@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import "../../styles/theme-admin.css";
 
 const PRIMARY_NAV = [
   { href: "/admin/dashboard", label: "Dashboard" },
@@ -17,7 +19,7 @@ function AdminNavigation() {
   const pathname = usePathname();
 
   return (
-    <nav className="space-y-1 text-sm font-medium text-slate-300">
+    <nav className="space-y-1 text-sm font-medium text-muted-foreground">
       {PRIMARY_NAV.map((item) => {
         const active = pathname.startsWith(item.href);
         return (
@@ -27,12 +29,12 @@ function AdminNavigation() {
             className={
               "flex items-center justify-between rounded-xl px-4 py-2 transition-colors " +
               (active
-                ? "bg-emerald-500/10 text-white ring-1 ring-emerald-400/50"
-                : "hover:bg-slate-800/60 hover:text-white")
+                ? "bg-primary/10 text-primary-foreground ring-1 ring-primary/50"
+                : "hover:bg-muted/60 hover:text-foreground")
             }
           >
             <span>{item.label}</span>
-            {active && <span className="text-xs text-emerald-300">•</span>}
+            {active && <span className="text-xs text-primary">•</span>}
           </Link>
         );
       })}
@@ -55,36 +57,36 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="theme-admin min-h-screen bg-background text-foreground">
       <div className="flex min-h-screen flex-col lg:flex-row">
-        <aside className="border-slate-900/60 bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900/70 lg:min-h-screen lg:w-72 lg:border-r lg:border-white/10">
+        <aside className="bg-card lg:min-h-screen lg:w-72 lg:border-r">
           <div className="flex h-full flex-col gap-8 px-6 py-8">
             <div>
               <Link
                 href="/admin/dashboard"
-                className="text-2xl font-semibold tracking-tight text-white"
+                className="text-2xl font-semibold tracking-tight text-foreground"
               >
                 Zabava Admin
               </Link>
-              <p className="mt-2 text-sm text-slate-400">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Operations control centre
               </p>
             </div>
 
             <AdminNavigation />
 
-            <div className="mt-auto space-y-4 text-sm text-slate-400">
-              <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
-                <p className="text-xs uppercase tracking-wider text-slate-500">
+            <div className="mt-auto space-y-4 text-sm text-muted-foreground">
+              <div className="rounded-2xl border bg-muted/70 p-4">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">
                   Need help?
                 </p>
-                <p className="mt-2 text-sm text-slate-300">
+                <p className="mt-2 text-sm text-foreground">
                   Visit the knowledge base or reach out to support for
                   onboarding partners faster.
                 </p>
                 <Link
                   href="/admin/analytics"
-                  className="mt-3 inline-flex text-sm font-semibold text-emerald-300 hover:text-emerald-200"
+                  className="mt-3 inline-flex text-sm font-semibold text-primary hover:text-primary/80"
                 >
                   View insights →
                 </Link>
@@ -94,7 +96,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 type="button"
                 onClick={handleSignOut}
                 disabled={signingOut}
-                className="w-full rounded-xl border border-white/10 px-4 py-2 text-left text-sm text-slate-300 transition-colors hover:border-red-400/60 hover:bg-red-500/10 hover:text-white disabled:opacity-70"
+                className="w-full rounded-xl border px-4 py-2 text-left text-sm text-muted-foreground transition-colors hover:border-destructive/60 hover:bg-destructive/10 hover:text-destructive disabled:opacity-70"
               >
                 {signingOut ? "Signing out…" : "Sign out"}
               </button>
@@ -103,27 +105,32 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </aside>
 
         <div className="flex-1">
-          <header className="sticky top-0 z-10 border-b border-white/10 bg-slate-950/80 backdrop-blur">
+          <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur">
             <div className="flex flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-              <div className="flex w-full items-center gap-3 rounded-full border border-white/10 bg-slate-900/80 px-4 py-2">
-                <span className="text-sm text-slate-500">Search console…</span>
+              <div className="flex w-full items-center gap-3 rounded-full border bg-muted/80 px-4 py-2">
+                <span className="text-sm text-muted-foreground">
+                  Search console…
+                </span>
                 <input
                   type="search"
                   name="q"
                   aria-label="Search admin"
-                  className="flex-1 bg-transparent text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none"
+                  className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
                   placeholder="Find partners, visits, rewards"
                   disabled
                 />
               </div>
               <div className="flex items-center gap-4">
+                <ThemeToggle />
                 <div className="hidden sm:flex flex-col text-right">
-                  <span className="text-sm font-medium text-slate-100">
+                  <span className="text-sm font-medium text-foreground">
                     Admin Console
                   </span>
-                  <span className="text-xs text-slate-400">Secure session</span>
+                  <span className="text-xs text-muted-foreground">
+                    Secure session
+                  </span>
                 </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-sky-500 text-sm font-semibold text-white">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-sm font-semibold text-primary-foreground">
                   ZA
                 </div>
               </div>

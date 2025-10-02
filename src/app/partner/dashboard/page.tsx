@@ -154,26 +154,26 @@ export default function PartnerDashboardPage() {
   return (
     <div className="space-y-8 p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-semibold text-slate-900">Partner dashboard · {partnerName}</h1>
+        <h1 className="text-3xl font-semibold text-foreground">Partner dashboard · {partnerName}</h1>
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
               void triggerRefresh();
             }}
             disabled={!partnerId || autoRefreshing}
-            className="rounded-lg border border-slate-300 px-3 py-1 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-lg border border-border px-3 py-1 text-sm font-medium text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
           >
             {autoRefreshing ? "Refreshing…" : "Refresh"}
           </button>
           <Link
             href="/partner/staff"
-            className="rounded-lg border border-slate-300 px-3 py-1 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+            className="rounded-lg border border-border px-3 py-1 text-sm font-medium text-foreground transition hover:bg-muted"
           >
             Staff &amp; access
           </Link>
           <button
             onClick={async () => { try { await fetch('/api/auth/logout', { method: 'POST' }); } catch {} router.replace('/partner/login'); }}
-            className="rounded-lg bg-slate-900 px-3 py-1 text-sm font-medium text-white shadow-sm transition hover:bg-slate-700"
+            className="rounded-lg bg-primary px-3 py-1 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
           >
             Logout
           </button>

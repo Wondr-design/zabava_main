@@ -118,11 +118,11 @@ export default function PartnerStaffPage() {
     <div className="space-y-8 p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-semibold text-slate-900">Staff &amp; access · {partnerName}</h1>
-          <p className="text-sm text-slate-500">Manage direct accounts and invitations for your onsite team.</p>
+          <h1 className="text-3xl font-semibold text-foreground">Staff &amp; access · {partnerName}</h1>
+          <p className="text-sm text-muted-foreground">Manage direct accounts and invitations for your onsite team.</p>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/partner/dashboard" className="rounded-lg border border-slate-300 px-3 py-1 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900">
+          <Link href="/partner/dashboard" className="rounded-lg border border-border px-3 py-1 text-sm font-medium text-foreground transition hover:bg-muted">
             Back to dashboard
           </Link>
           <button
@@ -130,14 +130,14 @@ export default function PartnerStaffPage() {
               try { await fetch('/api/auth/logout', { method: 'POST' }); } catch {}
               router.replace('/partner/login');
             }}
-            className="rounded-lg bg-slate-900 px-3 py-1 text-sm font-medium text-white shadow-sm transition hover:bg-slate-700"
+            className="rounded-lg bg-primary px-3 py-1 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
           >
             Logout
           </button>
         </div>
       </div>
 
-      {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">{error}</div>}
+      {error && <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">{error}</div>}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <StaffCreateForm onCreate={handleCreateStaff} />

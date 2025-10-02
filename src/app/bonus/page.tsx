@@ -5,6 +5,18 @@ import { format } from "date-fns";
 import { bonusApi } from "@/lib/web/api-client";
 import { useAutoRefresh } from "@/hooks/use-auto-refresh";
 
+interface VisitSummary {
+  partnerId?: string | null;
+  partner?: string | null;
+  status?: string | null;
+  pointsEarned?: number | null;
+  estimatedPoints?: number | null;
+  visitDate?: string | null;
+  createdAt?: string | null;
+  confirmedDate?: string | null;
+  visitedAt?: string | null;
+}
+
 interface BonusData {
   user?: { totalPoints?: number; availablePoints?: number };
   availableRewards?: Array<{
@@ -13,6 +25,7 @@ interface BonusData {
     pointsCost: number;
     canRedeem?: boolean;
   }>;
+  visits?: VisitSummary[];
 }
 
 interface DebugData {
@@ -45,33 +58,36 @@ export default function BonusPage() {
   const [debug, setDebug] = useState<DebugData | null>(null);
   const [success, setSuccess] = useState<string>("");
 
-  const fetchPoints = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
-    setError("");
-    setSuccess("");
-    if (!silent) {
-      setData(null);
-      setDebug(null);
-    }
-    if (!email) {
-      if (!silent) setError("Enter email");
-      return;
-    }
-    if (!silent) setLoading(true);
-    try {
-      const lower = email.trim().toLowerCase();
-      const [userPointsRes, debugRes] = await Promise.all([
-        bonusApi.userPoints(lower) as Promise<BonusData>,
-        bonusApi.debugUser(lower) as Promise<DebugData>,
-      ]);
-      setData(userPointsRes);
-      setDebug(debugRes);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to load";
-      setError(message);
-    } finally {
-      if (!silent) setLoading(false);
-    }
-  }, [email]);
+  const fetchPoints = useCallback(
+    async ({ silent = false }: { silent?: boolean } = {}) => {
+      setError("");
+      setSuccess("");
+      if (!silent) {
+        setData(null);
+        setDebug(null);
+      }
+      if (!email) {
+        if (!silent) setError("Enter email");
+        return;
+      }
+      if (!silent) setLoading(true);
+      try {
+        const lower = email.trim().toLowerCase();
+        const [userPointsRes, debugRes] = await Promise.all([
+          bonusApi.userPoints(lower) as Promise<BonusData>,
+          bonusApi.debugUser(lower) as Promise<DebugData>,
+        ]);
+        setData(userPointsRes);
+        setDebug(debugRes);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Failed to load";
+        setError(message);
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [email]
+  );
 
   async function redeem(rewardId: string) {
     if (!email) return;
@@ -132,7 +148,7 @@ export default function BonusPage() {
         <label className="block text-sm">Email</label>
         <div className="flex gap-2">
           <input
-            className="flex-1 rounded border px-3 py-2 bg-white/80 text-black"
+            className="flex-1 rounded border border-input px-3 py-2 bg-background text-foreground"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="user@example.com"
@@ -140,19 +156,19 @@ export default function BonusPage() {
           <button
             onClick={() => fetchPoints()}
             disabled={loading || autoRefreshing}
-            className="rounded bg-blue-600 text-white px-4 py-2 disabled:opacity-60"
+            className="rounded bg-primary text-primary-foreground px-4 py-2 disabled:opacity-60 hover:bg-primary/90"
           >
             {loading || autoRefreshing ? "Loading..." : "Refresh"}
           </button>
         </div>
       </div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
-      {success && <p className="text-sm text-emerald-500">{success}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
+      {success && <p className="text-sm text-primary">{success}</p>}
 
       {data && (
         <div className="space-y-4">
-          <div className="border rounded-xl p-4 space-y-2">
+          <div className="border rounded-xl p-4 space-y-2 bg-card">
             <p>
               Total Points:{" "}
               <strong>{(data.user?.totalPoints ?? 0).toLocaleString()}</strong>
@@ -162,7 +178,7 @@ export default function BonusPage() {
               <strong>{availablePoints.toLocaleString()}</strong>
             </p>
             {Number.isFinite(nextRewardCost) && nextRewardCost !== Infinity && (
-              <div className="text-sm text-black/80">
+              <div className="text-sm text-muted-foreground">
                 {needMore > 0 ? (
                   <span>
                     Need <strong>{needMore.toLocaleString()} pts</strong> to
@@ -176,7 +192,7 @@ export default function BonusPage() {
             )}
           </div>
 
-          <div className="border rounded-xl p-4">
+          <div className="border rounded-xl p-4 bg-card">
             <h2 className="font-semibold mb-2">Available Rewards</h2>
             <ul className="space-y-2">
               {(data.availableRewards ?? []).map((r) => {
@@ -187,15 +203,15 @@ export default function BonusPage() {
                 return (
                   <li
                     key={r.id}
-                    className="flex items-center justify-between border rounded-lg p-3"
+                    className="flex items-center justify-between border rounded-lg p-3 bg-card"
                   >
                     <div>
                       <div className="font-medium">{r.name}</div>
-                      <div className="text-sm text-black/70">
+                      <div className="text-sm text-muted-foreground">
                         {r.pointsCost.toLocaleString()} pts
                       </div>
                       {!can && diff > 0 && (
-                        <div className="text-xs text-black/60">
+                        <div className="text-xs text-muted-foreground">
                           Need {diff.toLocaleString()} more pts
                         </div>
                       )}
@@ -203,7 +219,7 @@ export default function BonusPage() {
                     <button
                       disabled={!can}
                       onClick={() => redeem(r.id)}
-                      className="rounded bg-emerald-600 text-white px-3 py-1 disabled:opacity-50"
+                      className="rounded bg-primary text-primary-foreground px-3 py-1 disabled:opacity-50 hover:bg-primary/90"
                     >
                       Redeem
                     </button>
@@ -214,11 +230,11 @@ export default function BonusPage() {
           </div>
 
           {debug && Array.isArray(debug.pointsHistory) && (
-            <div className="border rounded-xl p-4">
+            <div className="border rounded-xl p-4 bg-card">
               <h2 className="font-semibold mb-2">Points history</h2>
               <div className="overflow-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-black/5">
+                  <thead className="bg-muted">
                     <tr>
                       <th className="text-left p-2">When</th>
                       <th className="text-left p-2">Type</th>
@@ -228,7 +244,7 @@ export default function BonusPage() {
                   </thead>
                   <tbody>
                     {debug.pointsHistory!.map((p, i) => (
-                      <tr key={i} className="border-t">
+                      <tr key={i} className="border-t border-border">
                         <td className="p-2">{fmtDate(p.created_at)}</td>
                         <td className="p-2">{p.type || "—"}</td>
                         <td className="p-2">
@@ -246,11 +262,11 @@ export default function BonusPage() {
           )}
 
           {debug && Array.isArray(debug.redemptions) && (
-            <div className="border rounded-xl p-4">
+            <div className="border rounded-xl p-4 bg-card">
               <h2 className="font-semibold mb-2">Redemptions</h2>
               <div className="overflow-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-black/5">
+                  <thead className="bg-muted">
                     <tr>
                       <th className="text-left p-2">Code</th>
                       <th className="text-left p-2">Status</th>
@@ -261,7 +277,7 @@ export default function BonusPage() {
                   </thead>
                   <tbody>
                     {(debug.redemptions ?? []).map((r, i) => (
-                      <tr key={i} className="border-t">
+                      <tr key={i} className="border-t border-border">
                         <td className="p-2">{r.code || "—"}</td>
                         <td className="p-2">{r.status || "—"}</td>
                         <td className="p-2">{fmtDate(r.created_at)}</td>
@@ -277,11 +293,11 @@ export default function BonusPage() {
 
           {/* Visits preview if present */}
           {(data?.visits ?? []).length > 0 && (
-            <div className="border rounded-xl p-4">
+            <div className="border rounded-xl p-4 bg-card">
               <h2 className="font-semibold mb-2">Recent Visits</h2>
               <div className="overflow-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-black/5">
+                  <thead className="bg-muted">
                     <tr>
                       <th className="text-left p-2">Partner</th>
                       <th className="text-left p-2">Status</th>
@@ -294,7 +310,7 @@ export default function BonusPage() {
                     {(data?.visits ?? [])
                       .slice(0, 20)
                       .map((v: VisitSummary, i: number) => (
-                        <tr key={i} className="border-t">
+                        <tr key={i} className="border-t border-border">
                           <td className="p-2">
                             {v.partnerId || v.partner || "—"}
                           </td>

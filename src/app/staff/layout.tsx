@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import "../../styles/theme-staff.css";
 
 const NAV_ITEMS = [{ href: "/staff/dashboard", label: "Dashboard" }];
 
@@ -10,7 +12,7 @@ function StaffNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex gap-2 text-sm font-medium text-slate-300">
+    <nav className="flex gap-2 text-sm font-medium text-muted-foreground">
       {NAV_ITEMS.map((item) => {
         const active = pathname.startsWith(item.href);
         return (
@@ -20,8 +22,8 @@ function StaffNav() {
             className={
               "rounded-lg px-3 py-2 transition-colors " +
               (active
-                ? "bg-emerald-500/15 text-white"
-                : "hover:bg-slate-800/70 hover:text-white")
+                ? "bg-primary/10 text-foreground"
+                : "hover:bg-muted hover:text-foreground")
             }
           >
             {item.label}
@@ -48,22 +50,23 @@ export default function StaffLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="border-b border-white/10 bg-slate-950/80 backdrop-blur">
+    <div className="theme-staff min-h-screen bg-background text-foreground">
+      <header className="border-b border-border bg-background/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 sm:px-6 lg:px-8">
           <Link
             href="/staff/dashboard"
-            className="text-lg font-semibold tracking-tight text-white"
+            className="text-lg font-semibold tracking-tight text-foreground"
           >
             Zabava Staff Console
           </Link>
           <div className="flex items-center gap-4">
             <StaffNav />
+            <ThemeToggle />
             <button
               type="button"
               onClick={handleSignOut}
               disabled={signingOut}
-              className="rounded-lg border border-white/10 px-3 py-2 text-sm text-slate-200 transition-colors hover:border-emerald-400/60 hover:bg-emerald-500/15 hover:text-white disabled:cursor-not-allowed disabled:opacity-70"
+              className="rounded-lg border border-border px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-70"
             >
               {signingOut ? "Signing out…" : "Sign out"}
             </button>
