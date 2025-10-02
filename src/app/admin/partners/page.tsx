@@ -54,8 +54,8 @@ export default async function AdminPartnersPage() {
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <h1 className="text-3xl font-semibold text-slate-100">Partners</h1>
-        <p className="text-sm text-slate-400">
+        <h1 className="text-3xl font-semibold text-foreground">Partners</h1>
+        <p className="text-sm text-muted-foreground">
           Manage partners, review invites, and keep tabs on membership.
         </p>
       </header>

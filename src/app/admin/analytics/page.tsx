@@ -160,25 +160,25 @@ export default function AdminAnalyticsPage() {
   }, [partners, search]);
 
   if (loading) return <div className="p-6">Loading...</div>;
-  if (error) return <div className="p-6 text-red-500">{error}</div>;
+  if (error) return <div className="p-6 text-destructive">{error}</div>;
 
   return (
     <div className="p-6 space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Admin · Analytics</h1>
         <div className="flex gap-2">
-          <input className="rounded border px-3 py-2 bg-white/80 text-black" placeholder="Filter by partnerId" value={partnerId} onChange={(e) => setPartnerId(e.target.value)} />
-          <input className="rounded border px-3 py-2 bg-white/80 text-black" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input className="rounded border border-input px-3 py-2 bg-background text-foreground" placeholder="Filter by partnerId" value={partnerId} onChange={(e) => setPartnerId(e.target.value)} />
+          <input className="rounded border border-input px-3 py-2 bg-background text-foreground" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
           <button
             onClick={() => {
               void triggerRefresh();
             }}
             disabled={autoRefreshing}
-            className="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
           >
             {autoRefreshing ? "Refreshing…" : "Refresh"}
           </button>
-          <a className="rounded bg-slate-700 px-3 py-2 text-sm" href="/api/admin/analytics?mode=export" target="_blank" rel="noreferrer">Export CSV</a>
+          <a className="rounded bg-primary text-primary-foreground px-3 py-2 text-sm hover:bg-primary/90" href="/api/admin/analytics?mode=export" target="_blank" rel="noreferrer">Export CSV</a>
         </div>
       </div>
 
@@ -196,7 +196,7 @@ export default function AdminAnalyticsPage() {
         <Card label="Redemptions used" value={(redemptions?.used ?? 0)} />
       </div>
 
-      <div className="border rounded-xl p-3">
+      <div className="border rounded-xl p-3 bg-card">
         <h3 className="text-sm font-medium mb-2">Revenue trend</h3>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
@@ -213,7 +213,7 @@ export default function AdminAnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="border rounded-xl p-3">
+        <div className="border rounded-xl p-3 bg-card">
           <h3 className="text-sm font-medium mb-2">Points trend</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">

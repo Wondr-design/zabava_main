@@ -41,15 +41,15 @@ export default function StaffLoginPage() {
   }
 
   return (
-    <div className="flex min-h-[60vh] items-center justify-center bg-slate-950 px-6 py-12">
-      <form onSubmit={onSubmit} className="w-full max-w-sm space-y-4 rounded-2xl border border-white/10 bg-slate-900/70 p-6 shadow-xl">
-        <h1 className="text-lg font-semibold text-white">Staff Login</h1>
-        <p className="text-sm text-slate-400">Use the email and password created during your invite onboarding.</p>
-        {error && <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">{error}</p>}
+    <div className="flex min-h-[60vh] items-center justify-center bg-background px-6 py-12">
+      <form onSubmit={onSubmit} className="w-full max-w-sm space-y-4 rounded-2xl border border-border bg-card p-6 shadow-xl">
+        <h1 className="text-lg font-semibold text-foreground">Staff Login</h1>
+        <p className="text-sm text-muted-foreground">Use the email and password created during your invite onboarding.</p>
+        {error && <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
         <div className="space-y-2">
-          <label className="block text-sm text-slate-300">Email</label>
+          <label className="block text-sm text-muted-foreground">Email</label>
           <input
-            className="w-full rounded-lg border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none"
+            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -58,9 +58,9 @@ export default function StaffLoginPage() {
           />
         </div>
         <div className="space-y-2">
-          <label className="block text-sm text-slate-300">Password</label>
+          <label className="block text-sm text-muted-foreground">Password</label>
           <input
-            className="w-full rounded-lg border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none"
+            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -70,11 +70,11 @@ export default function StaffLoginPage() {
         </div>
         <button
           disabled={submitting}
-          className="w-full rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
+          className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-60"
         >
           {submitting ? "Signing in…" : "Sign in"}
         </button>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           Need access? Ask your partner admin for a new staff invite link.
         </p>
       </form>

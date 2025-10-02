@@ -73,27 +73,27 @@ export default function AdminRewardsPage() {
   }
 
   if (loading) return <div className="p-6">Loading...</div>;
-  if (error) return <div className="p-6 text-red-500">{error}</div>;
+  if (error) return <div className="p-6 text-destructive">{error}</div>;
 
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Admin · Rewards</h1>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-white/70">Showing {filteredRewards.length} of {rewards.length}</span>
-          <button onClick={() => { setQ(""); setStatusFilter("all"); setCategoryFilter("all"); }} className="rounded bg-slate-700 text-white px-3 py-2 text-sm">Clear filters</button>
-          <button onClick={onNew} className="rounded bg-blue-600 text-white px-3 py-2 text-sm">New Reward</button>
+          <span className="text-sm text-muted-foreground">Showing {filteredRewards.length} of {rewards.length}</span>
+          <button onClick={() => { setQ(""); setStatusFilter("all"); setCategoryFilter("all"); }} className="rounded bg-muted text-foreground px-3 py-2 text-sm">Clear filters</button>
+          <button onClick={onNew} className="rounded bg-primary text-primary-foreground px-3 py-2 text-sm hover:bg-primary/90">New Reward</button>
         </div>
       </div>
 
       <div className="flex flex-wrap gap-2 items-end">
         <div className="flex-1 min-w-40">
           <label className="block text-sm">Search</label>
-          <input className="w-full rounded border px-3 py-2 bg-white/80 text-black" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name or ID" />
+          <input className="w-full rounded border border-input px-3 py-2 bg-background text-foreground" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name or ID" />
         </div>
         <div>
           <label className="block text-sm">Status</label>
-          <select className="rounded border px-3 py-2 bg-white/80 text-black" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}>
+          <select className="rounded border border-input px-3 py-2 bg-background text-foreground" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}>
             <option value="all">All</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
@@ -101,7 +101,7 @@ export default function AdminRewardsPage() {
         </div>
         <div>
           <label className="block text-sm">Category</label>
-          <select className="rounded border px-3 py-2 bg-white/80 text-black" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+          <select className="rounded border border-input px-3 py-2 bg-background text-foreground" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
             <option value="all">All</option>
             <option value="discount">discount</option>
             <option value="freebie">freebie</option>
@@ -114,7 +114,7 @@ export default function AdminRewardsPage() {
 
       <div className="overflow-auto border rounded-xl">
         <table className="w-full text-sm">
-          <thead className="bg-black/5">
+          <thead className="bg-muted">
             <tr>
               <th className="text-left p-2">ID</th>
               <th className="text-left p-2">Name</th>
@@ -128,7 +128,7 @@ export default function AdminRewardsPage() {
           </thead>
           <tbody>
             {filteredRewards.map((r, i) => (
-              <tr key={i} className="border-t">
+              <tr key={i} className="border-t border-border">
                 <td className="p-2">{r.id}</td>
                 <td className="p-2">{r.name}</td>
                 <td className="p-2">{r.pointsCost} pts</td>
@@ -136,11 +136,11 @@ export default function AdminRewardsPage() {
                 <td className="p-2">{typeof r.stock === 'number' ? r.stock : '—'}</td>
                 <td className="p-2">{Array.isArray(r.availableFor) && r.availableFor.length > 0 ? `${r.availableFor.length} partner${r.availableFor.length > 1 ? 's' : ''}` : 'All'}</td>
                 <td className="p-2">
-                  <span className={`inline-block rounded-full px-2 py-0.5 text-xs ${r.status === 'active' ? 'bg-emerald-600/20 text-emerald-300 border border-emerald-600/40' : 'bg-slate-600/20 text-slate-300 border border-slate-600/40'}`}>{r.status}</span>
+                  <span className={`inline-block rounded-full px-2 py-0.5 text-xs ${r.status === 'active' ? 'bg-primary/20 text-primary-foreground/80 border border-primary/40' : 'bg-muted text-muted-foreground border border-border'}`}>{r.status}</span>
                 </td>
                 <td className="p-2 flex gap-2">
-                  <button onClick={() => onEdit(r.id)} className="rounded bg-slate-700 text-white px-3 py-1">Edit</button>
-                  <button onClick={() => onArchive(r.id)} className="rounded bg-red-600 text-white px-3 py-1">Archive</button>
+                  <button onClick={() => onEdit(r.id)} className="rounded bg-primary text-primary-foreground px-3 py-1 hover:bg-primary/90">Edit</button>
+                  <button onClick={() => onArchive(r.id)} className="rounded bg-destructive text-destructive-foreground px-3 py-1 hover:bg-destructive/90">Archive</button>
                 </td>
               </tr>
             ))}
