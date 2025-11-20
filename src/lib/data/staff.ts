@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { getSupabaseAdmin } from "../supabase-admin";
+import { log } from "../logging";
 
 export const staffStatusSchema = z.enum(["active", "inactive", "revoked"]);
 
@@ -7,9 +8,10 @@ export const staffUpsertSchema = z.object({
   id: z.string().uuid().optional(),
   partnerId: z.string().min(1),
   email: z.string().email(),
-  passwordHash: z.string().min(1),
+  passwordHash: z.string().min(1).optional(),
   name: z.string().min(1).max(120).optional(),
   status: staffStatusSchema.optional(),
+  authUserId: z.string().uuid().optional(),
 });
 
 export type PartnerStaffUpsertInput = z.infer<typeof staffUpsertSchema>;
@@ -24,6 +26,7 @@ export interface PartnerStaffRecord {
   created_at: string;
   updated_at: string;
   last_login_at: string | null;
+  auth_user_id: string | null;
 }
 
 function normalizeEmail(email: string) {
@@ -85,26 +88,35 @@ export async function upsertPartnerStaff(input: PartnerStaffUpsertInput) {
   const supabase = getSupabaseAdmin();
   const now = new Date().toISOString();
 
-  const insertPayload = {
+  const normalizedEmail = normalizeEmail(payload.email);
+  const partnerId = payload.partnerId.trim().toLowerCase();
+
+  const basePayload: Record<string, unknown> = {
     id: payload.id ?? undefined,
-    partner_id: payload.partnerId.trim().toLowerCase(),
-    email: normalizeEmail(payload.email),
-    password_hash: payload.passwordHash,
+    partner_id: partnerId,
+    email: normalizedEmail,
     name: payload.name ?? null,
     status: payload.status ?? "active",
     updated_at: now,
   };
 
+  if (payload.passwordHash !== undefined) {
+    basePayload.password_hash = payload.passwordHash;
+  }
+  if (payload.authUserId !== undefined) {
+    basePayload.auth_user_id = payload.authUserId;
+  }
+
   const query = payload.id
     ? supabase
         .from("partner_staff")
-        .update(insertPayload as never)
+        .update(basePayload as never)
         .eq("id", payload.id)
         .select()
         .single()
     : supabase
         .from("partner_staff")
-        .insert({ ...insertPayload, created_at: now } as never)
+        .insert({ ...basePayload, created_at: now } as never)
         .select()
         .single();
 
@@ -156,4 +168,49 @@ export async function touchPartnerStaffLogin(id: string) {
   if (error) {
     throw new Error(`Failed to update staff login: ${error.message}`);
   }
+}
+
+export async function updatePartnerStaffPassword(params: {
+  email: string;
+  passwordHash: string;
+  staffId?: string;
+}) {
+  const supabase = getSupabaseAdmin();
+  const normalized = normalizeEmail(params.email);
+  const now = new Date().toISOString();
+  const query = supabase
+    .from("partner_staff")
+    .update({ password_hash: params.passwordHash, updated_at: now } as never);
+
+  if (params.staffId) {
+    query.eq("id", params.staffId);
+  } else {
+    query.eq("email", normalized);
+  }
+
+  const { data, error } = await query.select("*").maybeSingle();
+
+  if (error) {
+    log.error("partner_staff_password_reset_error", error, {
+      email: normalized,
+      staffId: params.staffId ?? null,
+    });
+    throw new Error(`Failed to reset staff password: ${error.message}`);
+  }
+
+  if (!data) {
+    log.warn("partner_staff_password_reset_missing", {
+      email: normalized,
+      staffId: params.staffId ?? null,
+    });
+    return null;
+  }
+
+  log.info("partner_staff_password_reset_success", {
+    email: normalized,
+    staffId: (data as PartnerStaffRecord).id,
+    updatedAt: (data as PartnerStaffRecord).updated_at,
+  });
+
+  return data as PartnerStaffRecord;
 }

@@ -2,12 +2,15 @@ import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import { getEnv } from "../env";
 import { getSupabaseAdmin } from "../supabase-admin";
+import { defaultLocale, resolveLocale, type Locale } from "@/i18n/config";
+import { buildLocalizedPath } from "@/i18n/routing";
 
 export const createInviteInputSchema = z.object({
   email: z.string().email(),
   partnerId: z.string().min(1, "partnerId is required"),
   role: z.enum(["partner", "admin"]).default("partner"),
   name: z.string().min(1).max(120).optional(),
+  locale: z.string().optional(),
   expiresInMinutes: z
     .number()
     .int()
@@ -54,18 +57,18 @@ export interface PartnerInviteDTO {
   used: boolean;
   usedAt: string | null;
   inviteUrl: string | null;
+  locale: Locale;
 }
 
-function buildInviteUrl(token: string, email?: string | null) {
+function buildInviteUrl(token: string, email: string | null | undefined, locale: Locale) {
   const base = getEnv("DASHBOARD_BASE_URL", true) || "";
   if (!base) return null;
   const normalizedBase = base.replace(/\/$/, "");
-  const url = new URL(
-    "/partner/signup",
-    normalizedBase.startsWith("http")
-      ? normalizedBase
-      : `https://${normalizedBase}`
-  );
+  const origin = normalizedBase.startsWith("http")
+    ? normalizedBase
+    : `https://${normalizedBase}`;
+  const localizedPath = buildLocalizedPath("/partner/signup", locale);
+  const url = new URL(localizedPath, origin);
   url.searchParams.set("token", token);
   if (email) {
     url.searchParams.set("email", email);
@@ -75,6 +78,8 @@ function buildInviteUrl(token: string, email?: string | null) {
 
 function mapInviteRecord(record: PartnerInviteRecord): PartnerInviteDTO {
   const email = record.email?.toLowerCase() ?? null;
+  const metadata = (record.metadata ?? {}) as { locale?: string } | null;
+  const locale = resolveLocale(metadata?.locale, defaultLocale);
   return {
     token: record.token,
     email,
@@ -85,7 +90,8 @@ function mapInviteRecord(record: PartnerInviteRecord): PartnerInviteDTO {
     expiresAt: record.expires_at,
     used: Boolean(record.used),
     usedAt: record.used_at,
-    inviteUrl: buildInviteUrl(record.token, email ?? undefined),
+    inviteUrl: buildInviteUrl(record.token, email ?? undefined, locale),
+    locale,
   };
 }
 
@@ -109,6 +115,7 @@ export async function getPartnerInviteByToken(token: string) {
 export async function createPartnerInvite(input: CreateInviteInput) {
   const payload = createInviteInputSchema.parse(input);
   const supabase = getSupabaseAdmin();
+  const locale = resolveLocale(payload.locale, defaultLocale);
 
   const token = randomBytes(24).toString("hex");
   const now = new Date();
@@ -139,7 +146,7 @@ export async function createPartnerInvite(input: CreateInviteInput) {
     created_at: createdAtIso,
     expires_at: expiresAt,
     used: false,
-    metadata: {},
+    metadata: { locale },
   };
 
   const { data, error } = await supabase
@@ -150,9 +157,15 @@ export async function createPartnerInvite(input: CreateInviteInput) {
 
   if (error || !data) {
     const code = (error as { code?: string } | null)?.code;
-    const message = (error as { message?: string } | null)?.message || "unknown error";
-    if (code === '23503' || message.includes('partner_invites_partner_id_fkey')) {
-      throw new Error('Partner ID does not exist. Create the partner first, then issue an invite.');
+    const message =
+      (error as { message?: string } | null)?.message || "unknown error";
+    if (
+      code === "23503" ||
+      message.includes("partner_invites_partner_id_fkey")
+    ) {
+      throw new Error(
+        "Partner ID does not exist. Create the partner first, then issue an invite."
+      );
     }
     throw new Error(`Failed to create invite: ${message}`);
   }

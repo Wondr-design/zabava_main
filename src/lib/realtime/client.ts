@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
 type Database = Record<string, never>;
 
@@ -13,8 +13,10 @@ export function getSupabaseBrowser() {
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !anonKey) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn('Realtime disabled: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY not set');
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        "Realtime disabled: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY not set",
+      );
     }
     return null;
   }

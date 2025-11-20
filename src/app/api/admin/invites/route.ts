@@ -9,6 +9,7 @@ import {
   listInvitesQuerySchema,
 } from '@/lib/data/invites';
 import { log, getCorrelationId } from '@/lib/logging';
+import { notifyPartnerInvite } from '@/lib/services/invites/notify';
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET || '';
 const ALLOWED_ORIGIN =
@@ -104,7 +105,12 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const payload = createInviteInputSchema.parse(body ?? {});
-    const invite = await createPartnerInvite(payload);
+    const headerLocale = req.headers.get('x-locale') ?? undefined;
+    const invite = await createPartnerInvite({
+      ...payload,
+      locale: payload.locale ?? headerLocale ?? undefined,
+    });
+    await notifyPartnerInvite(invite);
     log.info('admin_invite_created', {
       email: invite.email,
       partnerId: invite.partnerId,
@@ -132,7 +138,26 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
-    const token = req.nextUrl.searchParams.get('token') || (await req.json().catch(() => ({} as any)))?.token;
+    const tokenFromQuery = req.nextUrl.searchParams.get('token');
+    let tokenFromBody: string | null = null;
+    if (!tokenFromQuery) {
+      try {
+        const parsedBody: unknown = await req.json();
+        if (
+          typeof parsedBody === 'object' &&
+          parsedBody !== null &&
+          'token' in parsedBody
+        ) {
+          const candidate = (parsedBody as { token: unknown }).token;
+          if (typeof candidate === 'string') {
+            tokenFromBody = candidate;
+          }
+        }
+      } catch {
+        // ignore body parse errors; tokenFromBody remains null
+      }
+    }
+    const token = tokenFromQuery ?? tokenFromBody ?? '';
     if (!token) {
       return applyCors(NextResponse.json({ error: 'token is required' }, { status: 400 }));
     }

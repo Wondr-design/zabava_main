@@ -1,4 +1,4 @@
-import { verifyJwt } from './jwt';
+import { verifyJwt } from "./jwt";
 
 export interface PartnerTokenPayload {
   email?: string;
@@ -7,8 +7,10 @@ export interface PartnerTokenPayload {
   name?: string;
 }
 
-export function verifyPartnerToken(authorizationHeader: string | null | undefined) {
-  if (!authorizationHeader || !authorizationHeader.startsWith('Bearer ')) {
+export function verifyPartnerToken(
+  authorizationHeader: string | null | undefined
+) {
+  if (!authorizationHeader || !authorizationHeader.startsWith("Bearer ")) {
     return null;
   }
   const token = authorizationHeader.slice(7).trim();
@@ -16,12 +18,12 @@ export function verifyPartnerToken(authorizationHeader: string | null | undefine
 
   try {
     const payload = verifyJwt<PartnerTokenPayload>(token);
-    if (payload.role !== 'partner' || !payload.partnerId) {
+    if (payload.role !== "partner" || !payload.partnerId) {
       return null;
     }
     return payload;
   } catch (error) {
-    console.warn('partner token verification failed', error);
+    console.warn("partner token verification failed", error);
     return null;
   }
 }

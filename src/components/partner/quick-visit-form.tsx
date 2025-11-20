@@ -1,49 +1,211 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { partnerApi } from "@/lib/web/api-client";
 
-export function QuickVisitForm({ partnerId, onCreated }: { partnerId: string; onCreated: () => void }) {
+import { partnerApi } from "@/lib/web/api-client";
+import { useGlobalValues } from "@/hooks/use-global-values";
+import {
+  DesignButton,
+  DesignFormField,
+  DesignInput,
+  DesignSelect,
+  DesignSelectContent,
+  DesignSelectItem,
+  DesignSelectTrigger,
+  DesignSelectValue,
+} from "@/components/design-system";
+
+interface QuickVisitFormProps {
+  partnerId: string;
+  onCreated: () => void;
+}
+
+export function QuickVisitForm({ partnerId, onCreated }: QuickVisitFormProps) {
   const [email, setEmail] = useState("");
   const [numPeople, setNumPeople] = useState<number>(1);
-  const [ticketType, setTicketType] = useState<string>("");
   const [totalPrice, setTotalPrice] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [ticketMode, setTicketMode] = useState<"select" | "custom">("select");
+  const [selectedTicket, setSelectedTicket] = useState<string>("");
+  const [customTicket, setCustomTicket] = useState<string>("");
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!email.trim()) { toast.error("Email is required"); return; }
+  const { values: ticketTypes } = useGlobalValues("ticket_type", {
+    includeInactive: false,
+  });
+
+  const ticketOptions = useMemo(
+    () =>
+      ticketTypes
+        .filter((value) => value.isActive)
+        .map((value) => ({
+          key: value.key,
+          label: value.label,
+        })),
+    [ticketTypes],
+  );
+
+  useEffect(() => {
+    if (ticketOptions.length === 0) {
+      setTicketMode("custom");
+      return;
+    }
+    setTicketMode((prev) => (prev === "custom" ? prev : "select"));
+    setSelectedTicket((prev) =>
+      prev && ticketOptions.some((option) => option.key === prev)
+        ? prev
+        : ticketOptions[0]?.key ?? "",
+    );
+  }, [ticketOptions]);
+
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!email.trim()) {
+      toast.error("Email is required");
+      return;
+    }
+
+    const normalizedTicket =
+      ticketMode === "select"
+        ? selectedTicket.trim()
+        : customTicket.trim();
+
     setLoading(true);
     try {
-      await partnerApi.createVisit({
-        email: email.trim().toLowerCase(),
-        partnerId,
-        numPeople,
-        ticketType: ticketType || undefined,
-        totalPrice: totalPrice ? Number(totalPrice) : undefined,
-        payload: {},
-      }, {});
+      await partnerApi.createVisit(
+        {
+          email: email.trim().toLowerCase(),
+          partnerId,
+          numPeople,
+          ticketType: normalizedTicket || undefined,
+          totalPrice: totalPrice ? Number(totalPrice) : undefined,
+          payload: {},
+        },
+        {},
+      );
       toast.success("Visit registered");
-      setEmail(""); setNumPeople(1); setTicketType(""); setTotalPrice("");
+      setEmail("");
+      setNumPeople(1);
+      setTotalPrice("");
+      setCustomTicket("");
+      setSelectedTicket(ticketOptions[0]?.key ?? "");
+      setTicketMode(ticketOptions.length > 0 ? "select" : "custom");
       onCreated();
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to register visit");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to register visit";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   }
 
+  const showSelect = ticketMode === "select" && ticketOptions.length > 0;
+
   return (
-    <form onSubmit={submit} className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <h2 className="text-sm font-semibold text-slate-900">Quick visit</h2>
-      <div className="grid grid-cols-2 gap-2">
-        <input className="col-span-2 rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none" placeholder="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input className="rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none" placeholder="Num people" type="number" min={1} value={numPeople} onChange={(e) => setNumPeople(Number(e.target.value || 1))} />
-        <input className="rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none" placeholder="Ticket type (optional)" value={ticketType} onChange={(e) => setTicketType(e.target.value)} />
-        <input className="rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none" placeholder="Total price (optional)" value={totalPrice} onChange={(e) => setTotalPrice(e.target.value)} />
+    <form onSubmit={submit} className="space-y-6">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-[color:var(--ds-text-strong)]">
+            Quick visit
+          </h2>
+          <p className="text-xs text-[color:var(--ds-text-muted)]">
+            Capture a guest without asking them to complete the full form.
+          </p>
+        </div>
+        {ticketOptions.length > 0 ? (
+          <DesignButton
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() =>
+              setTicketMode((prev) => (prev === "select" ? "custom" : "select"))
+            }
+          >
+            {ticketMode === "select" ? "Use custom ticket" : "Use ticket list"}
+          </DesignButton>
+        ) : null}
       </div>
-      <button disabled={loading} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60">{loading ? "Saving…" : "Register"}</button>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <DesignFormField
+          label="Guest email"
+          required
+          className="sm:col-span-2"
+          helper="We’ll send the visit confirmation to this address."
+        >
+          <DesignInput
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="guest@example.com"
+            autoComplete="email"
+          />
+        </DesignFormField>
+
+        <DesignFormField label="Number of visitors">
+          <DesignInput
+            type="number"
+            min={1}
+            value={numPeople}
+            onChange={(event) =>
+              setNumPeople(Number.parseInt(event.target.value, 10) || 1)
+            }
+          />
+        </DesignFormField>
+
+        <DesignFormField
+          label="Ticket type"
+          description={
+            showSelect
+              ? "Choose from configured ticket types."
+              : "Enter a ticket label to keep reporting consistent."
+          }
+        >
+          {showSelect ? (
+            <DesignSelect
+              value={selectedTicket}
+              onValueChange={(value) => setSelectedTicket(value)}
+              disabled={loading}
+            >
+              <DesignSelectTrigger aria-label="Select ticket type">
+                <DesignSelectValue placeholder="Select ticket type" />
+              </DesignSelectTrigger>
+              <DesignSelectContent>
+                {ticketOptions.map((option) => (
+                  <DesignSelectItem key={option.key} value={option.key}>
+                    {option.label}
+                  </DesignSelectItem>
+                ))}
+              </DesignSelectContent>
+            </DesignSelect>
+          ) : (
+            <DesignInput
+              value={customTicket}
+              onChange={(event) => setCustomTicket(event.target.value)}
+              placeholder="VIP, family, walk-in…"
+            />
+          )}
+        </DesignFormField>
+
+        <DesignFormField label="Estimated spend (CZK)">
+          <DesignInput
+            type="number"
+            inputMode="decimal"
+            min={0}
+            value={totalPrice}
+            onChange={(event) => setTotalPrice(event.target.value)}
+            placeholder="Optional"
+          />
+        </DesignFormField>
+      </div>
+
+      <DesignButton
+        disabled={loading}
+        className="w-full sm:w-auto"
+      >
+        {loading ? "Saving…" : "Register"}
+      </DesignButton>
     </form>
   );
 }

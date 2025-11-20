@@ -1,0 +1,98 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
+import { getPartnerFormById } from "@/lib/data/partner-forms";
+import { getPartnerBySlug } from "@/lib/data/site-directory";
+import { SiteNav } from "@/site/components/site-nav";
+import { PartnerFormRunner } from "@/site/forms/partner-form-runner";
+import { LocalizedLink } from "@/components/ui/localized-link";
+
+type PartnerBookingPageContext = {
+  params: Promise<{ slug: string }>;
+};
+
+export async function generateMetadata({
+  params,
+}: PartnerBookingPageContext): Promise<Metadata> {
+  const { slug } = await params;
+  const result = await getPartnerBySlug(slug);
+  if (!result) return {};
+  return {
+    title: `Reserve ${result.partner.name} · Zabava`,
+    description:
+      result.partner.description ??
+      "Reserve a visit and generate your Zabava QR pass instantly.",
+  };
+}
+
+export default async function PartnerBookingPage({
+  params,
+}: PartnerBookingPageContext) {
+  const { slug } = await params;
+  const result = await getPartnerBySlug(slug);
+  if (!result) {
+    notFound();
+  }
+
+  const { partner } = result;
+
+  const partnerMetadata = partner.metadata as Record<string, unknown>;
+  const selectedFormId =
+    partner.selectedFormId ??
+    (typeof partnerMetadata.selectedFormId === "string"
+      ? (partnerMetadata.selectedFormId as string)
+      : null);
+
+  const form = selectedFormId ? await getPartnerFormById(selectedFormId) : null;
+  const isFormReady = form && form.status === "published";
+
+  return (
+    <main className="flex min-h-screen flex-col bg-slate-950 text-white">
+      <SiteNav />
+      <section className="bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-20">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-indigo-200">
+            <LocalizedLink
+              href={`/partners/${partner.slug}`}
+              className="rounded-full border border-white/15 px-4 py-1 transition hover:border-indigo-300 hover:text-white"
+            >
+              ← Back to {partner.name}
+            </LocalizedLink>
+            <span className="rounded-full border border-white/15 px-4 py-1 uppercase tracking-[0.35em] text-indigo-200/80">
+              Reserve
+            </span>
+          </div>
+          <div className="space-y-4">
+            <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">
+              Reserve your visit to {partner.name}
+            </h1>
+            <p className="max-w-3xl text-lg text-slate-200">
+              Complete the steps below to confirm your reservation and receive a
+              QR pass for fast check-in. We&apos;ll email the pass to you and
+              keep your loyalty points in sync.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16">
+        <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 lg:px-8">
+          {isFormReady && form ? (
+            <PartnerFormRunner
+              partnerId={partner.partnerId}
+              partnerName={partner.name}
+              form={form}
+              categories={partner.categories.map((category) => category.name)}
+              ticketCatalog={partner.ticketDetails ?? []}
+              ticketAddons={partner.ticketAddons ?? []}
+            />
+          ) : (
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-sm text-indigo-200/80 shadow-2xl shadow-black/30">
+              Booking for this partner is temporarily unavailable. Please check back soon or contact our team for assistance.
+            </div>
+          )}
+        </div>
+      </section>
+    </main>
+  );
+}

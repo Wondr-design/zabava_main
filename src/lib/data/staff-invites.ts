@@ -1,5 +1,8 @@
 import { z } from "zod";
 import { getSupabaseAdmin } from "../supabase-admin";
+import { getEnv } from "../env";
+import { buildLocalizedPath } from "@/i18n/routing";
+import { defaultLocale, resolveLocale, type Locale } from "@/i18n/config";
 
 export const staffInviteStatusSchema = z.enum([
   "pending",
@@ -15,6 +18,7 @@ export const staffInviteCreateSchema = z.object({
   name: z.string().min(1).max(120).optional(),
   expiresAt: z.string().datetime().optional(),
   createdBy: z.string().email().optional(),
+  locale: z.string().optional(),
 });
 
 export type StaffInviteCreateInput = z.infer<typeof staffInviteCreateSchema>;
@@ -32,25 +36,70 @@ export interface PartnerStaffInviteRecord {
   created_by_email: string | null;
 }
 
+export interface StaffInviteDTO extends PartnerStaffInviteRecord {
+  inviteUrl: string | null;
+  locale: Locale;
+}
+
 function normalizeEmail(email?: string | null) {
   return email ? email.trim().toLowerCase() : null;
 }
 
+function buildStaffInviteUrl(
+  token: string,
+  email: string | null | undefined,
+  name: string | null | undefined,
+  locale: Locale,
+) {
+  const base = getEnv("DASHBOARD_BASE_URL", true) || "";
+  if (!base) return null;
+  const normalizedBase = base.replace(/\/$/, "");
+  const origin = normalizedBase.startsWith("http")
+    ? normalizedBase
+    : `https://${normalizedBase}`;
+  const localizedPath = buildLocalizedPath("/staff/signup", locale);
+  const url = new URL(localizedPath, origin);
+  url.searchParams.set("token", token);
+  if (email) {
+    url.searchParams.set("email", email);
+  }
+  if (name) {
+    url.searchParams.set("name", name);
+  }
+  return url.toString();
+}
+
+export function mapStaffInvite(
+  record: PartnerStaffInviteRecord,
+  options?: { locale?: string | null },
+): StaffInviteDTO {
+  const email = record.email ? record.email.toLowerCase() : null;
+  const locale = resolveLocale(options?.locale, defaultLocale);
+  return {
+    ...record,
+    email,
+    inviteUrl: buildStaffInviteUrl(record.token, email, record.name, locale),
+    locale,
+  };
+}
+
 export async function createStaffInvite(input: StaffInviteCreateInput) {
   const payload = staffInviteCreateSchema.parse(input);
+  const { locale: _locale, ...rest } = payload;
+  void _locale;
   const supabase = getSupabaseAdmin();
   const now = new Date().toISOString();
 
   const insertPayload = {
-    token: payload.token,
-    partner_id: payload.partnerId.trim().toLowerCase(),
-    email: normalizeEmail(payload.email),
-    name: payload.name ?? null,
+    token: rest.token,
+    partner_id: rest.partnerId.trim().toLowerCase(),
+    email: normalizeEmail(rest.email),
+    name: rest.name ?? null,
     status: "pending" as const,
-    expires_at: payload.expiresAt ?? null,
+    expires_at: rest.expiresAt ?? null,
     used: false,
     created_at: now,
-    created_by_email: normalizeEmail(payload.createdBy),
+    created_by_email: normalizeEmail(rest.createdBy),
   };
 
   const { data, error } = await supabase

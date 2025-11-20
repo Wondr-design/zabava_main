@@ -16,16 +16,12 @@ export function VisitDetailPanelWrapper({ initialVisits, initialFilters }: Visit
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-3xl font-semibold text-slate-100">Visits</h1>
-        <p className="text-sm text-slate-400">Filter and review recent visit registrations.</p>
-      </div>
       <VisitsFilterBar
         initialEmail={initialFilters.email}
         initialPartnerId={initialFilters.partnerId}
         initialStatus={initialFilters.status}
       />
-      <RecentVisitsTable visits={initialVisits} onSelectVisit={setSelectedVisit} />
+      <RecentVisitsTable visits={initialVisits} onSelectVisit={setSelectedVisit} showLinks />
       <VisitDetailPanel visit={selectedVisit} onClose={() => setSelectedVisit(null)} />
     </div>
   );

@@ -11,18 +11,72 @@ import {
   savePartnerMeta,
   partnerStatusSchema,
   partnerExists,
+  partnerTypeSchema,
+  partnerNoteSchema,
+  setPartnerParentRelationships,
+  getPartnerRelationshipsForChild,
+  getPartnerRelationshipsForParent,
 } from '@/lib/data/partners';
 import { getAuthFromRequest } from '@/lib/auth/request';
+import { revalidatePublicDirectory } from '@/lib/data/site-directory';
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET || '';
 const JWT_SECRET = process.env.JWT_SECRET || '';
+
+const parentPartnerAssignmentsSchema = z.object({
+  transport: z.array(z.string()).optional(),
+  taxi: z.array(z.string()).optional(),
+});
+
+const listingTierKeySchema = z
+  .union([
+    z
+      .string()
+      .trim()
+      .max(120)
+      .regex(/^[a-z0-9][a-z0-9-_]*$/i, {
+        message:
+          'Listing tier keys may only contain letters, numbers, hyphens, and underscores.',
+      }),
+    z.literal(null),
+  ])
+  .optional();
+
+const addressSchema = z
+  .object({
+    city: z.string().optional(),
+    addressLine: z.string().optional(),
+    sameAsCompany: z.boolean().optional(),
+  })
+  .partial();
 
 const partnerCreateSchema = z.object({
   partnerId: z.string().min(1),
   displayName: z.string().min(1).optional(),
   status: partnerStatusSchema.optional(),
+  type: partnerTypeSchema.default('standard'),
   contactEmail: z.string().email().optional(),
   contactName: z.string().optional(),
+  contactPhone: z.string().optional(),
+  companyName: z.string().optional(),
+  businessName: z.string().optional(),
+  shortDescription: z.string().optional(),
+  website: z.string().optional(),
+  googleMapUrl: z.string().optional(),
+  companyIdNumber: z.string().optional(),
+  vatRegistered: z.boolean().optional(),
+  vatRate: z.number().min(0).max(100).optional(),
+  companyAddress: addressSchema.optional(),
+  businessAddress: addressSchema.optional(),
+  listingTierKey: listingTierKeySchema,
+  commissionRate: z.number().min(1).max(100).default(10),
+  commissionRateOriginal: z.number().min(0).max(100).optional(),
+  commissionRateDiscounted: z.number().min(0).max(100).optional(),
+  commissionBasis: z.enum(['original', 'discounted']).optional(),
+  monthlyFee: z.number().min(0).optional(),
+  discountRate: z.number().min(0).max(100).optional(),
+  notes: z.array(partnerNoteSchema).optional(),
+  parentPartners: parentPartnerAssignmentsSchema.optional(),
 });
 
 const CORS_CONFIG = {
@@ -82,8 +136,15 @@ export async function GET(req: NextRequest) {
     const search = url.searchParams.get('search');
 
     if (partnerId) {
-      const item = await loadPartnerMeta(partnerId);
-      return withCors(NextResponse.json({ item }), CORS_CONFIG);
+      const [item, relationships, children] = await Promise.all([
+        loadPartnerMeta(partnerId),
+        getPartnerRelationshipsForChild(partnerId),
+        getPartnerRelationshipsForParent(partnerId),
+      ]);
+      return withCors(
+        NextResponse.json({ item, relationships, children }),
+        CORS_CONFIG,
+      );
     }
 
     const items = await listPartnerMetas({ status, search });
@@ -122,7 +183,42 @@ export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
     const payload = partnerMetaUpdateSchema.parse(body ?? {});
+    const rawParentPartners =
+      body && typeof body === 'object'
+        ? (body as Record<string, unknown>).parentPartners
+        : undefined;
+    const parentPartners = rawParentPartners
+      ? parentPartnerAssignmentsSchema.parse(rawParentPartners)
+      : undefined;
     const result = await savePartnerMeta(partnerId, payload);
+    if (
+      parentPartners &&
+      Object.prototype.hasOwnProperty.call(parentPartners, 'transport')
+    ) {
+      await setPartnerParentRelationships(
+        partnerId,
+        'transport',
+        parentPartners.transport ?? []
+      );
+    } else if (
+      payload.type === 'standard' ||
+      result.type !== 'transport'
+    ) {
+      await setPartnerParentRelationships(partnerId, 'transport', []);
+    }
+    if (
+      parentPartners &&
+      Object.prototype.hasOwnProperty.call(parentPartners, 'taxi')
+    ) {
+      await setPartnerParentRelationships(
+        partnerId,
+        'taxi',
+        parentPartners.taxi ?? []
+      );
+    } else if (payload.type === 'standard' || result.type !== 'taxi') {
+      await setPartnerParentRelationships(partnerId, 'taxi', []);
+    }
+    revalidatePublicDirectory();
     return withCors(NextResponse.json(result), CORS_CONFIG);
   } catch (err) {
     if (err instanceof ZodError) {
@@ -164,19 +260,99 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const listingTierKey =
+      typeof payload.listingTierKey === 'string' && payload.listingTierKey.trim().length > 0
+        ? payload.listingTierKey.trim()
+        : null;
+    const vatRegistered = Boolean(payload.vatRegistered);
+    const vatRate =
+      vatRegistered && typeof payload.vatRate === 'number' ? payload.vatRate : 0;
+    const companyAddress =
+      payload.companyAddress &&
+      (payload.companyAddress.city || payload.companyAddress.addressLine)
+        ? {
+            city: payload.companyAddress.city ?? undefined,
+            addressLine: payload.companyAddress.addressLine ?? undefined,
+          }
+        : undefined;
+    const businessAddress =
+      payload.businessAddress &&
+      (payload.businessAddress.city || payload.businessAddress.addressLine)
+        ? {
+            city: payload.businessAddress.city ?? undefined,
+            addressLine: payload.businessAddress.addressLine ?? undefined,
+            sameAsCompany: payload.businessAddress.sameAsCompany ?? undefined,
+          }
+        : undefined;
+    const commissionBasis = payload.commissionBasis ?? 'discounted';
+    const commissionRateOriginal =
+      typeof payload.commissionRateOriginal === 'number'
+        ? payload.commissionRateOriginal
+        : payload.commissionRate;
+    const commissionRateDiscounted =
+      typeof payload.commissionRateDiscounted === 'number'
+        ? payload.commissionRateDiscounted
+        : payload.commissionRate;
+    const effectiveCommission =
+      commissionBasis === 'original'
+        ? commissionRateOriginal
+        : commissionRateDiscounted;
+    const contractUpdates = {
+      commissionRate: effectiveCommission,
+      commissionRateOriginal,
+      commissionRateDiscounted,
+      commissionBasis,
+      monthlyFee: payload.monthlyFee,
+      discountRate: payload.discountRate,
+    };
+    const infoUpdates = {
+      contactEmail: payload.contactEmail,
+      contactName: payload.contactName,
+      contactPhone: payload.contactPhone,
+      companyName: payload.companyName,
+      businessName: payload.businessName,
+      shortDescription: payload.shortDescription,
+      website: payload.website,
+      googleMapUrl: payload.googleMapUrl,
+      companyIdNumber: payload.companyIdNumber,
+      vatRegistered,
+      vatRate,
+      companyAddress,
+      businessAddress,
+    };
+
     const updates = {
       displayName: payload.displayName ?? payload.partnerId,
       status: payload.status,
-      info:
-        payload.contactEmail || payload.contactName
-          ? {
-              contactEmail: payload.contactEmail,
-              contactName: payload.contactName,
-            }
-          : undefined,
+      type: payload.type,
+      listingTierKey,
+      contract: contractUpdates,
+      info: infoUpdates,
+      notes: payload.notes,
     } satisfies Parameters<typeof savePartnerMeta>[1];
 
     await savePartnerMeta(normalizedId, updates);
+    if (
+      payload.type === 'transport' ||
+      (payload.parentPartners && payload.parentPartners.transport)
+    ) {
+      await setPartnerParentRelationships(
+        normalizedId,
+        'transport',
+        payload.parentPartners?.transport ?? []
+      );
+    }
+    if (
+      payload.type === 'taxi' ||
+      (payload.parentPartners && payload.parentPartners.taxi)
+    ) {
+      await setPartnerParentRelationships(
+        normalizedId,
+        'taxi',
+        payload.parentPartners?.taxi ?? []
+      );
+    }
+    revalidatePublicDirectory();
     const item = await loadPartnerMeta(normalizedId);
     log.info('admin_partner_created', { partnerId: normalizedId, correlationId: getCorrelationId(req) });
     const response = NextResponse.json({ ok: true, item });

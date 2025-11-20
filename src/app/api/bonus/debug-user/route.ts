@@ -63,14 +63,21 @@ export async function GET(req: NextRequest) {
     const pointsHistory = pointsRes.data ?? [];
 
     // Redemptions
-    const redRes = await supabase
-      .from('redemptions')
-      .select('*')
-      .eq('email', email)
-      .order('created_at', { ascending: false })
-      .limit(50);
-    if (redRes.error) throw new Error(redRes.error.message);
-    const redemptions = redRes.data ?? [];
+  const redRes = await supabase
+    .from('redemptions')
+    .select('*, reward:rewards(name, points_cost)')
+    .eq('email', email)
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (redRes.error) throw new Error(redRes.error.message);
+  type RedemptionDebugRow = Record<string, unknown> & {
+    reward?: { name?: string | null; points_cost?: number | null } | null;
+  };
+  const redemptionRows: RedemptionDebugRow[] = (redRes.data ?? []) as RedemptionDebugRow[];
+  const redemptions = redemptionRows.map((row) => ({
+    ...row,
+    reward: row.reward ?? null,
+  }));
 
     return withCors(
       NextResponse.json({

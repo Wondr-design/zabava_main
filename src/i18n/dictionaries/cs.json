@@ -1,0 +1,202 @@
+{
+  "nav": {
+    "home": "Domů",
+    "partners": "Partneři",
+    "specialFlashDeals": "Speciální & bleskové nabídky",
+    "bonus": "Zkontrolovat moje odměny",
+    "language": "Jazyk"
+  },
+  "hero": {
+    "tagline": "Zabava zážitky",
+    "headline": "Pečlivě vybrané dobrodružství a věrnost bez starostí. Objevujte, navštěvujte a sbírejte odměny na jednom místě.",
+    "description": "Procházejte ověřené partnery po celé zemi, rezervujte si zážitek během pár vteřin a okamžitě generujte QR vstupenku. Zabava udržuje vaše odměny a návštěvy v souladu pro celou vaši rodinu.",
+    "exploreCategories": "Prozkoumat kategorie",
+    "checkBonus": "Zkontrolovat moje body",
+    "categoryLabel": "Kategorie",
+    "viewPartners": "Zobrazit partnery"
+  },
+  "common": {
+    "downloadQr": "Stáhnout QR",
+    "openFullSize": "Otevřít v plné velikosti",
+    "qrExpiresHelp": "Potřebujete nový kód? Získejte odměnu znovu a vygenerujte čerstvé QR."
+  },
+  "bonus": {
+    "hero": {
+      "title": "Zkontrolovat moje odměny",
+      "description": "Sledujte své Zabava odměny, čerpejte zážitky a mějte historii návštěv na jednom místě."
+    },
+    "verify": {
+      "title": "Ověřte svůj e‑mail",
+      "description": "Zadejte e‑mail a ověřovací kód, abyste bezpečně načetli zůstatek.",
+      "viewing": "Zobrazují se odměny pro",
+      "hint": "Zašleme vám kód, aby měl k odměnám přístup jen jejich vlastník."
+    },
+    "errors": {
+      "verifyToContinue": "Nejprve ověřte svůj e‑mail",
+      "loadFailed": "Načtení se nezdařilo",
+      "verifyToRedeem": "Pro uplatnění nejprve ověřte svůj e‑mail.",
+      "loadRewardFailed": "Odměnu se nepodařilo načíst",
+      "rewardUnavailable": "Odměna není dostupná",
+      "redeemFailed": "Odměnu se nepodařilo uplatnit",
+      "genericRedeemFailed": "Uplatnění selhalo"
+    },
+    "messages": {
+      "redeemSuccess": "Odměna byla úspěšně uplatněna.",
+      "codeCopied": "Kód pro uplatnění byl zkopírován",
+      "copyFailed": "Kód se nepodařilo zkopírovat",
+      "qrDownloaded": "QR kód byl stažen",
+      "qrDownloadFailed": "QR kód se nepodařilo stáhnout",
+      "linkCopied": "Bezpečný odkaz byl zkopírován",
+      "linkCopyFailed": "Bezpečný odkaz se nepodařilo zkopírovat"
+    },
+    "secureLink": {
+      "title": "Bezpečný přehled odměn",
+      "helper": "Vygenerujte jednorázový odkaz pro sdílení tohoto přehledu.",
+      "waiting": "Generujeme bezpečný odkaz…",
+      "refresh": "Vygenerovat nový odkaz",
+      "shareNotice": "Sdílejte opatrně. Odkaz po prvním otevření vyprší.",
+      "expires": "Platnost do {date} v {time}",
+      "invalid": "Tento bezpečný odkaz není platný.",
+      "expired": "Platnost tohoto bezpečného odkazu vypršela.",
+      "consumed": "Tento bezpečný odkaz už byl použit.",
+      "loadError": "Bezpečný odkaz se nepodařilo načíst.",
+      "cta": "Zpět k odměnám",
+      "viewing": "Zobrazují se odměny pro",
+      "availableHeading": "Dostupné odměny",
+      "generated": "Bezpečný odkaz je připraven."
+    },
+    "points": {
+      "title": "Přehled bodů",
+      "subtitle": "Sledujte celkový stav, dostupné body a cestu k další odměně.",
+      "total": "Celkem bodů",
+      "available": "Dostupné body",
+      "nextReward": "Další odměna",
+      "ready": "Připraveno k uplatnění",
+      "needMore": "Chybí {points} bodů",
+      "canRedeem": "Odměnu můžete uplatnit hned",
+      "emptyState": "Dostupné odměny se zobrazí zde"
+    },
+    "states": {
+      "loadingRewards": "Načítáme vaše odměny…",
+      "enterCode": "Zadejte kód, který jsme vám poslali, a zobrazte zůstatek.",
+      "verifyToTrack": "Ověřte svůj e‑mail, abyste mohli sledovat body.",
+      "noActivity": "Zatím jsme nenašli žádnou aktivitu pro tento e‑mail. Jakmile začnete navštěvovat partnery, tuto sekci aktualizujeme."
+    },
+    "rewards": {
+      "title": "Dostupné odměny",
+      "description": "Uplatňujte body okamžitě za výhody partnerů. Aktuálně získáváte ",
+      "onePoint": "1 bod",
+      "forEvery": " za každých ",
+      "postfix": " Kč potvrzených při check-inu.",
+      "shown": "Zobrazeno {visible} z {total} odměn",
+      "pointsCost": "{points} bodů",
+      "save": "Ušetříte {value} Kč",
+      "needMore": "Potřebujete {points} bodů",
+      "redeem": "Uplatnit",
+      "readyLabel": "Připraveno",
+      "lockedLabel": "Zamčeno",
+      "stock": "Zbývá {stock}",
+      "noMatches": "Žádné odměny neodpovídají aktuálním filtrům. Upravte je pro více možností.",
+      "noneAvailable": "Zatím nejsou dostupné žádné odměny. Zkuste to po další návštěvě."
+    },
+    "filters": {
+      "age": "Věk",
+      "all": "Vše",
+      "category": "Kategorie",
+      "pointRange": "Rozsah bodů",
+      "allPoints": "Všechny body",
+      "pointsUpTo": "≤ {points} bodů",
+      "readyOnly": "Jen připravené",
+      "partnerName": "Partner",
+      "partnerPlaceholder": "Hledat atrakci nebo partnera",
+      "ticketType": "Typ vstupenky",
+      "ticketPlaceholder": "Filtrovat podle typu vstupenky",
+      "allTicketTypes": "Všechny typy"
+    },
+    "actions": {
+      "copy": "Kopírovat",
+      "close": "Zavřít",
+      "retry": "Zkusit znovu"
+    },
+    "history": {
+      "pointsTitle": "Historie bodů",
+      "when": "Kdy",
+      "type": "Typ",
+      "points": "Body",
+      "partner": "Partner"
+    },
+    "redemptions": {
+      "title": "Uplatnění",
+      "code": "Kód",
+      "status": "Stav",
+      "created": "Vytvořeno",
+      "used": "Využito",
+      "expires": "Platnost",
+      "actions": "Akce"
+    },
+    "visits": {
+      "title": "Nedávné návštěvy",
+      "partner": "Partner",
+      "status": "Stav",
+      "points": "Body",
+      "created": "Vytvořeno",
+      "visited": "Navštíveno"
+    },
+    "dialog": {
+      "title": "Uplatnit odměnu",
+      "successTitle": "Odměna uplatněna",
+      "description": "Vyplňte bonusový formulář a vygenerujte jednorázový QR kód.",
+      "successDescription": "Sdílejte tento QR kód s hostem, aby dokončil bonusové uplatnění.",
+      "loading": "Načítáme detaily odměny…",
+      "codeHeading": "Kód pro uplatnění",
+      "codeDescription": "Sdílejte tento jednorázový kód s obsluhou pro potvrzení odměny.",
+      "scanHeading": "Skenovat pro potvrzení",
+      "scanDescription": "Předložte tento QR kód týmu Zabava. Obsahuje detaily odměny i odpovědi z formuláře, takže potvrzení proběhne okamžitě.",
+      "qrExpires": "QR vyprší",
+      "rewardDetails": "Detaily odměny",
+      "partnerNotes": "Poznámky partnera",
+      "formResponses": "Odpovědi z formuláře",
+      "fields": {
+        "reward": "Odměna:",
+        "pointsSpent": "Utracené body:",
+        "partner": "Partner:",
+        "status": "Stav",
+        "applied": "Uplatněno",
+        "expires": "Platnost odměny",
+        "category": "Kategorie:",
+        "empty": "—"
+      },
+      "booleanYes": "Ano",
+      "booleanNo": "Ne"
+    }
+  },
+  "home": {
+    "featured": {
+      "tagline": "Doporučené zážitky",
+      "headline": "Pečlivě vybraní partneři oblíbení komunitou Zabava",
+      "description": "Každého partnera prověřuje náš tým. Rezervujte návštěvu, vygenerujte QR vstupenku a body sbírejte automaticky hned po příchodu.",
+      "badge": "Doporučený partner",
+      "learnMore": "Zjistit více",
+      "reserve": "Rezervovat a získat QR kód",
+      "comingSoon": "Již brzy"
+    }
+  },
+  "verification": {
+    "title": "Ověřte svůj e‑mail",
+    "description": "Zašleme vám jednorázový kód, abychom potvrdili, že e‑mailová adresa je vaše.",
+    "emailLabel": "E‑mail",
+    "emailPlaceholder": "vy@example.com",
+    "send": "Odeslat kód",
+    "sending": "Odesíláme…",
+    "codeLabel": "Ověřovací kód",
+    "codePlaceholder": "Zadejte kód",
+    "verify": "Ověřit",
+    "verifying": "Ověřujeme…",
+    "expires": "Kód vyprší v {time}",
+    "verified": "E‑mail ověřen v {time}.",
+    "errors": {
+      "missingEmail": "Nejprve zadejte e‑mail.",
+      "missingCode": "Zadejte kód, který jsme poslali."
+    }
+  }
+}

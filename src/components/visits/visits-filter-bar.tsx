@@ -1,11 +1,12 @@
 'use client';
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useTransition, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useLocalizedRouter } from '@/i18n/use-localized-router';
 
 interface VisitsFilterBarProps {
   initialEmail?: string;
@@ -14,7 +15,7 @@ interface VisitsFilterBarProps {
 }
 
 export function VisitsFilterBar({ initialEmail = '', initialPartnerId = '', initialStatus = '' }: VisitsFilterBarProps) {
-  const router = useRouter();
+  const router = useLocalizedRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -67,7 +68,7 @@ export function VisitsFilterBar({ initialEmail = '', initialPartnerId = '', init
   return (
     <form
       onSubmit={handleSubmit}
-      className="grid grid-cols-1 gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4"
+      className="grid grid-cols-1 gap-4 rounded-2xl border border-border bg-card p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))]"
     >
       <div className="grid gap-2">
         <Label htmlFor="filter-email">Email</Label>
@@ -104,8 +105,8 @@ export function VisitsFilterBar({ initialEmail = '', initialPartnerId = '', init
         </Select>
       </div>
 
-      <div className="flex items-end gap-2">
-        <Button type="submit" className="w-full" disabled={isPending}>
+      <div className="flex items-end justify-end gap-2">
+        <Button type="submit" className="w-full lg:w-auto" disabled={isPending}>
           {isPending ? 'Filtering…' : 'Filter'}
         </Button>
         <Button type="button" variant="secondary" onClick={handleReset} disabled={isPending}>

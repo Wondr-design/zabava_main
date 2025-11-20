@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import { ZodError, z } from "zod";
 import { upsertPartnerUser } from "@/lib/data/partner-users";
 import { hashPassword } from "@/lib/auth/passwords";
 import { preflightResponse, withCors } from "@/lib/http/cors";
+import { verifyCsrf, generateCsrfToken } from "@/lib/http/csrf";
 import { log, getCorrelationId } from "@/lib/logging";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-
-const ADMIN_SECRET = process.env.ADMIN_SECRET || "";
-const JWT_SECRET = process.env.JWT_SECRET || "";
+import { isAdminRequestAuthorized } from "@/lib/api/admin-auth";
 
 const upsertSchema = z
   .object({
@@ -22,38 +20,6 @@ const upsertSchema = z
     message: "partnerId is required for partner accounts",
     path: ["partnerId"],
   });
-
-function isAuthorized(req: NextRequest) {
-  const adminSecret = req.headers.get("x-admin-secret");
-  if (ADMIN_SECRET && adminSecret === ADMIN_SECRET) {
-    return true;
-  }
-
-  if (!JWT_SECRET) {
-    return false;
-  }
-
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return false;
-  }
-
-  const token = authHeader.slice(7).trim();
-  if (!token) {
-    return false;
-  }
-
-  try {
-    const payload = jwt.verify(token, JWT_SECRET);
-    if (typeof payload === "object" && payload && "role" in payload) {
-      return (payload as { role?: string }).role === "admin";
-    }
-    return false;
-  } catch (err) {
-    log.warn("admin_accounts_auth_failed", { route: "admin/accounts", error: (err as Error)?.message, correlationId: getCorrelationId(req) });
-    return false;
-  }
-}
 
 export function OPTIONS() {
   return preflightResponse({
@@ -75,7 +41,7 @@ type PartnerUserRow = {
 
 export async function GET(req: NextRequest) {
   // Reuse unified authorization: x-admin-secret OR admin JWT
-  if (!isAuthorized(req)) {
+  if (!isAdminRequestAuthorized(req)) {
     return withCors(
       NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
       {
@@ -118,9 +84,19 @@ export async function GET(req: NextRequest) {
 }
 
 async function handleUpsert(req: NextRequest) {
-  if (!isAuthorized(req)) {
+  if (!isAdminRequestAuthorized(req)) {
     return withCors(
       NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+      {
+        methods: "GET,POST,PUT,OPTIONS",
+        headers: "Content-Type, Authorization, x-admin-secret",
+      }
+    );
+  }
+
+  if (!verifyCsrf(req)) {
+    return withCors(
+      NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 }),
       {
         methods: "GET,POST,PUT,OPTIONS",
         headers: "Content-Type, Authorization, x-admin-secret",
@@ -141,22 +117,21 @@ async function handleUpsert(req: NextRequest) {
       name: payload.name,
     });
 
-    return withCors(
-      NextResponse.json(
-        {
-          success: true,
-          email: result.email,
-          partnerId: result.partnerId,
-          role: result.role,
-          name: result.name,
-        },
-        { status: 200 }
-      ),
+    const response = NextResponse.json(
       {
-        methods: "GET,POST,PUT,OPTIONS",
-        headers: "Content-Type, Authorization, x-admin-secret",
-      }
+        success: true,
+        email: result.email,
+        partnerId: result.partnerId,
+        role: result.role,
+        name: result.name,
+      },
+      { status: 200 }
     );
+    response.headers.set("x-csrf-token", generateCsrfToken());
+    return withCors(response, {
+      methods: "GET,POST,PUT,OPTIONS",
+      headers: "Content-Type, Authorization, x-admin-secret",
+    });
   } catch (err) {
     if (err instanceof ZodError) {
       log.warn("admin_accounts_validation_error", { route: "admin/accounts", method: req.method, correlationId: getCorrelationId(req), issues: err.flatten?.() });

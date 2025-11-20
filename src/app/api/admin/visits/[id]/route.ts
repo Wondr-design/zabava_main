@@ -54,14 +54,19 @@ export function OPTIONS() {
   return applyCors(new NextResponse(null, { status: 200 }));
 }
 
-export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, context: unknown) {
+  const req = request as NextRequest;
   if (!isAuthorized(req)) {
     log.warn('admin_visits_detail_auth_failed', { route: 'admin/visits/[id]', correlationId: getCorrelationId(req) });
     return applyCors(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
   }
 
   try {
-    const { id } = await ctx.params;
+    const params = (context as { params?: { id?: string } } | undefined)?.params ?? {};
+    const id = params.id ?? "";
+    if (!id) {
+      return applyCors(NextResponse.json({ error: 'Visit ID is required' }, { status: 400 }));
+    }
     const visit = await getVisitById(id);
     if (!visit) {
       log.warn('admin_visits_detail_not_found', { route: 'admin/visits/[id]', id, correlationId: getCorrelationId(req) });

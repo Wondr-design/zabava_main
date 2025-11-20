@@ -1,15 +1,14 @@
-import { createClient } from '@supabase/supabase-js';
-import { getEnv } from './env';
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { getEnv } from "./env";
+import type { Database } from "@/supabase/types";
 
-type Database = Record<string, never>;
+let cachedClient: SupabaseClient | null = null;
 
-let cachedClient: ReturnType<typeof createClient<Database>> | null = null;
-
-export function getSupabaseAdmin() {
+export function getSupabaseAdmin(): SupabaseClient {
   if (!cachedClient) {
-    const url = getEnv('SUPABASE_URL');
-    const serviceKey = getEnv('SUPABASE_SERVICE_ROLE_KEY');
-    cachedClient = createClient<Database>(url, serviceKey, {
+    const url = getEnv("SUPABASE_URL");
+    const serviceKey = getEnv("SUPABASE_SERVICE_ROLE_KEY");
+    cachedClient = createClient(url, serviceKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
@@ -17,4 +16,8 @@ export function getSupabaseAdmin() {
     });
   }
   return cachedClient;
+}
+
+export function getSupabaseAdminTyped(): SupabaseClient<Database> {
+  return getSupabaseAdmin() as SupabaseClient<Database>;
 }

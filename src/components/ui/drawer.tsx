@@ -13,7 +13,7 @@ const DrawerOverlay = React.forwardRef<React.ElementRef<typeof Dialog.Overlay>, 
   ({ className, ...props }, ref) => (
     <Dialog.Overlay
       ref={ref}
-      className={cn('fixed inset-0 bg-black/70 backdrop-blur-sm', className)}
+      className={cn('fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm', className)}
       {...props}
     />
   )

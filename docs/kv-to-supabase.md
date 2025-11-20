@@ -3,6 +3,7 @@
 This document maps the legacy KV data model and API behaviors to the current Supabase-backed schema and endpoints. It is intended for maintenance, debugging, and future enhancements while preserving legacy parity.
 
 Highlights
+
 - All legacy flows are backed by normalized Supabase tables.
 - Response shapes and status semantics match legacy where clients depend on them.
 - Auth parity: endpoints accept the same roles/secrets as before (admin secret, admin JWT, partner JWT) where applicable.
@@ -10,6 +11,7 @@ Highlights
 ---
 
 Schema overview (public)
+
 - partners
   - id (text, PK)
   - display_name (text)
@@ -109,6 +111,7 @@ Schema overview (public)
 Legacy KV → Supabase mapping by domain
 
 Partners (directory, metadata)
+
 - KV: per-partner object storing status, contact, tags, website, contract/ticketing/info/media, bonus program flag, notes
 - Supabase: partners
 - Status mapping
@@ -120,6 +123,7 @@ Partners (directory, metadata)
 - Write path: savePartnerMeta merges updates and persists to partners (see src/lib/data/partners.ts)
 
 Partner users (accounts)
+
 - KV: login emails with role and optional partner linkage
 - Supabase: partner_users
 - Notes
@@ -128,6 +132,7 @@ Partner users (accounts)
   - last_login_at set via touchPartnerUserLogin
 
 Partner invites (onboarding)
+
 - KV: invite token → email, partner, role, name, expiry, used
 - Supabase: partner_invites
 - Notes
@@ -135,6 +140,7 @@ Partner invites (onboarding)
   - inviteUrl generated from env DASHBOARD_BASE_URL
 
 Visits (registrations) and members
+
 - KV: visit objects (pending/visited), payload, derived metrics
 - Supabase: visit_registrations, plus partner_members
 - Key field mapping
@@ -158,6 +164,7 @@ Visits (registrations) and members
   - On visit creation, (partner_id, email) upserted into partner_members to track membership
 
 Points history (balances)
+
 - KV: earned/used/adjustment logs
 - Supabase: points_history
 - Semantics
@@ -165,6 +172,7 @@ Points history (balances)
   - compute user total = Σ(earned + adjustment) − Σ(redemption)
 
 Pending verifications (QR/verify flows)
+
 - KV: short-lived records keyed by rid or email with verify/qr URL
 - Supabase: pending_verifications
 - Semantics
@@ -173,6 +181,7 @@ Pending verifications (QR/verify flows)
   - legacy_key preserved for cross-system lookups
 
 Rewards and partner visibility
+
 - KV: reward catalog with partner-specific availability
 - Supabase: rewards + reward_partner_visibility (join table)
 - Mapping
@@ -182,6 +191,7 @@ Rewards and partner visibility
   - availableFor array mapped to rows in reward_partner_visibility
 
 Redemptions (bonus lifecycle)
+
 - KV: redemption code lifecycle (pending → applied → used | rejected)
 - Supabase: redemptions
 - Mapping & semantics
@@ -196,6 +206,7 @@ Redemptions (bonus lifecycle)
 Endpoint parity and auth
 
 Admin endpoints (admin JWT or x-admin-secret)
+
 - GET /api/admin/overview
 - GET /api/admin/analytics
   - CSV columns and ordering aligned with legacy
@@ -207,6 +218,7 @@ Admin endpoints (admin JWT or x-admin-secret)
 - GET/POST /api/admin/partners (metadata save/list)
 
 Partner endpoints (partner JWT or admin JWT)
+
 - POST /api/partner/visit
   - Creates visit_registrations row (status=pending)
   - Accepts either payload or legacy data field; derives estimated points with legacy rules
@@ -219,6 +231,7 @@ Partner endpoints (partner JWT or admin JWT)
   - POST: partner actions process (used) or reject with partner scoping
 
 Public/user endpoints
+
 - GET /api/bonus/user-points and /api/bonus/user-points-fixed
 - POST /api/bonus/redeem-reward
   - Verifies points, optional partner eligibility, creates redemption + points_history(redemption)
@@ -231,6 +244,7 @@ Public/user endpoints
   - Proxy to KV/Zapier as in legacy integration
 
 Auth and CORS
+
 - Admin
   - x-admin-secret header OR admin JWT (role=admin in JWT payload)
 - Partner
@@ -239,6 +253,7 @@ Auth and CORS
   - CORS allowed origins via ALLOWED_ORIGIN / DASHBOARD_BASE_URL; per-route overrides exist (e.g., pending)
 
 Environment variables (relevant)
+
 - ADMIN_SECRET: shared secret for admin endpoints
 - JWT_SECRET: used to verify admin/partner JWTs
 - SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: server-side Supabase client
@@ -253,6 +268,7 @@ Environment variables (relevant)
 Sample records (for reference)
 
 Visit (visit_registrations)
+
 ```json
 {
   "id": "d3a3e5f4-...",
@@ -274,6 +290,7 @@ Visit (visit_registrations)
 ```
 
 Points history (earned)
+
 ```json
 {
   "email": "user@example.com",
@@ -287,6 +304,7 @@ Points history (earned)
 ```
 
 Redemption
+
 ```json
 {
   "code": "RDM-1712345678901-ABCDEF1",
@@ -302,6 +320,7 @@ Redemption
 ---
 
 Verification and parity checks
+
 - Run quick parity assertions with the provided script:
   - npm run parity:check
   - Required envs (example):
@@ -311,6 +330,7 @@ Verification and parity checks
     - REWARD_ID (optional), REDEMPTION_CODE (optional)
 
 Notes
+
 - The codebase normalizes emails and partner IDs to lowercase before writes.
 - Hidden partner status is stored as inactive in DB but rendered as hidden at the app layer.
 - Numeric inputs from legacy payloads (e.g., totalPrice) are coerced defensively.

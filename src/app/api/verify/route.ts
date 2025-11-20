@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { listVisitsForEmail, getVisitById } from '@/lib/data/visits';
 import { getPointsHistoryForEmail, getTotalPointsForEmail } from '@/lib/data/points';
 import { getPendingByRid } from '@/lib/data/pending';
+import { extractVisitLinks, getVisitQrExpiryStatus } from '@/lib/services/visit-links';
+import { verifyJwt } from '@/lib/auth/jwt';
+import { log } from '@/lib/logging';
+import { resolveLocale } from '@/i18n/config';
+import { buildLocalizedPath } from '@/i18n/routing';
 
 const ZAPIER_HOOK = process.env.ZAPIER_HOOK || '';
 const REGEN_LINK = process.env.REGEN_LINK || 'https://example.com/regenerate';
@@ -197,6 +202,46 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    const token = req.cookies.get('zabava_token')?.value ?? null;
+    if (token) {
+      try {
+        const payload = verifyJwt<{ role?: string; partnerId?: string }>(token);
+        const normalizedPartner = payload.partnerId?.toLowerCase?.() ?? null;
+        const visitPartner = visit.partner_id?.toLowerCase?.() ?? null;
+        if (
+          (payload.role === 'staff' || payload.role === 'admin') &&
+          normalizedPartner &&
+          visitPartner &&
+          normalizedPartner === visitPartner
+        ) {
+          const locale = resolveLocale(req.headers.get('x-locale'));
+          const redirectUrl = new URL(
+            buildLocalizedPath(`/staff/scan/${visit.id}`, locale),
+            req.nextUrl.origin,
+          );
+          redirectUrl.searchParams.set('email', visit.email);
+          return NextResponse.redirect(redirectUrl);
+        }
+      } catch (error) {
+        log.warn('verify_staff_redirect_failed', {
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    const linkInfo = extractVisitLinks(visit);
+    const expiryStatus = getVisitQrExpiryStatus(linkInfo);
+    const qrExpiresAtIso = expiryStatus.expiresAt;
+    const qrExpiryFormatted = qrExpiresAtIso ? formatDate(qrExpiresAtIso) : null;
+    const hasExpiredQr = expiryStatus.expired && visit.status !== 'visited';
+    const qrExpiryRowValue = (() => {
+      if (!qrExpiresAtIso) return 'Not generated yet';
+      if (!qrExpiryFormatted) {
+        return expiryStatus.expired ? 'Expired (timestamp unavailable)' : 'Active (timestamp unavailable)';
+      }
+      return expiryStatus.expired ? `Expired ${qrExpiryFormatted}` : `Active until ${qrExpiryFormatted}`;
+    })();
+
     const totalPoints = await getTotalPointsForEmail(visit.email);
     const history = await getPointsHistoryForEmail(visit.email, 5);
 
@@ -220,6 +265,10 @@ export async function GET(req: NextRequest) {
       {
         label: 'Visited',
         value: escapeHtml(formatDate(visit.visited_at) ?? 'Not yet confirmed'),
+      },
+      {
+        label: 'QR expiry',
+        value: escapeHtml(qrExpiryRowValue),
       },
       {
         label: 'Estimated Points',
@@ -256,6 +305,10 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    if (hasExpiredQr) {
+      footerParts.push('The QR code is no longer valid. Please generate a new one.');
+    }
+
     if (REGEN_LINK) {
       footerParts.push(`Need a new QR? <a href="${escapeHtml(REGEN_LINK)}">Regenerate here</a>.`);
     }
@@ -264,17 +317,25 @@ export async function GET(req: NextRequest) {
       footerParts.push('Automated notifications enabled.');
     }
 
+    const statusVariant = visit.status === 'visited' ? 'success' : hasExpiredQr ? 'error' : 'info';
+    const titleText =
+      visit.status === 'visited'
+        ? 'Visit confirmed'
+        : hasExpiredQr
+        ? 'QR code expired'
+        : 'QR registration found';
+    const subtitleText =
+      visit.status === 'visited'
+        ? 'This visitor has already been marked as visited.'
+        : hasExpiredQr
+        ? `This QR code expired${qrExpiryFormatted ? ` on ${qrExpiryFormatted}.` : '.'} Regenerate a new code to continue.`
+        : 'Awaiting confirmation from partner.';
+
     return new NextResponse(
       renderHtml({
-        status: visit.status === 'visited' ? 'success' : 'info',
-        title:
-          visit.status === 'visited'
-            ? 'Visit confirmed'
-            : 'QR registration found',
-        subtitle:
-          visit.status === 'visited'
-            ? 'This visitor has already been marked as visited.'
-            : 'Awaiting confirmation from partner.',
+        status: statusVariant,
+        title: titleText,
+        subtitle: subtitleText,
         rows,
         footer: footerParts.join(' '),
       }),

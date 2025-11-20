@@ -1,82 +1,104 @@
 "use client";
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useState } from "react";
+
+import {
+  DesignButton,
+  DesignFormField,
+  DesignInput,
+  SurfaceCard,
+} from "@/components/design-system";
 
 interface StaffCreateFormProps {
-  onCreate: (payload: { email: string; name?: string; password: string }) => Promise<void> | void;
+  onCreate: (payload: {
+    email: string;
+    name?: string;
+    password: string;
+  }) => Promise<void> | void;
 }
 
 export function StaffCreateForm({ onCreate }: StaffCreateFormProps) {
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
     if (!email || !password) {
-      setError('Email and password are required');
+      setError("Email and password are required");
       return;
     }
 
     try {
       setBusy(true);
-      setError('');
+      setError("");
       await onCreate({ email, name: name || undefined, password });
-      setEmail('');
-      setName('');
-      setPassword('');
-    } catch (err: any) {
-      setError(err?.message || 'Failed to create staff account');
+      setEmail("");
+      setName("");
+      setPassword("");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to create staff account";
+      setError(message);
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <h3 className="text-sm font-semibold text-slate-900">Create staff account</h3>
-      <p className="text-xs text-slate-500">Creates a login immediately using the password you provide.</p>
-      {error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-600">{error}</div>}
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
-          Email
-          <input
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <h3 className="text-sm font-semibold text-[color:var(--ds-text-strong)]">
+          Create staff account
+        </h3>
+        <p className="text-xs text-[color:var(--ds-text-muted)]">
+          Provision a login immediately using a temporary password.
+        </p>
+      </div>
+
+      {error ? (
+        <SurfaceCard className="rounded-2xl border border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10 px-4 py-3 text-xs text-[color:var(--ds-danger)]">
+          {error}
+        </SurfaceCard>
+      ) : null}
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <DesignFormField label="Email" required>
+          <DesignInput
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
-            required
+            onChange={(event) => setEmail(event.target.value)}
+            autoComplete="email"
+            placeholder="staff@venue.cz"
           />
-        </label>
-        <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
-          Name (optional)
-          <input
-            type="text"
+        </DesignFormField>
+        <DesignFormField label="Name (optional)">
+          <DesignInput
             value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Full name"
           />
-        </label>
+        </DesignFormField>
       </div>
-      <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
-        Temporary password
-        <input
+
+      <DesignFormField
+        label="Temporary password"
+        helper="Share this with the staff member; they’ll reset it on first login."
+        required
+      >
+        <DesignInput
           type="password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
-          required
+          onChange={(event) => setPassword(event.target.value)}
+          autoComplete="new-password"
         />
-      </label>
-      <button
-        type="submit"
-        disabled={busy}
-        className="inline-flex items-center rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {busy ? 'Creating…' : 'Create account'}
-      </button>
+      </DesignFormField>
+
+      <DesignButton type="submit" disabled={busy}>
+        {busy ? "Creating…" : "Create account"}
+      </DesignButton>
     </form>
   );
 }

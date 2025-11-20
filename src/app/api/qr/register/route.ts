@@ -3,7 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError, z } from "zod";
 import { preflightResponse, withCors } from "@/lib/http/cors";
 import { log, getCorrelationId } from "@/lib/logging";
-import { createVisitRegistration } from "@/lib/data/visits";
+import {
+  createVisitRegistration,
+  getLatestPendingVisit,
+  getVisitBySubmissionId,
+} from "@/lib/data/visits";
 import {
   computeRegistrationMetrics,
   extractPartnerId,
@@ -87,10 +91,8 @@ export async function POST(req: NextRequest) {
     const normalizedEmail = normalizeEmail(email);
 
     const parsedData = parseDataField(data);
-    const mergedPayload = mergePayload(
-      rest as Record<string, unknown>,
-      parsedData
-    );
+    const restRecord = rest as Record<string, unknown>;
+    const mergedPayload = mergePayload(restRecord, parsedData);
 
     const partnerCandidate =
       partnerIdOverride ||
@@ -109,15 +111,50 @@ export async function POST(req: NextRequest) {
 
     const registrationMetrics = computeRegistrationMetrics(mergedPayload);
 
-    const visitId = randomUUID();
-    const legacyKey = `qr:${normalizedEmail}:${normalizedPartnerId}:${visitId}`;
+    const rawSubmissionId =
+      (typeof restRecord["submissionId"] === "string"
+        ? (restRecord["submissionId"] as string)
+        : undefined) ??
+      (typeof restRecord["rid"] === "string"
+        ? (restRecord["rid"] as string)
+        : undefined);
+    const normalizedSubmissionId = rawSubmissionId
+      ? rawSubmissionId.trim().toLowerCase()
+      : undefined;
+
+    let existing = null;
+    if (normalizedSubmissionId) {
+      existing = await getVisitBySubmissionId(normalizedSubmissionId).catch(
+        () => null,
+      );
+    }
+    if (!existing) {
+      const latestPending = await getLatestPendingVisit(
+        normalizedEmail,
+        normalizedPartnerId,
+      ).catch(() => null);
+      if (
+        latestPending &&
+        (!normalizedSubmissionId ||
+          !latestPending.submission_id ||
+          latestPending.submission_id.toLowerCase() ===
+            normalizedSubmissionId)
+      ) {
+        existing = latestPending;
+      }
+    }
+
+    const visitId = existing?.id ?? randomUUID();
+    const legacyKey = existing?.legacy_qr_key ??
+      `qr:${normalizedEmail}:${normalizedPartnerId}:${visitId}`;
 
     const visit = await createVisitRegistration({
       id: visitId,
       email: normalizedEmail,
       partnerId: normalizedPartnerId,
       status: "pending",
-      submissionId: (rest.submissionId as string | undefined) ?? undefined,
+      submissionId:
+        normalizedSubmissionId ?? existing?.submission_id ?? undefined,
       payload: mergedPayload,
       estimatedPoints: registrationMetrics.estimatedPoints,
       pointsAwarded: 0,

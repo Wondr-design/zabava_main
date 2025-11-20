@@ -1,5 +1,7 @@
-import { redirect } from 'next/navigation';
+import { redirect } from "next/navigation";
 
-export default function Home() {
-  redirect('/dashboard');
+import { defaultLocale } from "@/i18n/config";
+
+export default function RootRedirectPage() {
+  redirect(`/${defaultLocale}`);
 }

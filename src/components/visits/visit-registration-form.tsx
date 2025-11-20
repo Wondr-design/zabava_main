@@ -143,7 +143,7 @@ export function VisitRegistrationForm() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="total-price">Total Price (₦)</Label>
+            <Label htmlFor="total-price">Total Price (CZK)</Label>
               <Input
                 id="total-price"
                 type="number"

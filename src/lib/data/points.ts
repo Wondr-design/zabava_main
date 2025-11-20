@@ -11,6 +11,8 @@ export interface PointsHistoryRecord {
   partner_name: string | null;
   visit_id: string | null;
   meta: Record<string, unknown>;
+  source: 'visit' | 'reward_redemption' | 'manual_adjustment';
+  note?: string | null;
   created_at: string;
 }
 
@@ -22,6 +24,8 @@ export interface CreatePointsHistoryInput {
   partnerName?: string | null;
   visitId?: string | null;
   meta?: Record<string, unknown>;
+  source?: 'visit' | 'reward_redemption' | 'manual_adjustment';
+  note?: string | null;
 }
 
 export async function addPointsHistoryEntry(input: CreatePointsHistoryInput) {
@@ -36,6 +40,8 @@ export async function addPointsHistoryEntry(input: CreatePointsHistoryInput) {
     partner_name: string | null;
     visit_id: string | null;
     meta: Record<string, unknown>;
+    source: 'visit' | 'reward_redemption' | 'manual_adjustment';
+    note: string | null;
   };
 
   const payload: PointsInsert = {
@@ -46,6 +52,8 @@ export async function addPointsHistoryEntry(input: CreatePointsHistoryInput) {
     partner_name: input.partnerName ?? null,
     visit_id: input.visitId ?? null,
     meta: input.meta ?? {},
+    source: input.source ?? 'visit',
+    note: input.note ?? null,
   };
 
   const { data, error } = await supabase

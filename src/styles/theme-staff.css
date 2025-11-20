@@ -1,54 +1,85 @@
-/* Staff dashboard theme tokens
-   Scope: elements wrapped in .theme-staff */
-
 .theme-staff {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.42 0.12 300);            /* violet-ish */
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.96 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  --ds-text-strong: #2f2e28;
+  --ds-text-muted: #8d8a7a;
+  --ds-text-subtle: #b3af9e;
+  --ds-text-inverse: #fdfcf7;
+
+  --ds-surface-base: #f5f3ed;
+  --ds-surface-muted: #ece8de;
+  --ds-surface-card: #fcfbf7;
+  --ds-surface-elevated: #ebe6d8;
+  --ds-surface-popover: #ffffff;
+
+  --ds-border-subtle: #d9d3c6;
+  --ds-border-strong: #bcb49c;
+  --ds-focus-ring: #7b7755;
+  --ds-shadow-soft: 0 24px 60px rgba(47, 46, 40, 0.12);
+  --ds-shadow-popover: 0 28px 70px rgba(47, 46, 40, 0.18);
+  --ds-overlay: color(srgb 0 0 0 / 0.35);
+
+  --ds-primary: #7b7755;
+  --ds-primary-foreground: var(--ds-text-inverse);
+  --ds-secondary: #b5b28e;
+  --ds-secondary-foreground: var(--ds-text-strong);
+  --ds-success: #9fc793;
+  --ds-warning: #f0c7a6;
+  --ds-danger: #d99282;
+
+  --ds-chart-1: #7b7755;
+  --ds-chart-2: #b5b28e;
+  --ds-chart-3: #f5d4ba;
+  --ds-chart-4: #d9c8b4;
+  --ds-chart-5: #8d8a7a;
+
+  --sidebar: var(--ds-surface-card);
+  --sidebar-foreground: var(--ds-text-strong);
+  --sidebar-primary: var(--ds-primary);
+  --sidebar-primary-foreground: var(--ds-primary-foreground);
+  --sidebar-accent: var(--ds-surface-muted);
+  --sidebar-accent-foreground: var(--ds-text-strong);
+  --sidebar-border: var(--ds-border-subtle);
+  --sidebar-ring: var(--ds-focus-ring);
 }
 
 .dark .theme-staff {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.78 0.15 300);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
+  --ds-text-strong: #f5f3ed;
+  --ds-text-muted: #c7c2b3;
+  --ds-text-subtle: #a5a08f;
+  --ds-text-inverse: #23211a;
+
+  --ds-surface-base: #26241f;
+  --ds-surface-muted: #2f2c25;
+  --ds-surface-card: #343026;
+  --ds-surface-elevated: #3b362b;
+  --ds-surface-popover: #423b30;
+
+  --ds-border-subtle: #3f3a32;
+  --ds-border-strong: #5c5646;
+  --ds-focus-ring: #d9c8b4;
+  --ds-shadow-soft: 0 28px 70px rgba(0, 0, 0, 0.52);
+  --ds-shadow-popover: 0 32px 88px rgba(0, 0, 0, 0.6);
+  --ds-overlay: color(srgb 0 0 0 / 0.62);
+
+  --ds-primary: #d0c9a8;
+  --ds-primary-foreground: #26241f;
+  --ds-secondary: #4a4736;
+  --ds-secondary-foreground: #f0eee5;
+  --ds-success: #9fc793;
+  --ds-warning: #f0c7a6;
+  --ds-danger: #d3a094;
+
+  --ds-chart-1: #d0c9a8;
+  --ds-chart-2: #7b7755;
+  --ds-chart-3: #f0c7a6;
+  --ds-chart-4: #9fc793;
+  --ds-chart-5: #8d8a7a;
+
+  --sidebar: var(--ds-surface-card);
+  --sidebar-foreground: var(--ds-text-strong);
+  --sidebar-primary: var(--ds-primary);
+  --sidebar-primary-foreground: var(--ds-primary-foreground);
+  --sidebar-accent: var(--ds-surface-muted);
+  --sidebar-accent-foreground: var(--ds-text-strong);
+  --sidebar-border: color-mix(in oklab, var(--ds-border-subtle) 70%, transparent);
+  --sidebar-ring: var(--ds-focus-ring);
 }

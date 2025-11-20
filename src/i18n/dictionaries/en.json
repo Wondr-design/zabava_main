@@ -1,0 +1,202 @@
+{
+  "nav": {
+    "home": "Home",
+    "partners": "Partners",
+    "specialFlashDeals": "Special & Flash Deals",
+    "bonus": "Check my Rewards",
+    "language": "Language"
+  },
+  "hero": {
+    "tagline": "Zabava Experiences",
+    "headline": "Curated adventures, effortless loyalty. Discover, visit, and earn in one place.",
+    "description": "Browse verified partners across the country, reserve your experience in seconds, and generate your QR pass instantly. Zabava keeps your rewards and visits in sync for you and your family.",
+    "exploreCategories": "Explore categories",
+    "checkBonus": "Check my bonus points",
+    "categoryLabel": "Category",
+    "viewPartners": "View partners"
+  },
+  "common": {
+    "downloadQr": "Download QR",
+    "openFullSize": "Open full size",
+    "qrExpiresHelp": "Need a fresh code later? Redeem the reward again to generate a new QR."
+  },
+  "bonus": {
+    "hero": {
+      "title": "Check my Rewards",
+      "description": "Track your Zabava rewards, redeem experiences, and review your visit history in one place."
+    },
+    "verify": {
+      "title": "Verify your email",
+      "description": "Enter your email and verification code to securely load your balance.",
+      "viewing": "Viewing rewards for",
+      "hint": "We'll email you a code so only you can access your rewards."
+    },
+    "errors": {
+      "verifyToContinue": "Verify your email to continue",
+      "loadFailed": "Failed to load",
+      "verifyToRedeem": "Verify your email to redeem.",
+      "loadRewardFailed": "Failed to load reward",
+      "rewardUnavailable": "Reward is unavailable",
+      "redeemFailed": "Failed to redeem reward",
+      "genericRedeemFailed": "Redeem failed"
+    },
+    "messages": {
+      "redeemSuccess": "Reward redeemed successfully.",
+      "codeCopied": "Redemption code copied",
+      "copyFailed": "Unable to copy code",
+      "qrDownloaded": "QR code downloaded",
+      "qrDownloadFailed": "Unable to download QR code",
+      "linkCopied": "Secure link copied",
+      "linkCopyFailed": "Unable to copy secure link"
+    },
+    "secureLink": {
+      "title": "Secure reward snapshot",
+      "helper": "Generate a one-time link to share this dashboard.",
+      "waiting": "Generating secure link…",
+      "refresh": "Generate new link",
+      "shareNotice": "Share carefully. The link expires after the first view.",
+      "expires": "Expires on {date} at {time}",
+      "invalid": "This secure link is invalid.",
+      "expired": "This secure link has expired.",
+      "consumed": "This secure link has already been used.",
+      "loadError": "We couldn’t load this secure link.",
+      "cta": "Go back to rewards",
+      "viewing": "Viewing rewards for",
+      "availableHeading": "Available rewards",
+      "generated": "Secure link ready."
+    },
+    "points": {
+      "title": "Points overview",
+      "subtitle": "Monitor totals, balance, and your path to the next reward.",
+      "total": "Total points",
+      "available": "Available points",
+      "nextReward": "Next reward",
+      "ready": "Ready to redeem",
+      "needMore": "Need {points} more pts",
+      "canRedeem": "You can redeem a reward now",
+      "emptyState": "Redeemable rewards will appear here"
+    },
+    "states": {
+      "loadingRewards": "Loading your rewards…",
+      "enterCode": "Enter the code we sent to view your balance.",
+      "verifyToTrack": "Verify your email to start tracking points.",
+      "noActivity": "We didn't find any activity for this email yet. We'll update this space as soon as you start visiting partners."
+    },
+    "rewards": {
+      "title": "Available rewards",
+      "description": "Redeem points instantly for partner perks. You currently earn ",
+      "onePoint": "1 pt",
+      "forEvery": " for every ",
+      "postfix": " confirmed at check-in.",
+      "shown": "{visible}/{total} rewards shown",
+      "pointsCost": "{points} pts",
+      "save": "Save {value} Kč",
+      "needMore": "Need {points} pts",
+      "redeem": "Redeem",
+      "readyLabel": "Ready",
+      "lockedLabel": "Locked",
+      "stock": "{stock} left",
+      "noMatches": "No rewards match the current filters. Adjust the filters to see more options.",
+      "noneAvailable": "No rewards available yet. Check back after your next visit."
+    },
+    "filters": {
+      "age": "Age",
+      "all": "All",
+      "category": "Category",
+      "pointRange": "Point range",
+      "allPoints": "All points",
+      "pointsUpTo": "≤ {points} pts",
+      "readyOnly": "Ready to redeem",
+      "partnerName": "Partner name",
+      "partnerPlaceholder": "Search attractions or partners",
+      "ticketType": "Ticket type",
+      "ticketPlaceholder": "Filter by ticket type",
+      "allTicketTypes": "All ticket types"
+    },
+    "actions": {
+      "copy": "Copy",
+      "close": "Close",
+      "retry": "Retry"
+    },
+    "history": {
+      "pointsTitle": "Points history",
+      "when": "When",
+      "type": "Type",
+      "points": "Points",
+      "partner": "Partner"
+    },
+    "redemptions": {
+      "title": "Redemptions",
+      "code": "Code",
+      "status": "Status",
+      "created": "Created",
+      "used": "Used",
+      "expires": "Expires",
+      "actions": "Actions"
+    },
+    "visits": {
+      "title": "Recent visits",
+      "partner": "Partner",
+      "status": "Status",
+      "points": "Points",
+      "created": "Created",
+      "visited": "Visited"
+    },
+    "dialog": {
+      "title": "Redeem reward",
+      "successTitle": "Reward redeemed",
+      "description": "Fill in the bonus form to generate a one-time QR code.",
+      "successDescription": "Share this QR code with the guest to finish the bonus redemption.",
+      "loading": "Loading reward details…",
+      "codeHeading": "Redemption code",
+      "codeDescription": "Share this one-time code with staff to confirm your reward.",
+      "scanHeading": "Scan to finalize",
+      "scanDescription": "Present this QR code to the Zabava team. It carries the reward details and your submitted form responses so staff can confirm the redemption instantly.",
+      "qrExpires": "QR expires",
+      "rewardDetails": "Reward details",
+      "partnerNotes": "Partner notes",
+      "formResponses": "Form responses",
+      "fields": {
+        "reward": "Reward:",
+        "pointsSpent": "Points spent:",
+        "partner": "Partner:",
+        "status": "Status",
+        "applied": "Applied",
+        "expires": "Reward expires",
+        "category": "Category:",
+        "empty": "—"
+      },
+      "booleanYes": "Yes",
+      "booleanNo": "No"
+    }
+  },
+  "home": {
+    "featured": {
+      "tagline": "Featured Experiences",
+      "headline": "Hand-picked partners popular with the Zabava community",
+      "description": "Every partner is vetted by our team. Reserve a visit, generate your QR pass, and earn rewards automatically when you arrive.",
+      "badge": "Featured partner",
+      "learnMore": "Learn more",
+      "reserve": "Reserve and get QR pass",
+      "comingSoon": "Coming soon"
+    }
+  },
+  "verification": {
+    "title": "Verify your email",
+    "description": "We will send a one-time code to confirm you own this email address.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "send": "Send code",
+    "sending": "Sending…",
+    "codeLabel": "Verification code",
+    "codePlaceholder": "Enter code",
+    "verify": "Verify",
+    "verifying": "Verifying…",
+    "expires": "Code expires at {time}",
+    "verified": "Email verified at {time}.",
+    "errors": {
+      "missingEmail": "Enter your email first.",
+      "missingCode": "Enter the code we sent."
+    }
+  }
+}

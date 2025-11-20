@@ -7,8 +7,28 @@
    REWARD_ID=... REDEMPTION_CODE=... node scripts/parity/checks.js
 */
 
-const https = require('https');
-const http = require('http');
+/** @typedef {{ https: typeof import('node:https'); http: typeof import('node:http') }} Protocols */
+
+/** @type {Promise<Protocols> | null} */
+let protocolsPromise = null;
+
+/**
+ * Lazily loads the HTTP/S modules using dynamic import so we can stay ESM-friendly
+ * without relying on CommonJS `require`.
+ * @returns {Promise<Protocols>}
+ */
+async function loadProtocols() {
+  if (!protocolsPromise) {
+    protocolsPromise = Promise.all([
+      import('node:https'),
+      import('node:http'),
+    ]).then(([httpsModule, httpModule]) => ({
+      https: httpsModule,
+      http: httpModule,
+    }));
+  }
+  return protocolsPromise;
+}
 
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:3000';
@@ -19,7 +39,8 @@ const TEST_PARTNER_ID = process.env.TEST_PARTNER_ID || 'demo-partner';
 const REWARD_ID = process.env.REWARD_ID || '';
 const REDEMPTION_CODE = process.env.REDEMPTION_CODE || '';
 
-function makeRequest({ method, path, headers = {}, body }) {
+async function makeRequest({ method, path, headers = {}, body }) {
+  const { https, http } = await loadProtocols();
   const url = new URL(API_BASE_URL + path);
   const isHttps = url.protocol === 'https:';
   const reqOpts = {

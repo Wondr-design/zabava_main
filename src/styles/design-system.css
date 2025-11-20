@@ -1,0 +1,242 @@
+:root {
+  color-scheme: light;
+
+  /* Typography */
+  --ds-text-strong: #2f2e28;
+  --ds-text-muted: #8d8a7a;
+  --ds-text-subtle: #b3af9e;
+  --ds-text-inverse: #fdfcf7;
+
+  /* Surfaces */
+  --ds-surface-base: #f5f3ed;
+  --ds-surface-muted: #ece8de;
+  --ds-surface-card: #fcfbf7;
+  --ds-surface-elevated: #ebe6d8;
+  --ds-surface-popover: #ffffff;
+
+  /* Borders & shadows */
+  --ds-border-subtle: #d9d3c6;
+  --ds-border-strong: #bcb49c;
+  --ds-focus-ring: #7b7755;
+  --ds-shadow-soft: 0 24px 60px rgba(47, 46, 40, 0.08);
+  --ds-shadow-popover: 0 28px 70px rgba(47, 46, 40, 0.12);
+
+  /* Interaction */
+  --ds-primary: #7b7755;
+  --ds-primary-foreground: var(--ds-text-inverse);
+  --ds-secondary: #b5b28e;
+  --ds-secondary-foreground: var(--ds-text-strong);
+  --ds-success: #c9e0c1;
+  --ds-warning: #f5d4ba;
+  --ds-danger: #d99282;
+  --ds-overlay: color(srgb 0 0 0 / 0.3);
+
+  /* Charts */
+  --ds-chart-1: #7b7755;
+  --ds-chart-2: #b5b28e;
+  --ds-chart-3: #f5d4ba;
+  --ds-chart-4: #d9c8b4;
+  --ds-chart-5: #8d8a7a;
+
+  /* Map to shadcn variables */
+  --background: var(--ds-surface-base);
+  --foreground: var(--ds-text-strong);
+  --card: var(--ds-surface-card);
+  --card-foreground: var(--ds-text-strong);
+  --popover: var(--ds-surface-popover);
+  --popover-foreground: var(--ds-text-strong);
+  --primary: var(--ds-primary);
+  --primary-foreground: var(--ds-primary-foreground);
+  --secondary: var(--ds-secondary);
+  --secondary-foreground: var(--ds-secondary-foreground);
+  --muted: var(--ds-surface-muted);
+  --muted-foreground: var(--ds-text-muted);
+  --accent: var(--ds-surface-elevated);
+  --accent-foreground: var(--ds-text-strong);
+  --destructive: var(--ds-danger);
+  --border: var(--ds-border-subtle);
+  --input: var(--ds-border-subtle);
+  --ring: var(--ds-focus-ring);
+  --chart-1: var(--ds-chart-1);
+  --chart-2: var(--ds-chart-2);
+  --chart-3: var(--ds-chart-3);
+  --chart-4: var(--ds-chart-4);
+  --chart-5: var(--ds-chart-5);
+  --sidebar: var(--ds-surface-card);
+  --sidebar-foreground: var(--ds-text-strong);
+  --sidebar-primary: var(--ds-primary);
+  --sidebar-primary-foreground: var(--ds-primary-foreground);
+  --sidebar-accent: var(--ds-surface-muted);
+  --sidebar-accent-foreground: var(--ds-text-strong);
+  --sidebar-border: var(--ds-border-subtle);
+  --sidebar-ring: var(--ds-focus-ring);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --ds-text-strong: #f5f3ed;
+  --ds-text-muted: #c7c2b3;
+  --ds-text-subtle: #a5a08f;
+  --ds-text-inverse: #23211a;
+
+  --ds-surface-base: #26241f;
+  --ds-surface-muted: #2f2c25;
+  --ds-surface-card: #343026;
+  --ds-surface-elevated: #3b362b;
+  --ds-surface-popover: #423b30;
+
+  --ds-border-subtle: #3f3a32;
+  --ds-border-strong: #5c5646;
+  --ds-focus-ring: #d9c8b4;
+  --ds-shadow-soft: 0 24px 60px rgba(0, 0, 0, 0.45);
+  --ds-shadow-popover: 0 28px 70px rgba(0, 0, 0, 0.55);
+
+  --ds-primary: #d0c9a8;
+  --ds-primary-foreground: #26241f;
+  --ds-secondary: #4a4736;
+  --ds-secondary-foreground: #f0eee5;
+  --ds-success: #9fc793;
+  --ds-warning: #f0c7a6;
+  --ds-danger: #d3a094;
+  --ds-overlay: color(srgb 0 0 0 / 0.55);
+
+  --ds-chart-1: #d0c9a8;
+  --ds-chart-2: #7b7755;
+  --ds-chart-3: #f0c7a6;
+  --ds-chart-4: #9fc793;
+  --ds-chart-5: #8d8a7a;
+
+  --background: var(--ds-surface-base);
+  --foreground: var(--ds-text-strong);
+  --card: var(--ds-surface-card);
+  --card-foreground: var(--ds-text-strong);
+  --popover: var(--ds-surface-popover);
+  --popover-foreground: var(--ds-text-strong);
+  --primary: var(--ds-primary);
+  --primary-foreground: var(--ds-primary-foreground);
+  --secondary: var(--ds-secondary);
+  --secondary-foreground: var(--ds-secondary-foreground);
+  --muted: var(--ds-surface-muted);
+  --muted-foreground: var(--ds-text-muted);
+  --accent: var(--ds-surface-elevated);
+  --accent-foreground: var(--ds-text-strong);
+  --destructive: var(--ds-danger);
+  --border: var(--ds-border-subtle);
+  --input: var(--ds-border-subtle);
+  --ring: var(--ds-focus-ring);
+  --chart-1: var(--ds-chart-1);
+  --chart-2: var(--ds-chart-2);
+  --chart-3: var(--ds-chart-3);
+  --chart-4: var(--ds-chart-4);
+  --chart-5: var(--ds-chart-5);
+  --sidebar: var(--ds-surface-card);
+  --sidebar-foreground: var(--ds-text-strong);
+  --sidebar-primary: var(--ds-primary);
+  --sidebar-primary-foreground: var(--ds-primary-foreground);
+  --sidebar-accent: var(--ds-surface-muted);
+  --sidebar-accent-foreground: var(--ds-text-strong);
+  --sidebar-border: var(--ds-border-subtle);
+  --sidebar-ring: var(--ds-focus-ring);
+}
+
+/* Surface utility classes */
+.surface-base {
+  background-color: var(--ds-surface-base);
+  color: var(--ds-text-strong);
+}
+
+.surface-muted {
+  background-color: var(--ds-surface-muted);
+  color: var(--ds-text-strong);
+  border: 1px solid var(--ds-border-subtle);
+}
+
+.surface-card {
+  background-color: var(--ds-surface-card);
+  color: var(--ds-text-strong);
+  box-shadow: var(--ds-shadow-soft);
+  border: 1px solid
+    color-mix(in oklab, var(--ds-border-subtle) 70%, transparent);
+}
+
+.surface-elevated {
+  background-color: var(--ds-surface-elevated);
+  color: var(--ds-text-strong);
+  box-shadow: var(--ds-shadow-soft);
+  border: 1px solid
+    color-mix(in oklab, var(--ds-border-subtle) 60%, transparent);
+}
+
+.surface-popover {
+  background-color: var(--ds-surface-popover);
+  color: var(--ds-text-strong);
+  box-shadow: var(--ds-shadow-popover);
+  border: 1px solid
+    color-mix(in oklab, var(--ds-border-subtle) 55%, transparent);
+}
+
+.overlay-scrim {
+  background-color: var(--ds-overlay);
+  backdrop-filter: blur(4px);
+}
+
+/* Text helpers */
+.text-strong {
+  color: var(--ds-text-strong);
+}
+
+.text-muted {
+  color: var(--ds-text-muted);
+}
+
+.text-subtle {
+  color: var(--ds-text-subtle);
+}
+
+.text-inverse {
+  color: var(--ds-text-inverse);
+}
+
+/* Status chips */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+  padding: 0.125rem 0.75rem;
+  border: 1px solid
+    color-mix(in oklab, var(--ds-border-subtle) 60%, transparent);
+  background-color: var(--ds-surface-muted);
+  color: var(--ds-text-muted);
+}
+
+.chip--success {
+  background-color: var(--ds-success);
+  color: var(--ds-text-inverse);
+  border-color: color-mix(in oklab, var(--ds-success) 60%, transparent);
+}
+
+.chip--warning {
+  background-color: var(--ds-warning);
+  color: var(--ds-text-inverse);
+  border-color: color-mix(in oklab, var(--ds-warning) 60%, transparent);
+}
+
+.chip--danger {
+  background-color: var(--ds-danger);
+  color: var(--ds-text-inverse);
+  border-color: color-mix(in oklab, var(--ds-danger) 60%, transparent);
+}
+
+/* Shadow helpers */
+.shadow-soft {
+  box-shadow: var(--ds-shadow-soft);
+}
+
+.shadow-popover {
+  box-shadow: var(--ds-shadow-popover);
+}
