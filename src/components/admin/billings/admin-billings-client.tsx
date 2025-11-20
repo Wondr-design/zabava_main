@@ -18,6 +18,7 @@ type BillingItem = {
   partnerId: string;
   partnerName: string | null;
   billingEmail: string | null;
+  contactEmail?: string | null;
   autoSendEnabled: boolean;
   autoSendDay?: number;
   commissionBasis: string;
@@ -123,6 +124,12 @@ export function AdminBillingsClient({
   }
 
   async function handleSend(partnerId: string) {
+    const target = items.find((i) => i.partnerId === partnerId);
+    const resolvedEmail = target?.billingEmail || target?.contactEmail;
+    if (!resolvedEmail) {
+      toast.error("Add a billing or contact email before sending.");
+      return;
+    }
     setSending(partnerId);
     try {
       await adminApi.billingSend(
@@ -202,13 +209,23 @@ export function AdminBillingsClient({
                 <Label>Email</Label>
                 <div className="flex gap-2">
                   <Input
-                defaultValue={item.billingEmail ?? ""}
-                onBlur={(e) =>
-                  handleSaveSettings(item.partnerId, { billingEmail: e.target.value || null })
-                }
-                placeholder="billing@partner.com"
+                    defaultValue={item.billingEmail ?? item.contactEmail ?? ""}
+                    onBlur={(e) =>
+                      handleSaveSettings(item.partnerId, { billingEmail: e.target.value || null })
+                    }
+                    placeholder="billing@partner.com"
                   />
+                  {!item.billingEmail && item.contactEmail ? (
+                    <span className="text-xs text-muted-foreground">
+                      Using contact email: {item.contactEmail}
+                    </span>
+                  ) : null}
                 </div>
+                {!item.billingEmail && !item.contactEmail ? (
+                  <p className="text-xs text-amber-600">
+                    No contact email found. Please add one before sending.
+                  </p>
+                ) : null}
               </div>
               <div className="grid gap-3 rounded-lg border border-muted px-3 py-2">
                 <div className="flex items-center justify-between">

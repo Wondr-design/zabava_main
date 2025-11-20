@@ -23,6 +23,7 @@ export interface PartnerBillingSummary {
   partnerId: string;
   partnerName: string | null;
   billingEmail: string | null;
+  contactEmail?: string | null;
   autoSendEnabled: boolean;
   autoSendDay?: number;
   lastSentAt: string | null;
@@ -98,7 +99,7 @@ export async function listPartnerBillingSummaries(): Promise<PartnerBillingSumma
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("partners")
-    .select("id, display_name, billing:partner_billing_settings(*)")
+    .select("id, display_name, contact_email, billing:partner_billing_settings(*)")
     .order("display_name", { ascending: true });
   if (error) {
     throw new Error(`Failed to load partners for billing: ${error.message}`);
@@ -107,6 +108,7 @@ export async function listPartnerBillingSummaries(): Promise<PartnerBillingSumma
     partnerId: row.id as string,
     partnerName: (row.display_name as string | null) ?? null,
     billingEmail: (row.billing?.billing_email as string | null) ?? null,
+    contactEmail: (row.contact_email as string | null) ?? null,
     autoSendEnabled: Boolean(row.billing?.auto_send_enabled),
     commissionBasis: (row.billing?.commission_basis as CommissionBasis) || "discounted",
     listingFeeAmount: Number(row.billing?.listing_fee_amount ?? 0),
