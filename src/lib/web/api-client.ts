@@ -393,12 +393,24 @@ export const adminApi = {
       listingFeeCurrency: string;
       lastSentAt: string | null;
     }> }>(`/api/admin/billings`, { method: "GET" }, opts),
-  billingSettingsGet: (partnerId: string, opts: RequestOptions = {}) =>
-    json<{ settings: unknown }>(
-      `/api/admin/billings/${encodeURIComponent(partnerId)}`,
+  billingSettingsGet: (
+    partnerId: string,
+    params: { summary?: boolean; dateFrom?: string; dateTo?: string } = {},
+    opts: RequestOptions = {},
+  ) => {
+    const qs = new URLSearchParams();
+    if (params.summary) qs.set("summary", "true");
+    if (params.dateFrom) qs.set("dateFrom", params.dateFrom);
+    if (params.dateTo) qs.set("dateTo", params.dateTo);
+    const url = `/api/admin/billings/${encodeURIComponent(partnerId)}${
+      qs.toString() ? `?${qs.toString()}` : ""
+    }`;
+    return json<{ settings: unknown; summary?: unknown; visits?: unknown }>(
+      url,
       { method: "GET" },
       opts,
-    ),
+    );
+  },
   billingSettingsUpdate: (partnerId: string, body: unknown, opts: RequestOptions = {}) =>
     json<{ ok: boolean }>(
       `/api/admin/billings/${encodeURIComponent(partnerId)}`,
@@ -415,6 +427,25 @@ export const adminApi = {
       { method: "POST", body: JSON.stringify(body) },
       opts,
     ),
+  billingDownload: (
+    partnerId: string,
+    params: { dateFrom?: string; dateTo?: string } = {},
+    opts: RequestOptions = {},
+  ) => {
+    const qs = new URLSearchParams();
+    if (params.dateFrom) qs.set("dateFrom", params.dateFrom);
+    if (params.dateTo) qs.set("dateTo", params.dateTo);
+    const url = `/api/admin/billings/${encodeURIComponent(partnerId)}/download${
+      qs.toString() ? `?${qs.toString()}` : ""
+    }`;
+    return json<{
+      summary: unknown;
+      files: {
+        csv: { filename: string; contentType: string; base64: string };
+        xlsx: { filename: string; contentType: string; base64: string };
+      };
+    }>(url, { method: "GET" }, opts);
+  },
   showcaseEmbed: async (
     params: {
       type: 'categories' | 'list' | 'detail';

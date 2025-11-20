@@ -85,7 +85,14 @@ export interface PartnerBillingSummary {
   periodStart: string;
   periodEnd: string;
   commissionRate: number;
+  commissionBasis: "discounted" | "original";
+  listingOnly: boolean;
+  listingFeeAmount: number;
+  listingFeeCurrency: string;
   visitCount: number;
+  visitGrossOriginal: number;
+  visitGrossDiscounted: number;
+  commissionBaseTotal: number;
   visitCommissionTotal: number;
   flashDealCount: number;
   transportRideCount: number;
@@ -117,9 +124,20 @@ function buildCsvContent(
   visits: VisitRow[],
   flashDeals: FlashDealRow[],
   transportRides: TransportRideRow[],
+  summary: PartnerBillingSummary,
 ): string {
   const parts: string[] = [];
   parts.push("Section,Record ID,Created At,Details...,Amount,Commission");
+  parts.push(
+    buildCsvLine([
+      "Totals",
+      "",
+      "",
+      `Commission basis: ${summary.commissionBasis}`,
+      summary.visitGrossDiscounted.toFixed(2),
+      summary.visitCommissionTotal.toFixed(2),
+    ]),
+  );
 
   for (const visit of visits) {
     parts.push(
@@ -207,6 +225,10 @@ export async function generatePartnerBillingReport(params: {
   partnerId: string;
   dateFrom: string;
   dateTo: string;
+  commissionBasis?: "discounted" | "original";
+  listingOnly?: boolean;
+  listingFeeAmount?: number;
+  listingFeeCurrency?: string;
 }): Promise<PartnerBillingReport> {
   const { partnerId, dateFrom, dateTo } = exportRangeSchema.parse(params);
   const supabase = getSupabaseAdmin();
@@ -230,13 +252,17 @@ export async function generatePartnerBillingReport(params: {
     .from("visit_registrations")
     .select("*")
     .eq("partner_id", normalizedPartnerId)
+    .eq("status", "visited")
+    .not("checked_in_by_staff_id", "is", null)
     .gte("created_at", dateFrom)
     .lte("created_at", dateTo)
     .order("created_at", { ascending: true });
   if (visitError) {
     throw new Error(`Failed to load visits: ${visitError.message}`);
   }
-  const visits = (visitRows ?? []).map((row) => toVisitRow(row as VisitRegistrationRow, commissionRate));
+  let visits = (visitRows ?? []).map((row) =>
+    toVisitRow(row as VisitRegistrationRow, commissionRate),
+  );
 
   // Flash deal redemptions
   const { data: flashRows, error: flashError } = await supabase
@@ -266,20 +292,44 @@ export async function generatePartnerBillingReport(params: {
     .filter((row) => (row.service?.partner_id ?? "").toLowerCase() === normalizedPartnerId)
     .map((row) => toTransportRow(row as TransportRideRowData));
 
-  const visitCommissionTotal = visits.reduce((sum, visit) => sum + visit.commissionAmount, 0);
+  const visitGrossOriginal = visits.reduce((sum, v) => sum + v.originalTotalPrice, 0);
+  const visitGrossDiscounted = visits.reduce((sum, v) => sum + v.totalPrice, 0);
+  const commissionBasis = params.commissionBasis ?? "discounted";
+  const listingOnly = params.listingOnly ?? false;
+  if (listingOnly) {
+    visits = visits.map((v) => ({ ...v, commissionAmount: 0, commissionRate: 0 }));
+  } else if (commissionBasis === "discounted") {
+    visits = visits.map((v) => {
+      const amount = (v.totalPrice * commissionRate) / 100;
+      return { ...v, commissionAmount: Number(amount.toFixed(2)) };
+    });
+  }
+  const commissionBaseTotal =
+    commissionBasis === "original" ? visitGrossOriginal : visitGrossDiscounted;
+  const effectiveRate = listingOnly ? 0 : commissionRate;
+  const visitCommissionTotal = listingOnly
+    ? 0
+    : visits.reduce((sum, visit) => sum + visit.commissionAmount, 0);
 
   const summary: PartnerBillingSummary = {
     partnerId: normalizedPartnerId,
     periodStart: dateFrom,
     periodEnd: dateTo,
-    commissionRate,
+    commissionRate: effectiveRate,
+    commissionBasis,
+    listingOnly,
+    listingFeeAmount: params.listingFeeAmount ?? 0,
+    listingFeeCurrency: params.listingFeeCurrency ?? "CZK",
     visitCount: visits.length,
+    visitGrossOriginal,
+    visitGrossDiscounted,
+    commissionBaseTotal,
     visitCommissionTotal,
     flashDealCount: flashDeals.length,
     transportRideCount: transportRides.length,
   };
 
-  const csvContent = buildCsvContent(visits, flashDeals, transportRides);
+  const csvContent = buildCsvContent(visits, flashDeals, transportRides, summary);
   const csvBuffer = Buffer.from(csvContent, "utf-8");
 
   const workbook = new ExcelJS.Workbook();

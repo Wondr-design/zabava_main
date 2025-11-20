@@ -14,6 +14,7 @@ export interface PartnerBillingSettings {
   listingFeeAmount: number;
   listingFeeCurrency: string;
   commissionBasis: CommissionBasis;
+  listingOnly: boolean;
   lastSentAt: string | null;
   nextScheduledAt: string | null;
 }
@@ -23,10 +24,12 @@ export interface PartnerBillingSummary {
   partnerName: string | null;
   billingEmail: string | null;
   autoSendEnabled: boolean;
+  autoSendDay?: number;
   lastSentAt: string | null;
   commissionBasis: CommissionBasis;
   listingFeeAmount: number;
   listingFeeCurrency: string;
+  listingOnly: boolean;
 }
 
 const settingsSchema = z.object({
@@ -36,6 +39,7 @@ const settingsSchema = z.object({
   listingFeeAmount: z.number().nonnegative().optional(),
   listingFeeCurrency: z.string().min(1).optional(),
   commissionBasis: z.enum(["discounted", "original"]).optional(),
+  listingOnly: z.boolean().optional(),
 });
 
 export async function getPartnerBillingSettings(partnerId: string): Promise<PartnerBillingSettings> {
@@ -56,6 +60,7 @@ export async function getPartnerBillingSettings(partnerId: string): Promise<Part
     listingFeeAmount: Number(data?.listing_fee_amount ?? 0),
     listingFeeCurrency: (data?.listing_fee_currency as string) || "CZK",
     commissionBasis: (data?.commission_basis as CommissionBasis) || "discounted",
+    listingOnly: Boolean(data?.listing_only),
     lastSentAt: (data?.last_sent_at as string | null) ?? null,
     nextScheduledAt: (data?.next_scheduled_at as string | null) ?? null,
   };
@@ -63,9 +68,10 @@ export async function getPartnerBillingSettings(partnerId: string): Promise<Part
 
 export async function upsertPartnerBillingSettings(
   partnerId: string,
-  payload: z.infer<typeof settingsSchema>,
+  payload: Partial<PartnerBillingSettings>,
 ) {
-  const parsed = settingsSchema.parse(payload);
+  // settingsSchema already allows listingOnly
+  const parsed = settingsSchema.parse(payload as unknown);
   const supabase = getSupabaseAdmin();
   const now = new Date().toISOString();
   const { error } = await supabase.from("partner_billing_settings").upsert(
@@ -78,6 +84,7 @@ export async function upsertPartnerBillingSettings(
       listing_fee_amount: parsed.listingFeeAmount ?? undefined,
       listing_fee_currency: parsed.listingFeeCurrency ?? undefined,
       commission_basis: parsed.commissionBasis ?? undefined,
+      listing_only: parsed.listingOnly ?? undefined,
       updated_at: now,
     } as never,
     { onConflict: "partner_id" },
@@ -104,6 +111,7 @@ export async function listPartnerBillingSummaries(): Promise<PartnerBillingSumma
     commissionBasis: (row.billing?.commission_basis as CommissionBasis) || "discounted",
     listingFeeAmount: Number(row.billing?.listing_fee_amount ?? 0),
     listingFeeCurrency: (row.billing?.listing_fee_currency as string) || "CZK",
+    listingOnly: Boolean(row.billing?.listing_only),
     lastSentAt: (row.billing?.last_sent_at as string | null) ?? null,
   }));
 }
@@ -123,10 +131,15 @@ export async function generatePartnerBilling(
   opts: { dateFrom?: string; dateTo?: string },
 ) {
   const { dateFrom, dateTo } = defaultRange(opts.dateFrom, opts.dateTo);
+  const settings = await getPartnerBillingSettings(partnerId);
   const report = await generatePartnerBillingReport({
     partnerId,
     dateFrom,
     dateTo,
+    commissionBasis: settings.commissionBasis,
+    listingOnly: settings.listingOnly,
+    listingFeeAmount: settings.listingFeeAmount,
+    listingFeeCurrency: settings.listingFeeCurrency,
   });
-  return { report, dateFrom, dateTo, template: EMAIL_TEMPLATE_DEFAULTS.billing_report };
+  return { report, dateFrom, dateTo, template: EMAIL_TEMPLATE_DEFAULTS.billing_report, settings };
 }

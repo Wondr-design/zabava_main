@@ -7,6 +7,7 @@ create table if not exists public.partner_billing_settings (
   listing_fee_amount numeric not null default 0,
   listing_fee_currency text not null default 'CZK',
   commission_basis text not null default 'discounted',
+  listing_only boolean not null default false,
   last_sent_at timestamptz,
   next_scheduled_at timestamptz,
   created_at timestamptz not null default now(),

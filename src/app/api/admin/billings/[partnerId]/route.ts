@@ -42,6 +42,7 @@ const settingsSchema = z.object({
   listingFeeAmount: z.number().nonnegative().optional(),
   listingFeeCurrency: z.string().min(1).optional(),
   commissionBasis: z.enum(["discounted", "original"]).optional(),
+  listingOnly: z.boolean().optional(),
 });
 
 export function OPTIONS(req: NextRequest) {
@@ -55,13 +56,24 @@ export async function GET(
   if (!isAdminRequestAuthorized(req)) {
     return cors(req, NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
   }
+  const search = req.nextUrl.searchParams;
+  const dateFrom = search.get("dateFrom") || undefined;
+  const dateTo = search.get("dateTo") || undefined;
+  const includeSummary = search.get("summary") === "true";
   const { partnerId } = await params;
   if (!partnerId) {
     return cors(req, NextResponse.json({ error: "Partner ID required" }, { status: 400 }));
   }
   try {
     const settings = await getPartnerBillingSettings(partnerId);
-    const response = NextResponse.json({ settings });
+    let summary: unknown = null;
+    let visits: unknown = null;
+    if (includeSummary) {
+      const { report } = await generatePartnerBilling(partnerId, { dateFrom, dateTo });
+      summary = report.summary;
+      visits = report.visits;
+    }
+    const response = NextResponse.json({ settings, summary, visits });
     response.headers.set("x-csrf-token", generateCsrfToken());
     return cors(req, response);
   } catch (error) {
@@ -135,7 +147,10 @@ export async function POST(
   try {
     const body = await req.json().catch(() => ({}));
     const parsed = sendSchema.parse(body ?? {});
-    const { report, dateFrom, dateTo, template } = await generatePartnerBilling(partnerId, parsed);
+    const { report, dateFrom, dateTo, template, settings } = await generatePartnerBilling(
+      partnerId,
+      parsed,
+    );
 
     if (!isEmailDeliveryConfigured()) {
       return cors(
@@ -144,7 +159,8 @@ export async function POST(
       );
     }
     const partnerMeta = await loadPartnerMeta(partnerId);
-    const recipient = partnerMeta.info.contactEmail;
+    const recipient =
+      settings.billingEmail || partnerMeta.info.contactEmail;
     if (!recipient) {
       return cors(
         req,

@@ -1,4 +1,3 @@
-import { adminApi } from "@/lib/web/api-client";
 import { resolveLocale } from "@/i18n/config";
 import { AdminBillingsClient } from "@/components/admin/billings/admin-billings-client";
 
@@ -13,6 +12,6 @@ export default async function BillingsPage({
 }) {
   const { locale: rawLocale } = await params;
   const locale = resolveLocale(rawLocale);
-  const { items } = await adminApi.billingList({ token: undefined });
-  return <AdminBillingsClient initialItems={items} locale={locale} />;
+  // Client will fetch via adminApi (client-side); render with empty initial state
+  return <AdminBillingsClient initialItems={[]} locale={locale} />;
 }
