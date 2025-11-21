@@ -177,6 +177,21 @@ export function CodeBadge({ label, value }: CodeBadgeProps) {
   );
 }
 
+interface CopyIconBadgeProps {
+  label?: string;
+}
+
+export function CopyIconBadge({ label }: CopyIconBadgeProps) {
+  return (
+    <div className="inline-flex items-center justify-center gap-2 rounded-full border border-brand-border bg-brand-surface px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-brand-text shadow-[inset_0_0_0_1px_rgba(0,0,0,0.02)]">
+      <span aria-hidden role="img">
+        📋
+      </span>
+      {label ?? "Copy code"}
+    </div>
+  );
+}
+
 interface CtaButtonProps {
   href?: string | null;
   label?: string;

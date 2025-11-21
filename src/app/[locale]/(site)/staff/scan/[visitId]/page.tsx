@@ -200,18 +200,7 @@ function buildPartnerTicketCatalog(partnerMeta: PartnerMeta | null) {
       } satisfies TicketCatalogEntry;
     })
     .filter((entry): entry is TicketCatalogEntry => Boolean(entry));
-
-  const ticketTypeEntries: TicketCatalogEntry[] = (partnerMeta.ticketing?.ticketTypes ?? [])
-    .map((value) => (typeof value === "string" ? value.trim() : ""))
-    .filter((value) => value.length > 0)
-    .map((value) => ({
-      value,
-      label: value,
-      price: null,
-      discountedPrice: null,
-    }));
-
-  return mergeTicketCatalogs(detailEntries, ticketTypeEntries);
+  return detailEntries;
 }
 
 function buildFormTicketCatalog(config: PartnerFormConfig | null) {
@@ -236,24 +225,3 @@ function buildFormTicketCatalog(config: PartnerFormConfig | null) {
     .filter((entry): entry is TicketCatalogEntry => Boolean(entry));
 }
 
-function mergeTicketCatalogs(
-  primary: TicketCatalogEntry[],
-  secondary: TicketCatalogEntry[],
-) {
-  const map = new Map<string, TicketCatalogEntry>();
-  const addEntry = (entry: TicketCatalogEntry) => {
-    const normalized = normalizeTicketValue(entry.value);
-    if (!normalized || map.has(normalized)) return;
-    map.set(normalized, entry);
-  };
-
-  primary.forEach(addEntry);
-  secondary.forEach(addEntry);
-
-  return Array.from(map.values());
-}
-
-function normalizeTicketValue(value?: string | null) {
-  if (typeof value !== "string") return "";
-  return value.trim().toLowerCase();
-}

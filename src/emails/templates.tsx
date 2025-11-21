@@ -7,6 +7,7 @@ import {
   EmailLayout,
   EmailParagraph,
   QrPreview,
+  CopyIconBadge,
 } from "./components/email-components";
 
 export type EmailDetailsEntry = {
@@ -24,7 +25,8 @@ export interface TemplateComponentProps {
   ctaLabel?: string | null;
   highlightedCode?: { label?: string; value?: string | null };
   attachmentsNote?: string | null;
-  verificationCopyHref?: string | null;
+  partnerLabel?: string | null;
+  expiresInLabel?: string | null;
 }
 
 const FOOTER_TEXT =
@@ -120,8 +122,22 @@ export function VerificationCodeEmail(props: TemplateComponentProps) {
         label={props.highlightedCode?.label ?? "Verification code"}
         value={props.highlightedCode?.value ?? undefined}
       />
-      <CtaButton href={props.verificationCopyHref} label="Copy code" />
-      <DetailsTable rows={props.details} />
+      <div className="text-center">
+        <CopyIconBadge label="Copy code" />
+        {props.expiresInLabel ? (
+          <p className="mt-3 text-xs uppercase tracking-[0.3em] text-brand-muted">
+            {props.expiresInLabel}
+          </p>
+        ) : null}
+      </div>
+      {props.partnerLabel ? (
+        <div className="mt-4 rounded-2xl border border-brand-border bg-brand-surface px-4 py-3 text-center">
+          <p className="text-xs uppercase tracking-[0.3em] text-brand-muted">
+            Attraction
+          </p>
+          <p className="text-sm font-semibold text-brand-text">{props.partnerLabel}</p>
+        </div>
+      ) : null}
     </EmailLayout>
   );
 }

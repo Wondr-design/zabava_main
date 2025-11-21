@@ -67,6 +67,7 @@ export type SubmissionItem = {
     email: string;
     status?: string;
   } | null;
+  visitNotes?: string | null;
 };
 
 type SubmissionRow = {
@@ -233,10 +234,11 @@ export function SubmissionsTable(props: {
       const statusDisplay = isPendingExpired
         ? `${statusLabel || "pending"} · expired`
         : statusLabel || (submission.visitedAt ? "visited" : "pending");
-      const statusTone: "success" | "warning" | "danger" =
-        statusDisplay.toLowerCase().includes("visited")
-          ? "success"
-          : isPendingExpired
+      const statusTone: "success" | "warning" | "danger" = statusDisplay
+        .toLowerCase()
+        .includes("visited")
+        ? "success"
+        : isPendingExpired
           ? "danger"
           : "warning";
       const emailDisplay = privacyMode
@@ -244,9 +246,15 @@ export function SubmissionsTable(props: {
         : submission.email || "—";
       const pointsDisplay = isPendingExpired
         ? "—"
-        : (submission.pointsAwarded ?? submission.estimatedPoints ?? 0).toLocaleString();
+        : (
+            submission.pointsAwarded ??
+            submission.estimatedPoints ??
+            0
+          ).toLocaleString();
       const amountDisplay = formatCurrencyCZK(
-        typeof submission.totalPrice === "number" ? submission.totalPrice : undefined,
+        typeof submission.totalPrice === "number"
+          ? submission.totalPrice
+          : undefined
       );
       const rowKey = getRowKey(submission);
       const handledNode = renderHandledBy({
@@ -382,7 +390,9 @@ export function SubmissionsTable(props: {
         accessor: (row) =>
           row.isPendingExpired ? (
             <div className="flex flex-col text-xs text-rose-600">
-              <span className="font-semibold uppercase tracking-wide">QR expired</span>
+              <span className="font-semibold uppercase tracking-wide">
+                QR expired
+              </span>
               {row.qrExpiryMessage ? (
                 <span className="text-rose-500/90">{row.qrExpiryMessage}</span>
               ) : null}
@@ -404,7 +414,6 @@ export function SubmissionsTable(props: {
       },
     ];
   }, [actingId, markVisited]);
-
 
   return (
     <div className="space-y-4">
@@ -459,9 +468,7 @@ function renderHandledBy({
 }) {
   if (privacyMode) {
     return (
-      <span className="italic text-slate-400">
-        Hidden in privacy mode
-      </span>
+      <span className="italic text-slate-400">Hidden in privacy mode</span>
     );
   }
   const descriptor = describeHandledBy(submission, viewerRole, viewerStaffId);
@@ -496,7 +503,9 @@ function SubmissionDialog(props: {
   const verifyDisplay = verifyUrl ? formatUrlDisplay(verifyUrl, 64) : null;
   const expiryStatus = getVisitQrExpiryStatus(linkInfo);
   const qrExpiresAtIso = expiryStatus.expiresAt;
-  const qrExpiresDisplay = qrExpiresAtIso ? formatDateTime(qrExpiresAtIso) : null;
+  const qrExpiresDisplay = qrExpiresAtIso
+    ? formatDateTime(qrExpiresAtIso)
+    : null;
   const isVisited = Boolean(item?.visitedAt) || item?.status === "visited";
   const qrExpired = expiryStatus.expired && !isVisited;
   const [qrPreviewUrl, setQrPreviewUrl] = React.useState<string | null>(qrUrl);
@@ -528,9 +537,7 @@ function SubmissionDialog(props: {
       .catch((err: unknown) => {
         if (cancelled) return;
         const message =
-          err instanceof Error
-            ? err.message
-            : "Unable to refresh QR preview.";
+          err instanceof Error ? err.message : "Unable to refresh QR preview.";
         setQrPreviewError(message);
       })
       .finally(() => {
@@ -557,18 +564,17 @@ function SubmissionDialog(props: {
     return "QR expiry will be shown once the first QR is generated.";
   })();
   const disableQrActions = qrExpired && !isVisited;
-  const qrImageSrc = qrExpired
-    ? qrPreviewUrl
-    : qrPreviewUrl ?? qrUrl;
+  const qrImageSrc = qrExpired ? qrPreviewUrl : (qrPreviewUrl ?? qrUrl);
   const qrLinkHref = qrExpired
-    ? qrPreviewUrl ?? undefined
-    : qrPreviewUrl ?? qrUrl ?? undefined;
-  
-  const statusTone = item?.status === "visited"
-    ? "success"
-    : item?.status === "cancelled"
-    ? "danger"
-    : "warning";
+    ? (qrPreviewUrl ?? undefined)
+    : (qrPreviewUrl ?? qrUrl ?? undefined);
+
+  const statusTone =
+    item?.status === "visited"
+      ? "success"
+      : item?.status === "cancelled"
+        ? "danger"
+        : "warning";
 
   return (
     <DesignDialog open={!!item} onOpenChange={onOpenChange}>
@@ -576,7 +582,9 @@ function SubmissionDialog(props: {
         <DesignDialogHeader className="border-b border-[color:var(--ds-border-subtle)] pb-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 space-y-2">
-              <DesignDialogTitle className="text-2xl">Visit Details</DesignDialogTitle>
+              <DesignDialogTitle className="text-2xl">
+                Visit Details
+              </DesignDialogTitle>
               <DesignDialogDescription>
                 Registration summary, visit metadata, and loyalty information
               </DesignDialogDescription>
@@ -588,7 +596,7 @@ function SubmissionDialog(props: {
               </DesignButton>
             </DesignDialogClose>
           </div>
-          
+
           {item && (
             <div className="flex flex-wrap items-center gap-2 pt-2">
               <StatusPill tone={statusTone} size="sm">
@@ -611,7 +619,9 @@ function SubmissionDialog(props: {
                   />
                   <InfoField
                     label="Status"
-                    value={item.status || (item.visitedAt ? "visited" : "pending")}
+                    value={
+                      item.status || (item.visitedAt ? "visited" : "pending")
+                    }
                   />
                   <InfoField
                     label="Submitted"
@@ -669,7 +679,10 @@ function SubmissionDialog(props: {
                         />
                       ) : (
                         <div className="flex flex-col items-center gap-3 text-center">
-                          <QrCode className="h-12 w-12 text-[color:var(--ds-text-subtle)]" aria-hidden />
+                          <QrCode
+                            className="h-12 w-12 text-[color:var(--ds-text-subtle)]"
+                            aria-hidden
+                          />
                           <p className="text-xs text-[color:var(--ds-text-muted)]">
                             QR code not available yet.
                           </p>
@@ -690,8 +703,13 @@ function SubmissionDialog(props: {
                               className="flex flex-1 items-center gap-2 rounded-xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] px-4 py-3 text-sm text-[color:var(--ds-text-strong)] transition hover:bg-[color:var(--ds-surface-muted)]"
                               title={qrUrl}
                             >
-                              <span className="truncate">{qrDisplay ?? qrUrl}</span>
-                              <ExternalLink className="h-4 w-4 shrink-0 text-[color:var(--ds-text-muted)]" aria-hidden />
+                              <span className="truncate">
+                                {qrDisplay ?? qrUrl}
+                              </span>
+                              <ExternalLink
+                                className="h-4 w-4 shrink-0 text-[color:var(--ds-text-muted)]"
+                                aria-hidden
+                              />
                             </a>
                             <DesignButton
                               variant="tonal"
@@ -699,10 +717,18 @@ function SubmissionDialog(props: {
                               onClick={() => {
                                 if (!qrUrl || disableQrActions) return;
                                 void navigator.clipboard.writeText(qrUrl);
-                                toast.success("QR code link copied to clipboard");
+                                toast.success(
+                                  "QR code link copied to clipboard"
+                                );
                               }}
                               disabled={disableQrActions}
-                              title={!qrUrl ? undefined : disableQrActions ? "QR expired — request a new registration" : "Copy QR link"}
+                              title={
+                                !qrUrl
+                                  ? undefined
+                                  : disableQrActions
+                                    ? "QR expired — request a new registration"
+                                    : "Copy QR link"
+                              }
                             >
                               <Copy className="h-4 w-4" aria-hidden />
                             </DesignButton>
@@ -722,8 +748,13 @@ function SubmissionDialog(props: {
                               className="flex flex-1 items-center gap-2 rounded-xl border border-[color:var(--ds-primary)]/30 bg-[color:var(--ds-primary)]/5 px-4 py-3 text-sm text-[color:var(--ds-primary)] transition hover:bg-[color:var(--ds-primary)]/10"
                               title={verifyUrl}
                             >
-                              <span className="truncate">{verifyDisplay ?? verifyUrl}</span>
-                              <ExternalLink className="h-4 w-4 shrink-0" aria-hidden />
+                              <span className="truncate">
+                                {verifyDisplay ?? verifyUrl}
+                              </span>
+                              <ExternalLink
+                                className="h-4 w-4 shrink-0"
+                                aria-hidden
+                              />
                             </a>
                             <DesignButton
                               variant="tonal"
@@ -731,40 +762,64 @@ function SubmissionDialog(props: {
                               onClick={() => {
                                 if (!verifyUrl || disableQrActions) return;
                                 void navigator.clipboard.writeText(verifyUrl);
-                                toast.success("Verify link copied to clipboard");
+                                toast.success(
+                                  "Verify link copied to clipboard"
+                                );
                               }}
                               disabled={disableQrActions}
-                              title={disableQrActions ? "QR expired — request a new registration" : "Copy verify link"}
+                              title={
+                                disableQrActions
+                                  ? "QR expired — request a new registration"
+                                  : "Copy verify link"
+                              }
                             >
                               <Copy className="h-4 w-4" aria-hidden />
                             </DesignButton>
                           </div>
                         </div>
                       )}
-                      <SurfaceCard className={cn(
-                        "p-3",
-                        qrExpired ? "border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10" : "border-[color:var(--ds-primary)]/40 bg-[color:var(--ds-primary)]/5"
-                      )}>
+                      <SurfaceCard
+                        className={cn(
+                          "p-3",
+                          qrExpired
+                            ? "border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10"
+                            : "border-[color:var(--ds-primary)]/40 bg-[color:var(--ds-primary)]/5"
+                        )}
+                      >
                         <div className="flex items-start gap-2">
                           {qrExpired ? (
-                            <AlertCircle className="h-4 w-4 shrink-0 text-[color:var(--ds-danger)] mt-0.5" aria-hidden />
+                            <AlertCircle
+                              className="h-4 w-4 shrink-0 text-[color:var(--ds-danger)] mt-0.5"
+                              aria-hidden
+                            />
                           ) : (
-                            <Info className="h-4 w-4 shrink-0 text-[color:var(--ds-primary)] mt-0.5" aria-hidden />
+                            <Info
+                              className="h-4 w-4 shrink-0 text-[color:var(--ds-primary)] mt-0.5"
+                              aria-hidden
+                            />
                           )}
-                          <p className={cn(
-                            "text-xs",
-                            qrExpired ? "text-[color:var(--ds-danger)]" : "text-[color:var(--ds-text-muted)]"
-                          )}>
+                          <p
+                            className={cn(
+                              "text-xs",
+                              qrExpired
+                                ? "text-[color:var(--ds-danger)]"
+                                : "text-[color:var(--ds-text-muted)]"
+                            )}
+                          >
                             {qrExpiryMessage}
                           </p>
                         </div>
                       </SurfaceCard>
                       {qrPreviewLoading && (
-                        <p className="text-xs text-[color:var(--ds-text-muted)]">Refreshing QR preview…</p>
+                        <p className="text-xs text-[color:var(--ds-text-muted)]">
+                          Refreshing QR preview…
+                        </p>
                       )}
                       {qrPreviewError && (
                         <SurfaceCard className="border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10 p-3">
-                          <p className="text-xs text-[color:var(--ds-danger)]">{qrPreviewError}</p>
+                          <p className="text-xs text-[color:var(--ds-danger)]">
+                            {qrPreviewError}
+                          </p>
                         </SurfaceCard>
                       )}
                     </div>
@@ -785,24 +840,25 @@ function SubmissionDialog(props: {
                     value={String(deriveGuests(item))}
                     icon={Users}
                   />
-                  <InfoField
-                    label="Transport"
-                    value={deriveTransport(item)}
-                  />
+                  <InfoField label="Transport" value={deriveTransport(item)} />
                   <InfoField
                     label="Categories"
                     value={deriveCategories(item)}
                   />
                   <InfoField
                     label="Preferred date"
-                    value={derivePayloadValue(item, [
-                      "preferredDateTime",
-                      "visitDate",
-                    ]) || "—"}
+                    value={
+                      derivePayloadValue(item, [
+                        "preferredDateTime",
+                        "visitDate",
+                      ]) || "—"
+                    }
                   />
                   <InfoField
                     label="Promo code"
-                    value={derivePayloadValue(item, ["promo", "promoCode"]) || "—"}
+                    value={
+                      derivePayloadValue(item, ["promo", "promoCode"]) || "—"
+                    }
                   />
                   <InfoField
                     label="Notes"
@@ -810,6 +866,16 @@ function SubmissionDialog(props: {
                   />
                 </div>
               </Section>
+
+              {item?.visitNotes ? (
+                <Section title="Internal notes">
+                  <SurfaceCard className="p-4">
+                    <p className="whitespace-pre-wrap text-sm text-[color:var(--ds-text-strong)]">
+                      {item.visitNotes}
+                    </p>
+                  </SurfaceCard>
+                </Section>
+              ) : null}
 
               {/* Additional Information */}
               {(() => {
@@ -834,7 +900,9 @@ function SubmissionDialog(props: {
                               <ExternalLink className="h-3 w-3" aria-hidden />
                             </a>
                           ) : (
-                            <p className="text-sm text-[color:var(--ds-text-strong)]">{entry.value}</p>
+                            <p className="text-sm text-[color:var(--ds-text-strong)]">
+                              {entry.value}
+                            </p>
                           )}
                         </SurfaceCard>
                       ))}
@@ -845,8 +913,13 @@ function SubmissionDialog(props: {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Info className="h-12 w-12 text-[color:var(--ds-text-subtle)] mb-4" aria-hidden />
-              <p className="text-sm text-[color:var(--ds-text-muted)]">Select a visit from the table to view details.</p>
+              <Info
+                className="h-12 w-12 text-[color:var(--ds-text-subtle)] mb-4"
+                aria-hidden
+              />
+              <p className="text-sm text-[color:var(--ds-text-muted)]">
+                Select a visit from the table to view details.
+              </p>
             </div>
           )}
         </DesignDialogBody>
@@ -855,7 +928,13 @@ function SubmissionDialog(props: {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="space-y-4">
       <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-[color:var(--ds-text-subtle)]">
@@ -866,12 +945,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function InfoField({ 
-  label, 
-  value, 
-  icon: Icon 
-}: { 
-  label: string; 
+function InfoField({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
   value: React.ReactNode;
   icon?: React.ComponentType<{ className?: string }>;
 }) {
@@ -883,7 +962,10 @@ function InfoField({
       <div className="flex items-start gap-3">
         {Icon && (
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[color:var(--ds-primary)]/10">
-            <Icon className="h-4 w-4 text-[color:var(--ds-primary)]" aria-hidden />
+            <Icon
+              className="h-4 w-4 text-[color:var(--ds-primary)]"
+              aria-hidden
+            />
           </div>
         )}
         <div className="flex-1 min-w-0">
@@ -907,9 +989,7 @@ function Detail({
   value?: string | number | null;
 }) {
   if (value === undefined || value === null || value === "") return null;
-  return (
-    <InfoField label={label} value={value} />
-  );
+  return <InfoField label={label} value={value} />;
 }
 
 function describeHandledBy(

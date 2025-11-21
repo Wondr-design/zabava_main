@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { withCors, preflightResponse } from "@/lib/http/cors";
 import { getRewardById } from "@/lib/data/rewards";
-import { getPartnerFormById } from "@/lib/data/partner-forms";
+import {
+  applyBookingCapToForm,
+  getPartnerFormById,
+} from "@/lib/data/partner-forms";
+import { loadPartnerMeta } from "@/lib/data/partners";
 import { log, getCorrelationId } from "@/lib/logging";
 
 const CORS_CONFIG = {
@@ -78,6 +82,34 @@ export async function GET(
       });
     }
 
+    let partnerBookingCap: number | null = null;
+    const candidatePartnerId =
+      form.partnerId ||
+      form.config.partner?.id ||
+      (reward.availableFor && reward.availableFor.length === 1
+        ? reward.availableFor[0]
+        : null);
+    if (candidatePartnerId) {
+      try {
+        const partnerMeta = await loadPartnerMeta(candidatePartnerId);
+        const cap = partnerMeta.ticketing.maxGuestsPerBooking;
+        partnerBookingCap =
+          typeof cap === "number" && Number.isFinite(cap) && cap > 0
+            ? cap
+            : null;
+      } catch (error) {
+        log.warn("bonus_reward_partner_cap_lookup_failed", {
+          rewardId,
+          formId: form.id,
+          partnerId: candidatePartnerId,
+          error: (error as Error)?.message ?? String(error),
+          correlationId,
+        });
+      }
+    }
+
+    const enrichedForm = applyBookingCapToForm(form, partnerBookingCap);
+
     return withCors(
       NextResponse.json({
         reward: {
@@ -100,7 +132,7 @@ export async function GET(
           transportIncluded: reward.transportIncluded,
           isAvailable: reward.isAvailable,
         },
-        form,
+        form: enrichedForm,
       }),
       CORS_CONFIG,
     );

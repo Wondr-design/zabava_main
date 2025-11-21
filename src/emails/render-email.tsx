@@ -28,11 +28,12 @@ export async function renderEmailTemplate(input: RenderEmailTemplateInput) {
     normalizedDetails,
     input.templateType
   );
-  const copyCodeHref = buildCopyCodeHref(highlightedCode?.value);
   const attachmentsNote =
     input.templateType === "billing_report"
       ? "Your CSV and XLSX reports are attached."
       : undefined;
+  const verificationPartnerLabel = extractPartnerLabel(normalizedDetails);
+  const verificationExpiresIn = buildExpiresInLabel(normalizedDetails);
 
   const component = getTemplateComponent({
     templateType: input.templateType,
@@ -45,7 +46,8 @@ export async function renderEmailTemplate(input: RenderEmailTemplateInput) {
     ctaLabel: cta?.label,
     highlightedCode,
     attachmentsNote,
-    extra: { verificationCopyHref: copyCodeHref },
+    partnerLabel: verificationPartnerLabel,
+    expiresInLabel: verificationExpiresIn,
   });
 
   const html = await render(component);
@@ -64,7 +66,8 @@ function getTemplateComponent(props: {
   ctaLabel?: string | null;
   highlightedCode?: { label?: string; value?: string | null };
   attachmentsNote?: string;
-  extra?: { verificationCopyHref?: string | null };
+  partnerLabel?: string | null;
+  expiresInLabel?: string | null;
 }) {
   switch (props.templateType) {
     case "qr_delivery":
@@ -117,7 +120,8 @@ function getTemplateComponent(props: {
           previewText={props.previewText}
           details={props.details}
           highlightedCode={props.highlightedCode}
-          verificationCopyHref={props.extra?.verificationCopyHref}
+          partnerLabel={props.partnerLabel}
+          expiresInLabel={props.expiresInLabel}
         />
       );
     case "billing_report":
@@ -199,13 +203,28 @@ function extractHighlightedCode(
   return undefined;
 }
 
-function buildCopyCodeHref(codeValue?: string | null) {
-  if (!codeValue) return undefined;
-  const normalizedBase =
-    process.env.NEXT_PUBLIC_BASE_URL ||
-    process.env.BASE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
-  if (!normalizedBase) return undefined;
-  const trimmedBase = normalizedBase.replace(/\/$/, "");
-  return `${trimmedBase}/copy-code?code=${encodeURIComponent(codeValue)}`;
+function extractPartnerLabel(details?: EmailDetailsEntry[]) {
+  if (!details) return undefined;
+  const partnerEntry = details.find((entry) =>
+    entry.label?.toLowerCase().includes("partner")
+  );
+  return partnerEntry?.value ? String(partnerEntry.value) : undefined;
+}
+
+function buildExpiresInLabel(details?: EmailDetailsEntry[]) {
+  if (!details) return undefined;
+  const expiresEntry = details.find((entry) =>
+    entry.label?.toLowerCase().includes("expire")
+  );
+  if (!expiresEntry?.value) return undefined;
+  const parsed = Date.parse(String(expiresEntry.value));
+  if (Number.isNaN(parsed)) return undefined;
+  const diffMs = parsed - Date.now();
+  if (diffMs <= 0) return "Expires soon";
+  const diffMinutes = Math.max(1, Math.round(diffMs / 60000));
+  if (diffMinutes < 60) {
+    return `Expires in ${diffMinutes} min${diffMinutes === 1 ? "" : "s"}`;
+  }
+  const diffHours = Math.max(1, Math.round(diffMinutes / 60));
+  return `Expires in ${diffHours} hr${diffHours === 1 ? "" : "s"}`;
 }

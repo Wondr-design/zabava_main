@@ -22,6 +22,7 @@ type VisitRowPartner = {
   payload: Record<string, unknown> | null;
   partner_id: string | null;
   checked_in_by_staff_id: string | null;
+  visit_notes: string | null;
 };
 
 function buildCorsOptions(req: NextRequest) {
@@ -88,7 +89,7 @@ export async function GET(
     // Fetch submissions (visits)
     const visitsRes = await supabase
       .from('visit_registrations')
-      .select('id,submission_id,email,status,created_at,visited_at,points_awarded,estimated_points,total_price,num_people,ticket_type,payload,partner_id,checked_in_by_staff_id,legacy_qr_key')
+      .select('id,submission_id,email,status,created_at,visited_at,points_awarded,estimated_points,total_price,num_people,ticket_type,payload,partner_id,checked_in_by_staff_id,legacy_qr_key,visit_notes')
       .eq('partner_id', partnerId)
       .order('created_at', { ascending: false });
     if (visitsRes.error) throw new Error(visitsRes.error.message);
@@ -142,6 +143,7 @@ export async function GET(
       originalPayload: v.payload || {},
       checkedInByStaffId: v.checked_in_by_staff_id,
       checkedInByStaff: v.checked_in_by_staff_id ? staffMap.get(v.checked_in_by_staff_id) ?? null : null,
+      visitNotes: v.visit_notes ?? null,
     }));
 
     const count = submissions.length;

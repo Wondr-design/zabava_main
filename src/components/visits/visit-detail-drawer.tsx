@@ -365,6 +365,16 @@ export function VisitDetailDrawer({
                     <InfoGrid items={selectionEntries} />
                   </DataGroup>
 
+                  {visit.visit_notes ? (
+                    <DataGroup title="Internal notes">
+                      <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
+                        <p className="text-sm text-[color:var(--ds-text-strong)] whitespace-pre-wrap">
+                          {visit.visit_notes}
+                        </p>
+                      </SurfaceCard>
+                    </DataGroup>
+                  ) : null}
+
                   {isFlashDeal && (
                     <DataGroup title="Flash deal">
                       <InfoGrid items={flashEntries} />

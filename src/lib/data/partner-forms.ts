@@ -249,6 +249,7 @@ const partnerFormConfigSchema = z.object({
           })
         )
         .default([]),
+      maxGuestsPerBooking: z.number().nonnegative().nullable().optional(),
     })
     .optional(),
   transport: z
@@ -502,6 +503,77 @@ export function buildPricingStepFromTicketing(args: {
   };
 }
 
+function normalizeBookingCap(cap?: number | null) {
+  if (typeof cap !== "number") return null;
+  if (!Number.isFinite(cap)) return null;
+  if (cap <= 0) return null;
+  return Math.floor(cap);
+}
+
+export function applyBookingCapToForm(
+  form: PartnerFormRecord,
+  cap?: number | null
+): PartnerFormRecord {
+  const normalizedCap = normalizeBookingCap(cap);
+  if (!normalizedCap) {
+    return form;
+  }
+
+  let pricingUpdated = false;
+  let updatedPricing = form.config.pricing;
+  if (
+    form.config.pricing &&
+    !(
+      typeof form.config.pricing.maxGuestsPerBooking === "number" &&
+      form.config.pricing.maxGuestsPerBooking > 0
+    )
+  ) {
+    updatedPricing = {
+      ...form.config.pricing,
+      maxGuestsPerBooking: normalizedCap,
+    };
+    pricingUpdated = true;
+  }
+
+  let stepsUpdated: PartnerFormConfig["steps"] | null = null;
+  const steps = form.config.steps;
+  for (let index = 0; index < steps.length; index += 1) {
+    const step = steps[index];
+    if (step.variant !== "pricing" || !step.pricing) continue;
+    if (
+      typeof step.pricing.maxGuestsPerBooking === "number" &&
+      step.pricing.maxGuestsPerBooking > 0
+    ) {
+      continue;
+    }
+    if (!stepsUpdated) {
+      stepsUpdated = steps.slice();
+    }
+    stepsUpdated[index] = {
+      ...step,
+      pricing: {
+        ...step.pricing,
+        maxGuestsPerBooking: normalizedCap,
+      },
+    };
+  }
+
+  if (!pricingUpdated && !stepsUpdated) {
+    return form;
+  }
+
+  return {
+    ...form,
+    config: {
+      ...form.config,
+      ...(pricingUpdated && updatedPricing
+        ? { pricing: updatedPricing }
+        : {}),
+      ...(stepsUpdated ? { steps: stepsUpdated } : {}),
+    },
+  };
+}
+
 const SAMPLE_TICKETING_DETAILS: PartnerTicketDetail[] = [
   {
     id: "default-adult",
@@ -688,6 +760,7 @@ export function createDefaultFormConfig(
         { value: "Adult", label: "Adult", price: 220 },
         { value: "Child", label: "Child", price: 100 },
       ],
+      maxGuestsPerBooking: null,
     },
     transport: {
       enabled: true,

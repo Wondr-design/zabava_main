@@ -12,18 +12,14 @@ import {
   ClipboardCheck,
   Pencil,
   X,
+  Minus,
+  Plus,
 } from "lucide-react";
 
 import type { VisitRegistrationRecord } from "@/lib/data/visits";
 import { getCsrfToken } from "@/lib/web/csrf";
 import {
   DesignButton,
-  DesignInput,
-  DesignSelect,
-  DesignSelectContent,
-  DesignSelectItem,
-  DesignSelectTrigger,
-  DesignSelectValue,
   DesignTextarea,
   SectionCard,
   StatusPill,
@@ -35,7 +31,11 @@ interface StaffVisitEditorProps {
   initialVisit: VisitRegistrationRecord;
   partnerId: string;
   formOptions?: {
-    fallbackTicketTypeOptions?: Array<{ value: string; label: string; price?: number | null }>;
+    fallbackTicketTypeOptions?: Array<{
+      value: string;
+      label: string;
+      price?: number | null;
+    }>;
     ticketCatalog?: TicketCatalogEntry[];
     currency?: string;
   };
@@ -48,7 +48,7 @@ export type TicketCatalogEntry = {
   discountedPrice: number | null;
 };
 
-type EditableKey = "ticketType" | "totalPrice" | "categories" | "visitNotes";
+type EditableKey = "visitNotes";
 
 type TicketSelectionEntry = {
   id: string;
@@ -83,7 +83,7 @@ function normalizeTicketSelection(entry: unknown): TicketSelectionEntry | null {
   const record = entry as Record<string, unknown>;
   const idCandidates = [record.id, record.ticketType, record.value].filter(
     (candidate): candidate is string =>
-      typeof candidate === "string" && candidate.trim().length > 0,
+      typeof candidate === "string" && candidate.trim().length > 0
   );
   const rawId = idCandidates[0]?.trim();
   if (!rawId) return null;
@@ -161,17 +161,11 @@ export function StaffVisitEditor({
   const [marking, setMarking] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [editing, setEditing] = useState<Record<EditableKey, boolean>>({
-    ticketType: false,
-    totalPrice: false,
-    categories: false,
     visitNotes: false,
   });
 
   const resetEditingState = useCallback(() => {
     setEditing({
-      ticketType: false,
-      totalPrice: false,
-      categories: false,
       visitNotes: false,
     });
   }, []);
@@ -191,14 +185,14 @@ export function StaffVisitEditor({
     typeof payload.visitors === "number"
       ? payload.visitors
       : typeof payload.minVisitors === "number"
-      ? payload.minVisitors
-      : undefined;
+        ? payload.minVisitors
+        : undefined;
   const actualVisitorsCurrent =
     typeof numPeople === "number"
       ? numPeople
       : typeof visit.num_people === "number"
-      ? visit.num_people
-      : undefined;
+        ? visit.num_people
+        : undefined;
   const visitorsWarning =
     isFlashDeal &&
     typeof requiredVisitors === "number" &&
@@ -307,7 +301,14 @@ export function StaffVisitEditor({
     } finally {
       setSaving(false);
     }
-  }, [categories, resetEditingState, ticketType, totalPrice, visitId, visitNotes]);
+  }, [
+    categories,
+    resetEditingState,
+    ticketType,
+    totalPrice,
+    visitId,
+    visitNotes,
+  ]);
 
   const handleMarkVisited = useCallback(async () => {
     setMarking(true);
@@ -329,8 +330,8 @@ export function StaffVisitEditor({
             typeof numPeople === "number"
               ? numPeople
               : typeof visit.num_people === "number"
-              ? visit.num_people
-              : undefined,
+                ? visit.num_people
+                : undefined,
         }),
       });
       if (!res.ok) {
@@ -362,39 +363,10 @@ export function StaffVisitEditor({
       ? formatDateTime(visit.payload.qrCodeExpiresAt)
       : null;
 
-  const fallbackTicketTypeOptions = formOptions?.fallbackTicketTypeOptions ?? [];
+  const fallbackTicketTypeOptions =
+    formOptions?.fallbackTicketTypeOptions ?? [];
   const ticketCatalog = formOptions?.ticketCatalog ?? [];
   const currencyCode = formOptions?.currency ?? "CZK";
-
-  const ticketSelectOptions = useMemo(() => {
-    if (ticketCatalog.length > 0) {
-      return ticketCatalog.map((entry) => ({
-        value: entry.value,
-        label: buildTicketOptionLabel(entry.label, entry.discountedPrice ?? entry.price),
-      }));
-    }
-    const map = new Map<string, { value: string; label: string }>();
-    const addOption = (value?: string | null, label?: string | null, price?: number | null) => {
-      if (!value) return;
-      const normalized = normalizeTicketKey(value);
-      if (!normalized || map.has(normalized)) return;
-      const optionLabel =
-        label && label.trim().length > 0 ? label : value;
-      map.set(normalized, {
-        value,
-        label: buildTicketOptionLabel(optionLabel, price),
-      });
-    };
-
-    fallbackTicketTypeOptions.forEach((option) =>
-      addOption(option.value, option.label, option.price),
-    );
-    if (ticketType) {
-      addOption(ticketType, ticketType);
-    }
-
-    return Array.from(map.values());
-  }, [fallbackTicketTypeOptions, ticketCatalog, ticketType, buildTicketOptionLabel]);
 
   const ticketCatalogIndex = useMemo(() => {
     const map = new Map<string, TicketCatalogEntry>();
@@ -443,7 +415,8 @@ export function StaffVisitEditor({
     return rawTicketSelections
       .map((entry) => normalizeTicketSelection(entry))
       .filter(
-        (entry): entry is TicketSelectionEntry => entry !== null && Boolean(entry.id),
+        (entry): entry is TicketSelectionEntry =>
+          entry !== null && Boolean(entry.id)
       )
       .map((entry) => {
         const normalizedKey = normalizeTicketKey(entry.ticketType ?? entry.id);
@@ -456,8 +429,8 @@ export function StaffVisitEditor({
             ? typeof catalogMatch.discountedPrice === "number"
               ? catalogMatch.discountedPrice
               : typeof catalogMatch.price === "number"
-              ? catalogMatch.price
-              : null
+                ? catalogMatch.price
+                : null
             : null);
         const subtotal =
           entry.subtotal ??
@@ -475,12 +448,16 @@ export function StaffVisitEditor({
 
   const ticketSelectionsTotal = useMemo(() => {
     const totalSources = [
-      parseNumericValue((payload as Record<string, unknown>).ticketSelectionsTotal),
-      payloadMetadata ? parseNumericValue(payloadMetadata.ticketSelectionsTotal) : null,
+      parseNumericValue(
+        (payload as Record<string, unknown>).ticketSelectionsTotal
+      ),
+      payloadMetadata
+        ? parseNumericValue(payloadMetadata.ticketSelectionsTotal)
+        : null,
       payloadForm ? parseNumericValue(payloadForm.ticketSelectionsTotal) : null,
     ];
     const explicitTotal = totalSources.find(
-      (value): value is number => typeof value === "number",
+      (value): value is number => typeof value === "number"
     );
     if (explicitTotal !== undefined) {
       return explicitTotal;
@@ -490,8 +467,8 @@ export function StaffVisitEditor({
         typeof entry.subtotal === "number"
           ? entry.subtotal
           : typeof entry.unitPrice === "number"
-          ? entry.unitPrice * entry.quantity
-          : null;
+            ? entry.unitPrice * entry.quantity
+            : null;
       return typeof amount === "number" ? sum + amount : sum;
     }, 0);
     return ticketSelections.length > 0 ? computed : null;
@@ -518,18 +495,79 @@ export function StaffVisitEditor({
         ? currencyFormatter.format(value)
         : `${value.toLocaleString()} ${currencyCode}`.trim();
     },
-    [currencyCode, currencyFormatter],
+    [currencyCode, currencyFormatter]
   );
 
-  const buildTicketOptionLabel = useCallback(
-    (baseLabel: string, price?: number | null) => {
-      if (typeof price === "number") {
-        return `${baseLabel} · ${formatCurrencyAmount(price)}`;
-      }
-      return baseLabel;
-    },
-    [formatCurrencyAmount],
-  );
+  const ticketEditorOptions = useMemo(() => {
+    if (ticketCatalog.length > 0) {
+      return ticketCatalog;
+    }
+    return fallbackTicketTypeOptions.map((option) => ({
+      value: option.value,
+      label: option.label,
+      price:
+        typeof option.price === "number" && Number.isFinite(option.price)
+          ? option.price
+          : null,
+      discountedPrice:
+        typeof option.price === "number" && Number.isFinite(option.price)
+          ? option.price
+          : null,
+    }));
+  }, [fallbackTicketTypeOptions, ticketCatalog]);
+
+  const normalizedSelectedTicket = normalizeTicketKey(ticketType);
+  const currentGuestCount =
+    typeof numPeople === "number" && numPeople > 0
+      ? numPeople
+      : typeof visit.num_people === "number" && visit.num_people > 0
+        ? visit.num_people
+        : 1;
+
+  const estimatedSpendValue =
+    typeof totalPrice === "number"
+      ? totalPrice
+      : typeof visit.total_price === "number"
+        ? visit.total_price
+        : null;
+  const estimatedSpendDisplay =
+    estimatedSpendValue !== null
+      ? formatCurrencyAmount(estimatedSpendValue)
+      : "Not recorded";
+  const categoriesDisplay =
+    (categories && categories.trim().length > 0
+      ? categories
+      : visit.categories && visit.categories.trim().length > 0
+        ? visit.categories
+        : null) ?? "No categories recorded";
+
+  const handleTicketCardSelect = (value: string) => {
+    setTicketType(value);
+    if (
+      typeof numPeople !== "number" ||
+      Number.isNaN(numPeople) ||
+      numPeople <= 0
+    ) {
+      setNumPeople(
+        typeof visit.num_people === "number" && visit.num_people > 0
+          ? visit.num_people
+          : 1
+      );
+    }
+  };
+
+  const handleTicketQuantityAdjust = (delta: number) => {
+    setNumPeople((prev) => {
+      const base =
+        typeof prev === "number" && prev > 0
+          ? prev
+          : typeof visit.num_people === "number" && visit.num_people > 0
+            ? visit.num_people
+            : 1;
+      const next = Math.max(1, base + delta);
+      return next;
+    });
+  };
 
   const toggleEditing = (key: EditableKey, next?: boolean) => {
     setEditing((prev) => ({
@@ -554,7 +592,11 @@ export function StaffVisitEditor({
       aria-label={isEditing(key) ? `Stop editing ${label}` : `Edit ${label}`}
       disabled={disabled}
     >
-      {isEditing(key) ? <X className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+      {isEditing(key) ? (
+        <X className="h-4 w-4" />
+      ) : (
+        <Pencil className="h-4 w-4" />
+      )}
     </DesignButton>
   );
 
@@ -567,7 +609,7 @@ export function StaffVisitEditor({
       span?: boolean;
       editor: ReactNode;
       display: ReactNode;
-    },
+    }
   ) => {
     const { description, helper, span, editor, display } = config;
     const editing = isEditing(key);
@@ -575,7 +617,7 @@ export function StaffVisitEditor({
       <SurfaceCard
         className={cn(
           "space-y-3 border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4",
-          span && "sm:col-span-2",
+          span && "sm:col-span-2"
         )}
       >
         <div className="flex items-start justify-between gap-3">
@@ -594,7 +636,9 @@ export function StaffVisitEditor({
         <div className="space-y-2 text-sm text-[color:var(--ds-text-strong)]">
           {editing ? editor : display}
           {helper ? (
-            <p className="text-[11px] text-[color:var(--ds-text-muted)]">{helper}</p>
+            <p className="text-[11px] text-[color:var(--ds-text-muted)]">
+              {helper}
+            </p>
           ) : null}
         </div>
       </SurfaceCard>
@@ -661,7 +705,8 @@ export function StaffVisitEditor({
               <span className="font-semibold">
                 At least {requiredVisitors} visitors must be present.
               </span>{" "}
-              Update the guest count or decline the QR until the full group arrives.
+              Update the guest count or decline the QR until the full group
+              arrives.
             </SurfaceCard>
           ) : null}
         </SectionCard>
@@ -752,7 +797,10 @@ export function StaffVisitEditor({
                       ? selection.unitPrice * selection.quantity
                       : null);
                   return (
-                    <li key={`${selection.id}-${index}`} className="flex flex-col gap-1 px-3 py-3">
+                    <li
+                      key={`${selection.id}-${index}`}
+                      className="flex flex-col gap-1 px-3 py-3"
+                    >
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="text-base font-semibold text-[color:var(--ds-text-strong)]">
@@ -803,7 +851,10 @@ export function StaffVisitEditor({
             ) : (
               <ul className="divide-y divide-[color:var(--ds-border-subtle)] rounded-2xl border border-[color:var(--ds-border-subtle)] text-sm">
                 {ticketCatalog.map((entry) => (
-                  <li key={entry.value} className="flex items-center justify-between gap-3 px-3 py-3">
+                  <li
+                    key={entry.value}
+                    className="flex items-center justify-between gap-3 px-3 py-3"
+                  >
                     <div>
                       <p className="text-base font-semibold text-[color:var(--ds-text-strong)]">
                         {entry.label}
@@ -835,88 +886,139 @@ export function StaffVisitEditor({
         description="Adjust guest counts or logistics if things changed at the door."
         className="space-y-6"
       >
-        <div className="grid gap-4 sm:grid-cols-2">
-          {renderEditableCard("ticketType", "Ticket type", {
-            description: "Select a ticket profile or add a free-form label.",
-            editor:
-              ticketSelectOptions.length > 0 ? (
-                <DesignSelect
-                  value={ticketType ? ticketType : SELECT_UNSET_VALUE}
-                  onValueChange={(value) =>
-                    setTicketType(value === SELECT_UNSET_VALUE ? "" : value)
-                  }
-                >
-                  <DesignSelectTrigger aria-label="Ticket type">
-                    <DesignSelectValue placeholder="Select ticket type" />
-                  </DesignSelectTrigger>
-                  <DesignSelectContent>
-                    <DesignSelectItem value={SELECT_UNSET_VALUE}>
-                      No ticket
-                    </DesignSelectItem>
-                    {ticketSelectOptions.map((option) => (
-                      <DesignSelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </DesignSelectItem>
-                    ))}
-                  </DesignSelectContent>
-                </DesignSelect>
-              ) : (
-                <DesignInput
-                  value={ticketType}
-                  onChange={(event) => setTicketType(event.target.value)}
-                  placeholder="e.g. VIP, family"
-                />
-              ),
-            display: (
-              <p className="text-base font-semibold">
-                {ticketType ? ticketType : "—"}
+        <div className="space-y-6">
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
+                Ticket selections
               </p>
-            ),
-          })}
+              <p className="text-[11px] text-[color:var(--ds-text-muted)]">
+                Use the partner-configured price cards to reflect what the guest
+                purchased.
+              </p>
+            </div>
+            {ticketEditorOptions.length === 0 ? (
+              <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)]/60 p-4 text-sm text-[color:var(--ds-text-muted)]">
+                This partner has not configured ticket pricing in the admin
+                dashboard yet. Update their ticket catalog to enable door-side
+                edits.
+              </SurfaceCard>
+            ) : (
+              <div className="grid gap-3 md:grid-cols-2">
+                {ticketEditorOptions.map((entry) => {
+                  const normalizedValue = normalizeTicketKey(entry.value);
+                  const isSelected =
+                    normalizedSelectedTicket &&
+                    normalizedSelectedTicket === normalizedValue;
+                  const priceValue =
+                    typeof entry.discountedPrice === "number"
+                      ? entry.discountedPrice
+                      : entry.price;
+                  const priceDisplay =
+                    typeof priceValue === "number"
+                      ? formatCurrencyAmount(priceValue)
+                      : null;
+                  return (
+                    <button
+                      type="button"
+                      key={entry.value}
+                      onClick={() => handleTicketCardSelect(entry.value)}
+                      className={cn(
+                        "flex flex-col gap-3 rounded-2xl border px-4 py-4 text-left transition",
+                        isSelected
+                          ? "border-[color:var(--ds-primary)] bg-[color:var(--ds-primary)]/10 shadow-[0_12px_30px_rgba(47,46,40,0.15)]"
+                          : "border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] hover:border-[color:var(--ds-primary)]/50"
+                      )}
+                    >
+                      <div className="space-y-1">
+                        <p className="text-base font-semibold text-[color:var(--ds-text-strong)]">
+                          {entry.label}
+                        </p>
+                        <p className="text-sm text-[color:var(--ds-text-muted)]">
+                          {priceDisplay ?? "Price not set"}
+                        </p>
+                      </div>
+                      {isSelected ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <DesignButton
+                              type="button"
+                              variant="tonal"
+                              size="icon"
+                              onClick={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                handleTicketQuantityAdjust(-1);
+                              }}
+                              disabled={currentGuestCount <= 1}
+                              className="rounded-full"
+                              aria-label="Decrease guests"
+                            >
+                              <Minus className="h-4 w-4" aria-hidden />
+                            </DesignButton>
+                            <span className="text-lg font-semibold text-[color:var(--ds-text-strong)]">
+                              {currentGuestCount}
+                            </span>
+                            <DesignButton
+                              type="button"
+                              variant="tonal"
+                              size="icon"
+                              onClick={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                handleTicketQuantityAdjust(1);
+                              }}
+                              className="rounded-full"
+                              aria-label="Increase guests"
+                            >
+                              <Plus className="h-4 w-4" aria-hidden />
+                            </DesignButton>
+                          </div>
+                          <p className="text-xs text-[color:var(--ds-text-muted)]">
+                            Guests present for this ticket profile.
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[color:var(--ds-text-muted)]">
+                          Tap to select
+                        </p>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
-          {renderEditableCard("totalPrice", "Estimated spend", {
-            description: "What the guest reported spending.",
-            helper: "Leave blank if spend is unknown.",
-            editor: (
-              <DesignInput
-                type="number"
-                min={0}
-                step="0.01"
-                inputMode="decimal"
-                value={typeof totalPrice === "number" ? String(totalPrice) : ""}
-                onChange={(event) =>
-                  setTotalPrice(
-                    event.target.value ? Number(event.target.value) : undefined,
-                  )
-                }
-                placeholder="e.g. 5000"
-              />
-            ),
-            display: (
-              <p className="text-base font-semibold">
-                {typeof totalPrice === "number"
-                  ? totalPrice.toLocaleString()
-                  : "—"}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <SurfaceCard className="space-y-2 rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
+                  Estimated spend
+                </p>
+                <p className="text-[11px] text-[color:var(--ds-text-muted)]">
+                  Reported by the guest during registration.
+                </p>
+              </div>
+              <p className="text-base font-semibold text-[color:var(--ds-text-strong)]">
+                {estimatedSpendDisplay}
               </p>
-            ),
-          })}
+            </SurfaceCard>
 
-          {renderEditableCard("categories", "Categories / tags", {
-            description: "Comma-separated themes to keep analytics clean.",
-            span: true,
-            editor: (
-              <DesignInput
-                value={categories}
-                onChange={(event) => setCategories(event.target.value)}
-                placeholder="e.g. family, food"
-              />
-            ),
-            display: (
-              <p className="text-base font-semibold">
-                {categories ? categories : "—"}
+            <SurfaceCard className="space-y-2 rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
+                  Categories / tags
+                </p>
+                <p className="text-[11px] text-[color:var(--ds-text-muted)]">
+                  Pulled from the original registration form.
+                </p>
+              </div>
+              <p className="text-base font-semibold text-[color:var(--ds-text-strong)]">
+                {categoriesDisplay}
               </p>
-            ),
-          })}
+            </SurfaceCard>
+          </div>
 
           {renderEditableCard("visitNotes", "Internal notes", {
             description: "Add context for other staff members.",

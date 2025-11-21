@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { getPartnerFormById } from "@/lib/data/partner-forms";
+import {
+  applyBookingCapToForm,
+  getPartnerFormById,
+} from "@/lib/data/partner-forms";
 import { getPartnerBySlug } from "@/lib/data/site-directory";
 import { SiteNav } from "@/site/components/site-nav";
 import { PartnerFormRunner } from "@/site/forms/partner-form-runner";
@@ -45,6 +48,9 @@ export default async function PartnerBookingPage({
 
   const form = selectedFormId ? await getPartnerFormById(selectedFormId) : null;
   const isFormReady = form && form.status === "published";
+  const bookingCap = partner.ticketing?.maxGuestsPerBooking ?? null;
+  const enrichedForm =
+    form && bookingCap ? applyBookingCapToForm(form, bookingCap) : form;
 
   return (
     <main className="flex min-h-screen flex-col bg-slate-950 text-white">
@@ -77,11 +83,11 @@ export default async function PartnerBookingPage({
 
       <section className="py-16">
         <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 lg:px-8">
-          {isFormReady && form ? (
+          {isFormReady && enrichedForm ? (
             <PartnerFormRunner
               partnerId={partner.partnerId}
               partnerName={partner.name}
-              form={form}
+              form={enrichedForm}
               categories={partner.categories.map((category) => category.name)}
               ticketCatalog={partner.ticketDetails ?? []}
               ticketAddons={partner.ticketAddons ?? []}
