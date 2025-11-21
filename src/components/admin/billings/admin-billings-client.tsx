@@ -99,13 +99,25 @@ export function AdminBillingsClient({
     };
   }
 
+  function toIsoRange(dateStr?: string | null, endOfDay = false) {
+    if (!dateStr) return undefined;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return endOfDay ? `${dateStr}T23:59:59.999Z` : `${dateStr}T00:00:00.000Z`;
+    }
+    return dateStr;
+  }
+
   async function handleLoadDetails(partnerId: string) {
     const state = ensureDetail(partnerId);
     setDetails((prev) => ({ ...prev, [partnerId]: { ...state, loading: true } }));
     try {
       const res = await adminApi.billingSettingsGet(
         partnerId,
-        { summary: true, dateFrom: state.dateFrom, dateTo: state.dateTo },
+        {
+          summary: true,
+          dateFrom: toIsoRange(state.dateFrom),
+          dateTo: toIsoRange(state.dateTo, true),
+        },
         { headers: csrfToken ? { "x-csrf-token": csrfToken } : undefined },
       );
       setDetails((prev) => ({
@@ -460,7 +472,10 @@ export function AdminBillingsClient({
                       try {
                         const res = await adminApi.billingDownload(
                           item.partnerId,
-                          { dateFrom: state.dateFrom, dateTo: state.dateTo },
+                          {
+                            dateFrom: toIsoRange(state.dateFrom),
+                            dateTo: toIsoRange(state.dateTo, true),
+                          },
                           { headers: csrfToken ? { "x-csrf-token": csrfToken } : undefined },
                         );
                         downloadBase64File(
