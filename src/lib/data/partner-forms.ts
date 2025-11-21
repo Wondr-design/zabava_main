@@ -57,15 +57,6 @@ const pricingInclusionSchema = z
   })
   .partial();
 
-const pricingLimitSchema = z
-  .object({
-    adults: z.number().nonnegative().nullable().optional(),
-    children: z.number().nonnegative().nullable().optional(),
-    teens: z.number().nonnegative().nullable().optional(),
-    total: z.number().nonnegative().nullable().optional(),
-  })
-  .partial();
-
 const pricingBundleSchema = z.object({
   id: z.string(),
   sourceId: z.string().optional(),
@@ -74,9 +65,7 @@ const pricingBundleSchema = z.object({
   description: z.string().optional(),
   price: z.number().nonnegative().nullable().optional(),
   discountedPrice: z.number().nonnegative().nullable().optional(),
-  maxGuests: z.number().nonnegative().nullable().optional(),
   inclusions: pricingInclusionSchema.optional(),
-  limits: pricingLimitSchema.optional(),
 });
 
 const pricingAddonSchema = z.object({

@@ -73,7 +73,9 @@
     "vaul": "^1.1.2",
     "vercel": "^48.2.6",
     "zod": "^4.1.11",
-    "resend": "^4.0.0"
+    "resend": "^4.0.0",
+    "@react-email/components": "^0.0.25",
+    "@react-email/render": "^1.1.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

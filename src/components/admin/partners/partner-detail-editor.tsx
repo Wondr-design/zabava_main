@@ -129,13 +129,6 @@ type TicketDetailsPayloadItem = {
     children?: number | null;
     teens?: number | null;
   };
-  limits?: {
-    adults?: number | null;
-    children?: number | null;
-    teens?: number | null;
-    total?: number | null;
-  };
-  maxGuests?: number | null;
 };
 
 interface TicketAddonDraft {
@@ -1822,7 +1815,6 @@ export function PartnerDetailEditor({
       typeof maxGuestsPerBookingValue === "number" && maxGuestsPerBookingValue > 0
         ? maxGuestsPerBookingValue
         : null;
-    let limitValidationError: string | null = null;
     const ticketDetailsPayload: TicketDetailsPayloadItem[] = ticketDetailsForm
       .map<TicketDetailsPayloadItem | null>((detail) => {
         const description = detail.description.trim();
@@ -1832,27 +1824,8 @@ export function PartnerDetailEditor({
         const adultsValue = parseIntegerInput(detail.adults);
         const childrenValue = parseIntegerInput(detail.children);
         const teensValue = parseIntegerInput(detail.teens);
-        const limitAdultsValue = parseIntegerInput(detail.limitAdults);
-        const limitChildrenValue = parseIntegerInput(detail.limitChildren);
-        const limitTeensValue = parseIntegerInput(detail.limitTeens);
-        const limitTotalValue = parseIntegerInput(detail.limitTotal);
         if (!description && !label && priceValue === undefined && !ticketType) {
           return null;
-        }
-        if (bookingCap && bookingCap > 0) {
-          const limitsToCheck = [
-            { label: "total", value: limitTotalValue },
-            { label: "adults", value: limitAdultsValue },
-            { label: "children", value: limitChildrenValue },
-            { label: "teens", value: limitTeensValue },
-          ];
-          const over = limitsToCheck.find(
-            (entry) => typeof entry.value === "number" && entry.value > bookingCap
-          );
-          if (over) {
-            limitValidationError = `Limit for ${label || ticketType || "ticket"} (${over.label}) exceeds max guests per booking (${bookingCap}).`;
-            return null;
-          }
         }
         return {
           id: detail.id,
@@ -1870,27 +1843,11 @@ export function PartnerDetailEditor({
                   teens: teensValue ?? null,
                 }
               : undefined,
-          limits:
-            limitAdultsValue !== undefined ||
-            limitChildrenValue !== undefined ||
-            limitTeensValue !== undefined ||
-            limitTotalValue !== undefined
-              ? {
-                  adults: limitAdultsValue ?? null,
-                  children: limitChildrenValue ?? null,
-                  teens: limitTeensValue ?? null,
-                  total: limitTotalValue ?? null,
-                }
-              : undefined,
         };
       })
       .filter(
         (detail): detail is TicketDetailsPayloadItem => Boolean(detail)
       );
-    if (limitValidationError) {
-      toast.error(limitValidationError);
-      return;
-    }
     const ticketAddonsPayload: TicketAddonPayloadItem[] = ticketAddonsForm
       .map<TicketAddonPayloadItem | null>((addon) => {
         const label = addon.label.trim();
@@ -2631,91 +2588,9 @@ export function PartnerDetailEditor({
                         }
 
                         return (
-                          <>
-                            <div className="grid gap-3 md:grid-cols-3">
-                              {inclusionFields}
-                            </div>
-
-                            <div className="grid gap-3 md:grid-cols-3">
-                              <div className="space-y-1">
-                                <Label>Max per booking</Label>
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  value={detail.limitAdults}
-                                  onChange={(event) =>
-                                    updateTicketDetail(
-                                      detail.id,
-                                      "limitAdults",
-                                      event.target.value
-                                    )
-                                  }
-                                  placeholder="e.g. 5"
-                                />
-                                <p className="text-[11px] text-muted-foreground">
-                                  Caps this ticket&apos;s quantity per booking.
-                                </p>
-                              </div>
-                              {showSubOptionFields ? (
-                                subOptions.slice(0, 2).map((sub, idx) => {
-                                  const fieldName =
-                                    fieldMap[sub.key.toLowerCase()] ?? "adults";
-                                  const limitKeyMap: Record<string, keyof TicketDetailDraft> =
-                                    {
-                                      adults: "limitAdults",
-                                      children: "limitChildren",
-                                      teens: "limitTeens",
-                                    };
-                                  const limitKey =
-                                    (limitKeyMap[
-                                      fieldName as keyof typeof limitKeyMap
-                                    ] ?? "limitAdults") as
-                                      | "limitAdults"
-                                      | "limitChildren"
-                                      | "limitTeens"
-                                      | "limitTotal";
-                                  return (
-                                    <div key={`limit-${sub.key}`} className="space-y-1">
-                                      <Label>Max {sub.label}</Label>
-                                      <Input
-                                        type="number"
-                                        min={0}
-                                        value={detail[limitKey] as string}
-                                        onChange={(event) =>
-                                          updateTicketDetail(
-                                            detail.id,
-                                            limitKey,
-                                            event.target.value
-                                          )
-                                        }
-                                        placeholder="e.g. 3"
-                                      />
-                                    </div>
-                                  );
-                                })
-                              ) : (
-                                <div className="space-y-1">
-                                  <Label>Max total for this ticket</Label>
-                                  <Input
-                                    type="number"
-                                    min={0}
-                                    value={detail.limitTotal}
-                                    onChange={(event) =>
-                                      updateTicketDetail(
-                                        detail.id,
-                                        "limitTotal",
-                                        event.target.value
-                                      )
-                                    }
-                                    placeholder="e.g. 5"
-                                  />
-                                  <p className="text-[11px] text-muted-foreground">
-                                    Limits the combined quantity for this ticket.
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          </>
+                          <div className="grid gap-3 md:grid-cols-3">
+                            {inclusionFields}
+                          </div>
                         );
                       })()}
                       <div className="grid gap-3 md:grid-cols-2">

@@ -1,10 +1,14 @@
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
-import { StaffVisitEditor } from "@/components/staff/staff-visit-editor";
+import {
+  StaffVisitEditor,
+  type TicketCatalogEntry,
+} from "@/components/staff/staff-visit-editor";
 import { StaffBonusRedemptionView } from "@/components/staff/bonus-redemption-view";
 import { getVisitById } from "@/lib/data/visits";
 import { getPartnerFormById, type PartnerFormConfig } from "@/lib/data/partner-forms";
+import { loadPartnerMeta, type PartnerMeta } from "@/lib/data/partners";
 import { verifyJwt } from "@/lib/auth/jwt";
 import { getRedemptionByCode } from "@/lib/data/redemptions";
 import { resolveLocale } from "@/i18n/config";
@@ -92,7 +96,12 @@ export default async function StaffScanPage({ params }: StaffScanPageContext) {
     );
   }
 
-  const options = await deriveStaffVisitOptions(visit.payload ?? {});
+  let partnerMeta: PartnerMeta | null = null;
+  if (visit.partner_id) {
+    partnerMeta = await loadPartnerMeta(visit.partner_id).catch(() => null);
+  }
+
+  const options = await deriveStaffVisitOptions(visit.payload ?? {}, partnerMeta);
 
   return (
     <main className="theme-staff min-h-screen bg-[color:var(--ds-surface-base)] px-4 pb-16 pt-10 text-[color:var(--ds-text-strong)] sm:px-6 lg:px-8">
@@ -120,60 +129,131 @@ export default async function StaffScanPage({ params }: StaffScanPageContext) {
   );
 }
 
-async function deriveStaffVisitOptions(payload: Record<string, unknown>) {
+async function deriveStaffVisitOptions(
+  payload: Record<string, unknown>,
+  partnerMeta: PartnerMeta | null,
+) {
   const formId = typeof payload.formId === "string" ? payload.formId : null;
-  if (!formId) return undefined;
+  let config: PartnerFormConfig | null = null;
 
-  const formRecord = await getPartnerFormById(formId).catch(() => null);
-  if (!formRecord) return undefined;
+  if (formId) {
+    const formRecord = await getPartnerFormById(formId).catch(() => null);
+    if (formRecord) {
+      config = formRecord.config;
+    }
+  }
 
-  const config: PartnerFormConfig = formRecord.config;
+  const partnerTicketCatalog = buildPartnerTicketCatalog(partnerMeta);
+  const formTicketCatalog = partnerTicketCatalog.length === 0 ? buildFormTicketCatalog(config) : [];
 
-  const ticketTypeOptions = Array.isArray(config.pricing?.ticketPricing)
-    ? config.pricing!.ticketPricing.map((option) => ({
-        value: option.value,
-        label: option.label ?? option.value,
-      }))
-    : [];
+  const partnerCurrency =
+    partnerMeta?.info?.cashCurrencies?.find(
+      (value) => typeof value === "string" && value.trim().length > 0,
+    ) ?? undefined;
+  const currency = config?.pricing?.currency ?? partnerCurrency;
 
-  const transportOptions = deriveTransportOptions(config);
+  if (
+    partnerTicketCatalog.length === 0 &&
+    formTicketCatalog.length === 0 &&
+    !currency
+  ) {
+    return undefined;
+  }
 
   return {
-    ticketTypeOptions: ticketTypeOptions.length > 0 ? ticketTypeOptions : undefined,
-    transportOptions: transportOptions.length > 0 ? transportOptions : undefined,
+    ticketCatalog: partnerTicketCatalog.length > 0 ? partnerTicketCatalog : undefined,
+    fallbackTicketTypeOptions:
+      partnerTicketCatalog.length === 0 && formTicketCatalog.length > 0
+        ? formTicketCatalog.map((entry) => ({
+            value: entry.value,
+            label: entry.label,
+            price: entry.discountedPrice ?? entry.price ?? null,
+          }))
+        : undefined,
+    currency,
   } as const;
 }
 
-function deriveTransportOptions(config: PartnerFormConfig) {
-  const results: Array<{ value: string; label: string }> = [];
-  const yesValue =
-    config.transport?.yesValue ||
-    config.pricing?.transportYesValue ||
-    "Yes";
-  const noValue =
-    config.transport?.noValue ||
-    (config.transport?.enabled ? config.transport?.noValue : undefined) ||
-    "No";
+function buildPartnerTicketCatalog(partnerMeta: PartnerMeta | null) {
+  if (!partnerMeta) return [] as TicketCatalogEntry[];
 
-  if (yesValue) {
-    results.push({
-      value: yesValue,
-      label: config.transport?.yesLabel || yesValue,
-    });
-  }
-  if (noValue) {
-    const normalizedNo = noValue === yesValue ? "No" : noValue;
-    results.push({
-      value: normalizedNo,
-      label: config.transport?.noLabel || normalizedNo,
-    });
-  }
+  const detailEntries: TicketCatalogEntry[] = (partnerMeta.ticketing?.ticketDetails ?? [])
+    .map((detail) => {
+      const rawValue =
+        typeof detail.ticketType === "string" && detail.ticketType.trim().length > 0
+          ? detail.ticketType.trim()
+          : detail.label?.trim() || detail.id;
+      if (!rawValue) return null;
+      return {
+        value: rawValue,
+        label: detail.label?.trim() || detail.ticketType || rawValue,
+        price:
+          typeof detail.price === "number" && Number.isFinite(detail.price)
+            ? detail.price
+            : null,
+        discountedPrice:
+          typeof detail.discountedPrice === "number" && Number.isFinite(detail.discountedPrice)
+            ? detail.discountedPrice
+            : typeof detail.price === "number" && Number.isFinite(detail.price)
+            ? detail.price
+            : null,
+      } satisfies TicketCatalogEntry;
+    })
+    .filter((entry): entry is TicketCatalogEntry => Boolean(entry));
 
-  const unique = new Map<string, { value: string; label: string }>();
-  for (const option of results) {
-    if (!unique.has(option.value)) {
-      unique.set(option.value, option);
-    }
-  }
-  return Array.from(unique.values());
+  const ticketTypeEntries: TicketCatalogEntry[] = (partnerMeta.ticketing?.ticketTypes ?? [])
+    .map((value) => (typeof value === "string" ? value.trim() : ""))
+    .filter((value) => value.length > 0)
+    .map((value) => ({
+      value,
+      label: value,
+      price: null,
+      discountedPrice: null,
+    }));
+
+  return mergeTicketCatalogs(detailEntries, ticketTypeEntries);
+}
+
+function buildFormTicketCatalog(config: PartnerFormConfig | null) {
+  if (!config?.pricing?.ticketPricing) return [] as TicketCatalogEntry[];
+  return config.pricing.ticketPricing
+    .map((option) => {
+      const value = typeof option.value === "string" ? option.value.trim() : "";
+      if (!value) return null;
+      return {
+        value,
+        label: option.label ?? option.value,
+        price:
+          typeof option.price === "number" && Number.isFinite(option.price)
+            ? option.price
+            : null,
+        discountedPrice:
+          typeof option.price === "number" && Number.isFinite(option.price)
+            ? option.price
+            : null,
+      } satisfies TicketCatalogEntry;
+    })
+    .filter((entry): entry is TicketCatalogEntry => Boolean(entry));
+}
+
+function mergeTicketCatalogs(
+  primary: TicketCatalogEntry[],
+  secondary: TicketCatalogEntry[],
+) {
+  const map = new Map<string, TicketCatalogEntry>();
+  const addEntry = (entry: TicketCatalogEntry) => {
+    const normalized = normalizeTicketValue(entry.value);
+    if (!normalized || map.has(normalized)) return;
+    map.set(normalized, entry);
+  };
+
+  primary.forEach(addEntry);
+  secondary.forEach(addEntry);
+
+  return Array.from(map.values());
+}
+
+function normalizeTicketValue(value?: string | null) {
+  if (typeof value !== "string") return "";
+  return value.trim().toLowerCase();
 }

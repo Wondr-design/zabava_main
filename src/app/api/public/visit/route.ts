@@ -22,6 +22,8 @@ import { resolveLocale } from "@/i18n/config";
 import { buildLocalizedPath } from "@/i18n/routing";
 import { notifyQrEmail } from "@/lib/services/notifications/qr-email";
 import { loadPartnerBranding } from "@/lib/services/partner-branding";
+import { loadPartnerMeta } from "@/lib/data/partners";
+import { parseTicketSelections } from "@/lib/services/ticket-selections";
 
 const legacyFormSchema = z.object({
   fullName: z.string().min(1).max(120),
@@ -197,6 +199,27 @@ export async function POST(req: NextRequest) {
           )
         : null;
 
+    const ticketSelections =
+      dynamicForm && partnerFormRecord
+        ? parseTicketSelections(dynamicForm)
+        : [];
+
+    let partnerBookingCap: number | null = null;
+    try {
+      const partnerMeta = await loadPartnerMeta(normalizedPartnerId);
+      const cap = partnerMeta.ticketing.maxGuestsPerBooking;
+      partnerBookingCap =
+        typeof cap === "number" && Number.isFinite(cap) && cap > 0
+          ? cap
+          : null;
+    } catch (error) {
+      log.warn("public_visit_partner_meta_load_failed", {
+        partnerId: normalizedPartnerId,
+        correlationId,
+        error: (error as Error)?.message ?? String(error),
+      });
+    }
+
     const totalPriceOverride =
       typeof totalPrice === "number" && Number.isFinite(totalPrice)
         ? totalPrice
@@ -219,7 +242,36 @@ export async function POST(req: NextRequest) {
     }
     if (formMetrics) {
       payload.formMetrics = formMetrics;
+      payload.numPeople = formMetrics.numPeople;
+    } else if (legacyForm?.guests) {
+      payload.numPeople = legacyForm.guests;
     }
+    if (ticketSelections.length > 0) {
+      payload.ticketSelections = ticketSelections;
+    }
+    if (partnerBookingCap && partnerBookingCap > 0) {
+      const ticketGuestCount =
+        ticketSelections.length > 0
+          ? ticketSelections.reduce((sum, entry) => sum + entry.quantity, 0)
+          : null;
+      const metricsGuests = formMetrics?.numPeople ?? null;
+      const legacyGuests =
+        typeof legacyForm?.guests === "number" ? legacyForm.guests : null;
+      const totalGuests =
+        ticketGuestCount ?? metricsGuests ?? legacyGuests ?? 0;
+      if (totalGuests > partnerBookingCap) {
+        return withCors(
+          NextResponse.json(
+            {
+              error: "GuestLimitExceeded",
+              message: `Bookings are limited to ${partnerBookingCap} guests per visit for this partner.`,
+            },
+            { status: 400 },
+          ),
+        );
+      }
+    }
+
     if (totalPriceOverride !== undefined) {
       payload.totalPriceOverride = totalPriceOverride;
     }

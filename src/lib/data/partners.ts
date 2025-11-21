@@ -143,16 +143,6 @@ const ticketInclusionsSchema = z
   .partial()
   .optional();
 
-const ticketLimitsSchema = z
-  .object({
-    adults: z.coerce.number().min(0).optional().nullable(),
-    children: z.coerce.number().min(0).optional().nullable(),
-    teens: z.coerce.number().min(0).optional().nullable(),
-    total: z.coerce.number().min(0).optional().nullable(),
-  })
-  .partial()
-  .optional();
-
 const ticketDetailSchema = z.object({
   id: z.string().optional(),
   ticketType: z.string().optional().nullable(),
@@ -160,8 +150,6 @@ const ticketDetailSchema = z.object({
   price: z.coerce.number().min(0).optional().nullable(),
   description: z.string().optional(),
   inclusions: ticketInclusionsSchema,
-  limits: ticketLimitsSchema,
-  maxGuests: z.coerce.number().min(0).optional().nullable(),
 });
 
 const ticketAddonSchema = z.object({

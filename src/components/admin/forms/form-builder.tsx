@@ -406,7 +406,6 @@ function createPricingBundleTemplate(): PartnerFormPricingBundle {
     description: "",
     price: null,
     discountedPrice: null,
-    maxGuests: null,
     inclusions: {},
   };
 }
@@ -1323,8 +1322,6 @@ export function AdminFormBuilder({
                 nextBundle.discountedPrice ?? null
               );
               nextBundle.inclusions = match.inclusions ?? nextBundle.inclusions;
-              nextBundle.maxGuests =
-                match.maxGuests ?? nextBundle.maxGuests ?? null;
             }
           }
         }
@@ -1825,24 +1822,6 @@ export function AdminFormBuilder({
                           />
                         </div>
                       ) : null}
-                      <div>
-                        <Label className="text-xs uppercase text-muted-foreground">
-                          Max guests
-                        </Label>
-                        <Input
-                          type="number"
-                          min={0}
-                          step={1}
-                          value={bundle.maxGuests ?? ""}
-                          onChange={(event) =>
-                            handlePricingBundleUpdate(stepIndex, bundleIndex, {
-                              maxGuests: parseAmountInput(event.target.value),
-                            })
-                          }
-                          placeholder="Optional cap"
-                          disabled={isReadOnly}
-                        />
-                      </div>
                       {showSubOptionFields ? (
                         subOptions.map((subOption) => {
                           // Map sub-option keys to inclusion field names

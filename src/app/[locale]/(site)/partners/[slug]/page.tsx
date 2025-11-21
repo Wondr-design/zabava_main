@@ -571,11 +571,6 @@ export default async function PartnerPage({ params }: PartnerPageContext) {
                                     Includes {inclusionText}
                                   </p>
                                 ) : null}
-                                {ticket.maxGuests ? (
-                                  <p className="text-xs text-slate-400">
-                                    Max {ticket.maxGuests} guests
-                                  </p>
-                                ) : null}
                               </td>
                               <td className="px-4 py-3 text-right">
                                 {discountedPrice ? (

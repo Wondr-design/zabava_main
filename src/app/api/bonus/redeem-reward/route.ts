@@ -23,6 +23,8 @@ import {
 } from "@/lib/data/email-verifications";
 import { notifyQrEmail } from "@/lib/services/notifications/qr-email";
 import { loadPartnerBranding } from "@/lib/services/partner-branding";
+import { loadPartnerMeta } from "@/lib/data/partners";
+import { parseTicketSelections } from "@/lib/services/ticket-selections";
 
 const CORS_CONFIG = {
   methods: "POST, OPTIONS",
@@ -128,43 +130,6 @@ function inferPartnerId(args: {
   }
 
   return null;
-}
-
-type TicketSelection = {
-  id: string;
-  quantity: number;
-  points: number | null;
-};
-
-function parseTicketSelections(formPayload: FormPayload | null) {
-  const rawSelections =
-    (formPayload?.values?.__ticketSelections as unknown) ??
-    (formPayload?.hidden?.__ticketSelections as unknown);
-  if (!Array.isArray(rawSelections)) return [];
-  return rawSelections
-    .map((entry) => {
-      if (!entry || typeof entry !== "object") return null;
-      const obj = entry as Record<string, unknown>;
-      const id =
-        typeof obj.id === "string" && obj.id.trim().length > 0
-          ? obj.id.trim()
-          : null;
-      const quantity =
-        typeof obj.quantity === "number"
-          ? obj.quantity
-          : Number(obj.quantity ?? 0);
-      if (!id || !Number.isFinite(quantity) || quantity <= 0) return null;
-      const points =
-        typeof obj.points === "number"
-          ? obj.points
-          : Number(obj.points ?? NaN);
-      return {
-        id,
-        quantity: Math.max(1, Math.floor(quantity)),
-        points: Number.isFinite(points) ? points : null,
-      } satisfies TicketSelection;
-    })
-    .filter((entry): entry is TicketSelection => entry !== null);
 }
 
 export async function POST(req: NextRequest) {
@@ -500,6 +465,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    let partnerBookingCap: number | null = null;
+    if (partnerId) {
+      try {
+        const partnerMeta = await loadPartnerMeta(partnerId);
+        const cap = partnerMeta.ticketing.maxGuestsPerBooking;
+        partnerBookingCap =
+          typeof cap === "number" && Number.isFinite(cap) && cap > 0
+            ? cap
+            : null;
+      } catch (error) {
+        log.warn("bonus_partner_meta_load_failed", {
+          partnerId,
+          rewardId,
+          correlationId,
+          error: (error as Error)?.message ?? String(error),
+        });
+      }
+    }
+
     // Calculate actual points cost (partner/ ticket-specific or default)
     const ticketSelections = parseTicketSelections(dynamicForm);
     let actualPointsCost = reward.pointsCost;
@@ -561,6 +545,25 @@ export async function POST(req: NextRequest) {
         if (ticketPointEntry) {
           actualPointsCost = ticketPointEntry.points;
         }
+      }
+    }
+
+    if (partnerBookingCap && partnerBookingCap > 0) {
+      const totalGuests =
+        ticketSelections.length > 0
+          ? ticketSelections.reduce((sum, sel) => sum + sel.quantity, 0)
+          : formMetrics.numPeople ?? 0;
+      if (totalGuests > (partnerBookingCap ?? 0)) {
+        return withCors(
+          NextResponse.json(
+            {
+              error: "GuestLimitExceeded",
+              message: `This reward can only be redeemed for up to ${partnerBookingCap} guests per booking.`,
+            },
+            { status: 400 }
+          ),
+          CORS_CONFIG
+        );
       }
     }
 

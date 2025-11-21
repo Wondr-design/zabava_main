@@ -579,7 +579,6 @@ async function overwritePartnerFormPricing(
     label: ticket.label,
     price: null,
     discountedPrice: null,
-    maxGuests: null,
     inclusions: ticket.inclusions ?? undefined,
     description: `${ticket.points} pts`,
   }));

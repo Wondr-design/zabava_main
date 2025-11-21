@@ -609,7 +609,6 @@ function resolveTicketDetails(
           global?.description?.trim() ||
           "",
         inclusions: detail.inclusions,
-        maxGuests: detail.maxGuests ?? null,
       };
     }
   );
@@ -627,7 +626,6 @@ function resolveTicketDetails(
       discountedPrice: null,
       description: global?.description ?? "",
       inclusions: undefined,
-      maxGuests: null,
     });
   }
 

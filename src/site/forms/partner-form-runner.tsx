@@ -62,12 +62,6 @@ interface TicketCatalogItem {
     children?: number | null;
     teens?: number | null;
   };
-  limits?: {
-    adults?: number | null;
-    children?: number | null;
-    teens?: number | null;
-    total?: number | null;
-  };
 }
 
 type TicketCatalogBundle = TicketCatalogItem & { kind: "bundle" };
@@ -273,10 +267,6 @@ export function PartnerFormRunner({
           (item as PartnerFormPricingBundle).inclusions ??
           (item as PartnerTicketDetail).inclusions ??
           undefined,
-        limits:
-          (item as PartnerFormPricingBundle).limits ??
-          (item as PartnerTicketDetail).limits ??
-          undefined,
       };
     };
 
@@ -361,38 +351,8 @@ export function PartnerFormRunner({
       setTicketQuantities((prev) => {
         const next = { ...prev };
         const current = next[id] ?? 0;
-        const bundle = bundleCatalog.find((b) => b.id === id);
-        const computeMax = () => {
-          if (!bundle?.limits) return Number.POSITIVE_INFINITY;
-          let cap = Number.POSITIVE_INFINITY;
-          const { limits, inclusions } = bundle;
-          const applyCap = (limitValue?: number | null, perUnit?: number | null) => {
-            if (
-              limitValue === null ||
-              limitValue === undefined ||
-              Number.isNaN(limitValue)
-            ) {
-              return;
-            }
-            const unit = perUnit && perUnit > 0 ? perUnit : 1;
-            const qtyCap = Math.floor(limitValue / unit);
-            cap = Math.min(cap, qtyCap);
-          };
-          if (typeof limits.total === "number") {
-            cap = Math.min(cap, limits.total);
-          }
-          applyCap(limits.adults ?? null, inclusions?.adults ?? null);
-          applyCap(limits.children ?? null, inclusions?.children ?? null);
-          applyCap(limits.teens ?? null, inclusions?.teens ?? null);
-          return cap;
-        };
-        const maxAllowed = computeMax();
-        const proposed = current + delta;
-        const clamped =
-          maxAllowed === Number.POSITIVE_INFINITY
-            ? Math.max(0, proposed)
-            : Math.max(0, Math.min(proposed, maxAllowed));
-        let finalQuantity = clamped;
+        const proposed = Math.max(0, current + delta);
+        let finalQuantity = proposed;
         if (bookingCap !== null) {
           const otherTotal = Object.entries(prev).reduce(
             (sum, [key, qty]) => (key === id ? sum : sum + qty),
@@ -400,16 +360,11 @@ export function PartnerFormRunner({
           );
           const available = Math.max(bookingCap - otherTotal, 0);
           finalQuantity = Math.min(finalQuantity, available);
-          if (finalQuantity < clamped) {
+          if (finalQuantity < proposed) {
             setError(`Total tickets limited to ${bookingCap} per booking.`);
           }
-        }
-        if (clamped < proposed && bookingCap === null) {
-          setError(
-            `This ticket is limited to ${
-              maxAllowed === 0 ? "0" : maxAllowed
-            } per booking.`
-          );
+        } else {
+          setError(null);
         }
         if (finalQuantity === 0) {
           delete next[id];
@@ -419,7 +374,7 @@ export function PartnerFormRunner({
         return next;
       });
     },
-    [bundleCatalog, bookingCap]
+    [bookingCap]
   );
 
   const adjustAddonQuantity = useCallback((id: string, delta: number) => {
@@ -1594,8 +1549,28 @@ export function PartnerFormRunner({
               {form.config.summary?.pointsLabel ?? "Estimated points"}
             </span>
             <span className="font-semibold text-white">
-              {estimatedPoints !== null ? estimatedPoints : "—"}
+              {estimatedPoints !== null ? estimatedPoints.toLocaleString() : "—"}
             </span>
+          </div>
+          <div className="rounded-xl border border-white/5 bg-slate-950/40 px-3 py-2 text-xs text-indigo-200/80">
+            {estimatedPoints !== null ? (
+              <>
+                <span className="uppercase tracking-[0.3em] text-indigo-200/60">
+                  After staff check-in
+                </span>
+                <p className="mt-2 text-sm text-white">
+                  You’ll receive{" "}
+                  <span className="font-semibold">
+                    {estimatedPoints.toLocaleString()} pts
+                  </span>{" "}
+                  once the staff marks your visit as completed.
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-white">
+                Points are calculated once staff marks your visit as completed.
+              </p>
+            )}
           </div>
           {metrics.transportSelected ? (
             <div className="flex items-center justify-between">
