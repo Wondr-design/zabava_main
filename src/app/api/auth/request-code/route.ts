@@ -42,14 +42,25 @@ async function sendNotification(payload: {
       return;
     }
     const template = EMAIL_TEMPLATE_DEFAULTS.verification_code;
+    const baseUrl =
+      (process.env.NEXT_PUBLIC_BASE_URL || process.env.BASE_URL || "").replace(
+        /\/+$/,
+        ""
+      );
+    const copyPageUrl = baseUrl
+      ? `${baseUrl}/copy-code?code=${encodeURIComponent(payload.code)}`
+      : `https://app.zabava.cz/copy-code?code=${encodeURIComponent(
+          payload.code
+        )}`;
     await sendTemplatedEmail({
       to: payload.email,
       templateType: "verification_code",
       locale: "en",
       subjectOverride: template.subject,
-      bodyOverride: `${template.body}\n\nCode: ${payload.code}\nExpires at: ${payload.expiresAt}`,
+      bodyOverride: `${template.body}\n\nCode: ${payload.code}\nExpires at: ${payload.expiresAt}\nCopy code: ${copyPageUrl}`,
       details: [
         { label: "Code", value: payload.code },
+        { label: "Copy code", value: copyPageUrl },
         { label: "Expires", value: payload.expiresAt },
         { label: "Purpose", value: payload.purpose },
         { label: "Partner", value: payload.partnerId },

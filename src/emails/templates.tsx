@@ -123,7 +123,10 @@ export function VerificationCodeEmail(props: TemplateComponentProps) {
         value={props.highlightedCode?.value ?? undefined}
       />
       <div className="text-center">
-        <CopyIconBadge label="Copy code" />
+        <CopyIconBadge
+          label={props.ctaLabel ?? "Copy code"}
+          href={props.ctaHref ?? null}
+        />
         {props.expiresInLabel ? (
           <p className="mt-3 text-xs uppercase tracking-[0.3em] text-brand-muted">
             {props.expiresInLabel}
@@ -157,4 +160,3 @@ export function BillingReportEmail(props: TemplateComponentProps) {
     </EmailLayout>
   );
 }
-

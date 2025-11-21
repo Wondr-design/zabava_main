@@ -177,12 +177,13 @@ export function CodeBadge({ label, value }: CodeBadgeProps) {
   );
 }
 
-interface CopyIconBadgeProps {
+export interface CopyIconBadgeProps {
   label?: string;
+  href?: string | null;
 }
 
-export function CopyIconBadge({ label }: CopyIconBadgeProps) {
-  return (
+export function CopyIconBadge({ label, href }: CopyIconBadgeProps) {
+  const badge = (
     <div className="inline-flex items-center justify-center gap-2 rounded-full border border-brand-border bg-brand-surface px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-brand-text shadow-[inset_0_0_0_1px_rgba(0,0,0,0.02)]">
       <span aria-hidden role="img">
         📋
@@ -190,6 +191,19 @@ export function CopyIconBadge({ label }: CopyIconBadgeProps) {
       {label ?? "Copy code"}
     </div>
   );
+  if (href) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer noopener"
+        aria-label={label ? `${label} (opens in new tab)` : "Copy code (opens in new tab)"}
+      >
+        {badge}
+      </a>
+    );
+  }
+  return badge;
 }
 
 interface CtaButtonProps {

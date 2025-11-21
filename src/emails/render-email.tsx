@@ -122,6 +122,8 @@ function getTemplateComponent(props: {
           highlightedCode={props.highlightedCode}
           partnerLabel={props.partnerLabel}
           expiresInLabel={props.expiresInLabel}
+          ctaHref={props.ctaHref}
+          ctaLabel={props.ctaLabel}
         />
       );
     case "billing_report":
