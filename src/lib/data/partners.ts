@@ -19,6 +19,7 @@ const DEFAULT_CONTRACT = {
   commissionRateDiscounted: 0,
   commissionBasis: "discounted" as const,
   bonusPointsPerCzk: 0,
+  listingOnly: false,
 };
 
 const DEFAULT_TICKETING = {
@@ -26,6 +27,7 @@ const DEFAULT_TICKETING = {
   familyRule: "",
   ticketDetails: [] as PartnerTicketDetail[],
   addons: [] as PartnerTicketAddon[],
+  maxGuestsPerBooking: null as number | null,
 };
 
 const DEFAULT_ADDRESS = {
@@ -51,8 +53,6 @@ const DEFAULT_INFO = {
   companyIdNumber: "",
   companyAddress: { ...DEFAULT_ADDRESS },
   businessAddress: { ...DEFAULT_ADDRESS, sameAsCompany: true },
-  visitorsMin: 0,
-  visitorsMax: 0,
   minAge: 0,
   openingHours: [] as PartnerOpeningHourEntry[],
   publicTransport: "",
@@ -97,7 +97,6 @@ export interface PartnerTicketDetail {
   discountedPrice: number | null;
   description: string;
   inclusions?: PartnerTicketInclusions | null;
-  maxGuests?: number | null;
 }
 
 export interface PartnerTicketAddon {
@@ -131,6 +130,7 @@ const contractSchema = z
     commissionRateDiscounted: z.coerce.number().min(0).max(100).optional(),
     commissionBasis: z.enum(["original", "discounted"]).optional(),
     bonusPointsPerCzk: z.coerce.number().min(0).optional(),
+    listingOnly: z.boolean().optional(),
   })
   .partial();
 
@@ -143,6 +143,16 @@ const ticketInclusionsSchema = z
   .partial()
   .optional();
 
+const ticketLimitsSchema = z
+  .object({
+    adults: z.coerce.number().min(0).optional().nullable(),
+    children: z.coerce.number().min(0).optional().nullable(),
+    teens: z.coerce.number().min(0).optional().nullable(),
+    total: z.coerce.number().min(0).optional().nullable(),
+  })
+  .partial()
+  .optional();
+
 const ticketDetailSchema = z.object({
   id: z.string().optional(),
   ticketType: z.string().optional().nullable(),
@@ -150,6 +160,7 @@ const ticketDetailSchema = z.object({
   price: z.coerce.number().min(0).optional().nullable(),
   description: z.string().optional(),
   inclusions: ticketInclusionsSchema,
+  limits: ticketLimitsSchema,
   maxGuests: z.coerce.number().min(0).optional().nullable(),
 });
 
@@ -169,6 +180,7 @@ const ticketingSchema = z
     familyRule: z.string().optional(),
     ticketDetails: z.array(ticketDetailSchema).optional(),
     addons: z.array(ticketAddonSchema).optional(),
+    maxGuestsPerBooking: z.coerce.number().min(0).optional().nullable(),
   })
   .partial();
 
@@ -205,8 +217,6 @@ const infoSchema = z
     companyIdNumber: z.string().optional(),
     companyAddress: addressSchema.optional(),
     businessAddress: addressSchema.optional(),
-    visitorsMin: z.coerce.number().min(0).optional(),
-    visitorsMax: z.coerce.number().min(0).optional(),
     minAge: z.coerce.number().min(0).optional(),
     openingHours: z.array(openingHourSchema).optional(),
     publicTransport: z.string().optional(),
@@ -273,6 +283,7 @@ export interface PartnerMetaContract {
   commissionRateDiscounted: number;
   commissionBasis: "original" | "discounted";
   bonusPointsPerCzk: number;
+  listingOnly: boolean;
 }
 
 export interface PartnerMetaTicketing {
@@ -280,6 +291,7 @@ export interface PartnerMetaTicketing {
   familyRule: string;
   ticketDetails: PartnerTicketDetail[];
   addons: PartnerTicketAddon[];
+  maxGuestsPerBooking: number | null;
 }
 
 export interface PartnerAddress {
@@ -305,8 +317,6 @@ export interface PartnerMetaInfo {
   companyIdNumber: string;
   companyAddress: PartnerAddress;
   businessAddress: PartnerAddress;
-  visitorsMin: number;
-  visitorsMax: number;
   minAge: number;
   openingHours: PartnerOpeningHourEntry[];
   publicTransport: string;
@@ -557,7 +567,6 @@ function sanitizeTicketDetails(input?: unknown): PartnerTicketDetail[] {
         : null;
     const price = coerceNonNegativeNumber(value.price);
     const inclusions = sanitizeTicketInclusions(value.inclusions);
-    const maxGuests = coerceNonNegativeNumber(value.maxGuests);
     const id =
       typeof value.id === "string" && value.id.trim().length > 0
         ? value.id.trim()
@@ -570,7 +579,6 @@ function sanitizeTicketDetails(input?: unknown): PartnerTicketDetail[] {
       discountedPrice: null,
       description,
       inclusions: inclusions ?? undefined,
-      maxGuests,
     } satisfies PartnerTicketDetail;
   });
   return mapped.filter(
@@ -762,6 +770,9 @@ function mergePartnerMeta(
     if (updates.contract?.bonusPointsPerCzk !== undefined) {
       merged.contract.bonusPointsPerCzk = updates.contract.bonusPointsPerCzk;
     }
+    if (typeof updates.contract?.listingOnly === "boolean") {
+      merged.contract.listingOnly = updates.contract.listingOnly;
+    }
     const shouldSyncCommissionRate =
       updates.contract?.commissionBasis !== undefined ||
       updates.contract?.commissionRateOriginal !== undefined ||
@@ -806,6 +817,14 @@ function mergePartnerMeta(
       merged.ticketing.addons = sanitizeTicketAddons(
         updates.ticketing.addons
       );
+    }
+    if (updates.ticketing?.maxGuestsPerBooking !== undefined) {
+      const value = updates.ticketing.maxGuestsPerBooking;
+      if (value === null) {
+        merged.ticketing.maxGuestsPerBooking = null;
+      } else if (typeof value === "number" && value >= 0) {
+        merged.ticketing.maxGuestsPerBooking = value;
+      }
     }
   }
 
@@ -873,12 +892,6 @@ function mergePartnerMeta(
       );
     } else {
       merged.info.businessAddress = cloneAddress(merged.info.businessAddress);
-    }
-    if (updates.info.visitorsMin !== undefined) {
-      merged.info.visitorsMin = updates.info.visitorsMin;
-    }
-    if (updates.info.visitorsMax !== undefined) {
-      merged.info.visitorsMax = updates.info.visitorsMax;
     }
     if (updates.info.minAge !== undefined) {
       merged.info.minAge = updates.info.minAge;
@@ -971,6 +984,7 @@ function mapRowToMeta(
     typeof contract.bonusPointsPerCzk === "number"
       ? contract.bonusPointsPerCzk
       : 0;
+  contract.listingOnly = Boolean(contract.listingOnly);
 
   const ticketing = {
     ...base.ticketing,
@@ -978,6 +992,11 @@ function mapRowToMeta(
   } as PartnerMetaTicketing;
   ticketing.ticketTypes = sanitizeStringArray(ticketing.ticketTypes);
   ticketing.ticketDetails = sanitizeTicketDetails(ticketing.ticketDetails);
+  ticketing.maxGuestsPerBooking =
+    typeof ticketing.maxGuestsPerBooking === "number" &&
+    Number.isFinite(ticketing.maxGuestsPerBooking)
+      ? ticketing.maxGuestsPerBooking
+      : null;
   ticketing.addons = sanitizeTicketAddons(ticketing.addons);
   const discountRate =
     typeof contract.discountRate === "number" &&
@@ -1027,10 +1046,6 @@ function mapRowToMeta(
   );
   info.openingHours = sanitizeOpeningHours(info.openingHours);
   info.cashCurrencies = sanitizeStringArray(info.cashCurrencies);
-  info.visitorsMin =
-    typeof info.visitorsMin === "number" ? info.visitorsMin : 0;
-  info.visitorsMax =
-    typeof info.visitorsMax === "number" ? info.visitorsMax : 0;
   info.minAge = typeof info.minAge === "number" ? info.minAge : 0;
   info.publicTransport = info.publicTransport ?? "";
   info.reservationRequired = Boolean(info.reservationRequired);
@@ -1105,6 +1120,7 @@ function metaToRow(meta: PartnerMeta): Partial<PartnerRow> & { id: string } {
       commissionRateDiscounted: meta.contract.commissionRateDiscounted,
       commissionBasis: meta.contract.commissionBasis,
       bonusPointsPerCzk: meta.contract.bonusPointsPerCzk,
+      listingOnly: Boolean(meta.contract.listingOnly),
     },
     ticketing: {
       ticketTypes: meta.ticketing.ticketTypes,
@@ -1113,6 +1129,7 @@ function metaToRow(meta: PartnerMeta): Partial<PartnerRow> & { id: string } {
         meta.ticketing.ticketDetails
       ),
       addons: serializeTicketAddonsForSave(meta.ticketing.addons),
+      maxGuestsPerBooking: meta.ticketing.maxGuestsPerBooking,
     },
     info: {
       contactName: meta.info.contactName,
@@ -1129,11 +1146,9 @@ function metaToRow(meta: PartnerMeta): Partial<PartnerRow> & { id: string } {
       vatRegistered: meta.info.vatRegistered,
       vatRate: meta.info.vatRate,
       companyIdNumber: meta.info.companyIdNumber,
-      companyAddress: meta.info.companyAddress,
-      businessAddress: meta.info.businessAddress,
-      visitorsMin: meta.info.visitorsMin,
-      visitorsMax: meta.info.visitorsMax,
-      minAge: meta.info.minAge,
+    companyAddress: meta.info.companyAddress,
+    businessAddress: meta.info.businessAddress,
+    minAge: meta.info.minAge,
       openingHours: meta.info.openingHours,
       publicTransport: meta.info.publicTransport,
       reservationRequired: meta.info.reservationRequired,
@@ -1146,6 +1161,8 @@ function metaToRow(meta: PartnerMeta): Partial<PartnerRow> & { id: string } {
       heroImageUrl: meta.media.heroImageUrl,
       contractAttachmentUrl: meta.media.contractAttachmentUrl,
       videoUrls: meta.media.videoUrls,
+      qrAccentColor: meta.media.qrAccentColor,
+      qrBadgeIconUrl: meta.media.qrBadgeIconUrl,
     },
     bonus_program_enabled: meta.bonusProgramEnabled,
     notes: meta.notes,

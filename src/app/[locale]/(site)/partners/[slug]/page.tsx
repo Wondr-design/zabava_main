@@ -106,15 +106,6 @@ function formatAddress(address?: PartnerAddress | null) {
     .join(", ");
 }
 
-function formatVisitorRange(min?: number, max?: number) {
-  const hasMin = typeof min === "number" && min > 0;
-  const hasMax = typeof max === "number" && max > 0;
-  if (hasMin && hasMax) return `${min} – ${max} guests`;
-  if (hasMax) return `Up to ${max} guests`;
-  if (hasMin) return `From ${min} guests`;
-  return "Flexible group sizes";
-}
-
 function formatTimeDisplay(value: string) {
   if (!value) return "";
   const trimmed = value.trim();
@@ -289,7 +280,10 @@ export default async function PartnerPage({ params }: PartnerPageContext) {
     info.googleMapEmbedUrl && info.googleMapEmbedUrl.trim().length > 0
       ? info.googleMapEmbedUrl.trim()
       : buildMapEmbedUrl(info.googleMapUrl, fullAddress);
-  const visitorRange = formatVisitorRange(info.visitorsMin, info.visitorsMax);
+  const bookingCap = partner.ticketing?.maxGuestsPerBooking ?? null;
+  const visitorRange = bookingCap
+    ? `Up to ${bookingCap} guests`
+    : "Flexible group sizes";
   const minAgeLabel = info.minAge > 0 ? `${info.minAge}+ years` : "All ages welcome";
   const vatLabel = info.vatRegistered
     ? info.vatRate > 0

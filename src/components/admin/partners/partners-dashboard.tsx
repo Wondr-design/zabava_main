@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -181,6 +182,8 @@ export function PartnersDashboard({
   createInviteAction,
   deleteInviteAction,
 }: PartnersDashboardProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [view, setView] = useState<"list" | "create" | "detail">("list");
   const [createForm, setCreateForm] = useState<CreatePartnerForm>(() => ({
     ...DEFAULT_CREATE_FORM,
@@ -298,6 +301,45 @@ export function PartnersDashboard({
       notes: prev.notes.filter((note) => note.id !== noteId),
     }));
   }, []);
+
+  const syncRouteState = useCallback(
+    (nextView: "list" | "create" | "detail", partnerId?: string | null) => {
+      const params = new URLSearchParams(searchParams?.toString() ?? "");
+      params.delete("view");
+      params.delete("partnerId");
+      if (nextView === "detail" && partnerId) {
+        params.set("view", "detail");
+        params.set("partnerId", partnerId);
+      } else if (nextView === "create") {
+        params.set("view", "create");
+      }
+      const query = params.toString();
+      router.replace(query ? `?${query}` : "?", { scroll: false });
+    },
+    [router, searchParams]
+  );
+
+  useEffect(() => {
+    const paramView = searchParams?.get("view");
+    const paramPartnerId = searchParams?.get("partnerId");
+    if (paramView === "detail" && paramPartnerId) {
+      setActivePartnerId(paramPartnerId);
+      setView("detail");
+      return;
+    }
+    if (paramView === "create") {
+      setView("create");
+      return;
+    }
+    setView("list");
+    setActivePartnerId(null);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "auto" });
+    }
+  }, [view, activePartnerId]);
 
   async function handleCreatePartner(event: React.FormEvent) {
     event.preventDefault();
@@ -480,6 +522,7 @@ export function PartnersDashboard({
       });
       setActivePartnerId(entry.partnerId);
       setView("detail");
+      syncRouteState("detail", entry.partnerId);
       resetCreateForm();
       toast.success("Partner created.");
     } catch (error) {
@@ -501,6 +544,7 @@ export function PartnersDashboard({
         onBack={() => {
           setView("list");
           setActivePartnerId(null);
+          syncRouteState("list");
         }}
         onPartnerUpdated={handlePartnerUpdated}
       />
@@ -516,6 +560,7 @@ export function PartnersDashboard({
           onClick={() => {
             setView("list");
             resetCreateForm();
+            syncRouteState("list");
           }}
         >
           ← Back to partners
@@ -1058,19 +1103,21 @@ export function PartnersDashboard({
       <PartnersTable
         partners={overviewList}
         actions={
-          <Button
-            type="button"
-            onClick={() => {
-              resetCreateForm();
-              setView("create");
-            }}
-          >
-            Create partner
-          </Button>
-        }
+        <Button
+          type="button"
+          onClick={() => {
+            resetCreateForm();
+            setView("create");
+            syncRouteState("create");
+          }}
+        >
+          Create partner
+        </Button>
+      }
         onPartnerClick={(partner) => {
           setActivePartnerId(partner.id);
           setView("detail");
+          syncRouteState("detail", partner.id);
         }}
       />
 

@@ -57,6 +57,15 @@ const pricingInclusionSchema = z
   })
   .partial();
 
+const pricingLimitSchema = z
+  .object({
+    adults: z.number().nonnegative().nullable().optional(),
+    children: z.number().nonnegative().nullable().optional(),
+    teens: z.number().nonnegative().nullable().optional(),
+    total: z.number().nonnegative().nullable().optional(),
+  })
+  .partial();
+
 const pricingBundleSchema = z.object({
   id: z.string(),
   sourceId: z.string().optional(),
@@ -67,6 +76,7 @@ const pricingBundleSchema = z.object({
   discountedPrice: z.number().nonnegative().nullable().optional(),
   maxGuests: z.number().nonnegative().nullable().optional(),
   inclusions: pricingInclusionSchema.optional(),
+  limits: pricingLimitSchema.optional(),
 });
 
 const pricingAddonSchema = z.object({
@@ -85,6 +95,7 @@ const pricingStepSchema = z.object({
   allowCustomTotals: z.boolean().default(true),
   bundles: z.array(pricingBundleSchema).default([]),
   addons: z.array(pricingAddonSchema).default([]),
+  maxGuestsPerBooking: z.number().nonnegative().nullable().optional(),
 });
 
 const formFieldSchema = z.object({
@@ -426,6 +437,7 @@ export function buildPricingStepFromTicketing(args: {
   title?: string;
   description?: string;
   discountRate?: number | null;
+  maxGuestsPerBooking?: number | null;
 }) {
   const normalizedDiscountRate =
     typeof args.discountRate === "number" && Number.isFinite(args.discountRate)
@@ -462,7 +474,6 @@ export function buildPricingStepFromTicketing(args: {
         ? detail.discountedPrice
         : null
     ),
-    maxGuests: detail.maxGuests ?? null,
     inclusions: detail.inclusions ?? undefined,
   }));
 
@@ -497,6 +508,7 @@ export function buildPricingStepFromTicketing(args: {
       allowCustomTotals: true,
       bundles,
       addons,
+      maxGuestsPerBooking: args.maxGuestsPerBooking ?? null,
     },
   };
 }
@@ -632,6 +644,7 @@ export function createDefaultFormConfig(
     currency: "CZK",
     ticketDetails: SAMPLE_TICKETING_DETAILS,
     addons: SAMPLE_TICKETING_ADDONS,
+    maxGuestsPerBooking: null,
   });
   baseSteps.splice(1, 0, pricingStep);
 

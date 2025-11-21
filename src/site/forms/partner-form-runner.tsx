@@ -57,6 +57,17 @@ interface TicketCatalogItem {
   description: string;
   price: number | null;
   ticketType: string | null;
+  inclusions?: {
+    adults?: number | null;
+    children?: number | null;
+    teens?: number | null;
+  };
+  limits?: {
+    adults?: number | null;
+    children?: number | null;
+    teens?: number | null;
+    total?: number | null;
+  };
 }
 
 type TicketCatalogBundle = TicketCatalogItem & { kind: "bundle" };
@@ -169,6 +180,13 @@ export function PartnerFormRunner({
       ) ?? null
     );
   }, [steps]);
+  const bookingCap = useMemo(() => {
+    const cap =
+      (pricingStep?.pricing as any)?.maxGuestsPerBooking ??
+      (form.config.pricing as any)?.maxGuestsPerBooking ??
+      null;
+    return typeof cap === "number" && cap > 0 ? cap : null;
+  }, [pricingStep?.pricing, form.config.pricing]);
   const [currentStep, setCurrentStep] = useState(0);
   const [values, setValues] = useState<Record<string, unknown>>(() =>
     initializeValues(form)
@@ -251,6 +269,14 @@ export function PartnerFormRunner({
         price,
         ticketType,
         kind: "bundle" as const,
+        inclusions:
+          (item as PartnerFormPricingBundle).inclusions ??
+          (item as PartnerTicketDetail).inclusions ??
+          undefined,
+        limits:
+          (item as PartnerFormPricingBundle).limits ??
+          (item as PartnerTicketDetail).limits ??
+          undefined,
       };
     };
 
@@ -330,19 +356,71 @@ export function PartnerFormRunner({
     setAddonQuantities({});
   }, [catalogSignature]);
 
-  const adjustTicketQuantity = useCallback((id: string, delta: number) => {
-    setTicketQuantities((prev) => {
-      const next = { ...prev };
-      const current = next[id] ?? 0;
-      const updated = Math.max(0, current + delta);
-      if (updated === 0) {
-        delete next[id];
-      } else {
-        next[id] = updated;
-      }
-      return next;
-    });
-  }, []);
+  const adjustTicketQuantity = useCallback(
+    (id: string, delta: number) => {
+      setTicketQuantities((prev) => {
+        const next = { ...prev };
+        const current = next[id] ?? 0;
+        const bundle = bundleCatalog.find((b) => b.id === id);
+        const computeMax = () => {
+          if (!bundle?.limits) return Number.POSITIVE_INFINITY;
+          let cap = Number.POSITIVE_INFINITY;
+          const { limits, inclusions } = bundle;
+          const applyCap = (limitValue?: number | null, perUnit?: number | null) => {
+            if (
+              limitValue === null ||
+              limitValue === undefined ||
+              Number.isNaN(limitValue)
+            ) {
+              return;
+            }
+            const unit = perUnit && perUnit > 0 ? perUnit : 1;
+            const qtyCap = Math.floor(limitValue / unit);
+            cap = Math.min(cap, qtyCap);
+          };
+          if (typeof limits.total === "number") {
+            cap = Math.min(cap, limits.total);
+          }
+          applyCap(limits.adults ?? null, inclusions?.adults ?? null);
+          applyCap(limits.children ?? null, inclusions?.children ?? null);
+          applyCap(limits.teens ?? null, inclusions?.teens ?? null);
+          return cap;
+        };
+        const maxAllowed = computeMax();
+        const proposed = current + delta;
+        const clamped =
+          maxAllowed === Number.POSITIVE_INFINITY
+            ? Math.max(0, proposed)
+            : Math.max(0, Math.min(proposed, maxAllowed));
+        let finalQuantity = clamped;
+        if (bookingCap !== null) {
+          const otherTotal = Object.entries(prev).reduce(
+            (sum, [key, qty]) => (key === id ? sum : sum + qty),
+            0
+          );
+          const available = Math.max(bookingCap - otherTotal, 0);
+          finalQuantity = Math.min(finalQuantity, available);
+          if (finalQuantity < clamped) {
+            setError(`Total tickets limited to ${bookingCap} per booking.`);
+          }
+        }
+        if (clamped < proposed && bookingCap === null) {
+          setError(
+            `This ticket is limited to ${
+              maxAllowed === 0 ? "0" : maxAllowed
+            } per booking.`
+          );
+        }
+        if (finalQuantity === 0) {
+          delete next[id];
+        } else {
+          next[id] = finalQuantity;
+        }
+        return next;
+      });
+    },
+    [bundleCatalog, bookingCap]
+  );
 
   const adjustAddonQuantity = useCallback((id: string, delta: number) => {
     setAddonQuantities((prev) => {

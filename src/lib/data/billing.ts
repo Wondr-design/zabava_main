@@ -37,33 +37,38 @@ const settingsSchema = z.object({
   billingEmail: z.string().email().optional().nullable(),
   autoSendEnabled: z.boolean().optional(),
   autoSendDay: z.number().int().min(1).max(28).optional(),
-  listingFeeAmount: z.number().nonnegative().optional(),
-  listingFeeCurrency: z.string().min(1).optional(),
   commissionBasis: z.enum(["discounted", "original"]).optional(),
-  listingOnly: z.boolean().optional(),
 });
 
 export async function getPartnerBillingSettings(partnerId: string): Promise<PartnerBillingSettings> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("partner_billing_settings")
-    .select("*")
-    .eq("partner_id", partnerId)
+    .from("partners")
+    .select("id, contract, contact_email, billing:partner_billing_settings(*)")
+    .eq("id", partnerId)
     .maybeSingle();
   if (error) {
     throw new Error(`Failed to load billing settings: ${error.message}`);
   }
+  const contract = (data?.contract as Record<string, unknown>) ?? {};
+  const listingFeeAmount = Number(contract.monthlyFee ?? 0);
+  const listingOnly = Boolean(contract.listingOnly);
+  const listingFeeCurrency = "CZK";
+  const billing = (data as any)?.billing ?? {};
   return {
     partnerId,
-    billingEmail: (data?.billing_email as string | null) ?? null,
-    autoSendEnabled: Boolean(data?.auto_send_enabled),
-    autoSendDay: Number(data?.auto_send_day ?? 1),
-    listingFeeAmount: Number(data?.listing_fee_amount ?? 0),
-    listingFeeCurrency: (data?.listing_fee_currency as string) || "CZK",
-    commissionBasis: (data?.commission_basis as CommissionBasis) || "discounted",
-    listingOnly: Boolean(data?.listing_only),
-    lastSentAt: (data?.last_sent_at as string | null) ?? null,
-    nextScheduledAt: (data?.next_scheduled_at as string | null) ?? null,
+    billingEmail: (billing?.billing_email as string | null) ?? null,
+    autoSendEnabled: Boolean(billing?.auto_send_enabled),
+    autoSendDay: Number(billing?.auto_send_day ?? 1),
+    listingFeeAmount,
+    listingFeeCurrency,
+    commissionBasis:
+      (billing?.commission_basis as CommissionBasis) ||
+      (contract.commissionBasis as CommissionBasis) ||
+      "discounted",
+    listingOnly,
+    lastSentAt: (billing?.last_sent_at as string | null) ?? null,
+    nextScheduledAt: (billing?.next_scheduled_at as string | null) ?? null,
   };
 }
 
@@ -82,10 +87,7 @@ export async function upsertPartnerBillingSettings(
       auto_send_enabled:
         parsed.autoSendEnabled !== undefined ? parsed.autoSendEnabled : undefined,
       auto_send_day: parsed.autoSendDay ?? undefined,
-      listing_fee_amount: parsed.listingFeeAmount ?? undefined,
-      listing_fee_currency: parsed.listingFeeCurrency ?? undefined,
       commission_basis: parsed.commissionBasis ?? undefined,
-      listing_only: parsed.listingOnly ?? undefined,
       updated_at: now,
     } as never,
     { onConflict: "partner_id" },
@@ -99,7 +101,7 @@ export async function listPartnerBillingSummaries(): Promise<PartnerBillingSumma
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("partners")
-    .select("id, display_name, contact_email, billing:partner_billing_settings(*)")
+    .select("id, display_name, contact_email, contract, billing:partner_billing_settings(*)")
     .order("display_name", { ascending: true });
   if (error) {
     throw new Error(`Failed to load partners for billing: ${error.message}`);
@@ -110,10 +112,14 @@ export async function listPartnerBillingSummaries(): Promise<PartnerBillingSumma
     billingEmail: (row.billing?.billing_email as string | null) ?? null,
     contactEmail: (row.contact_email as string | null) ?? null,
     autoSendEnabled: Boolean(row.billing?.auto_send_enabled),
-    commissionBasis: (row.billing?.commission_basis as CommissionBasis) || "discounted",
-    listingFeeAmount: Number(row.billing?.listing_fee_amount ?? 0),
-    listingFeeCurrency: (row.billing?.listing_fee_currency as string) || "CZK",
-    listingOnly: Boolean(row.billing?.listing_only),
+    autoSendDay: Number(row.billing?.auto_send_day ?? 1),
+    commissionBasis:
+      (row.billing?.commission_basis as CommissionBasis) ||
+      (row.contract?.commissionBasis as CommissionBasis) ||
+      "discounted",
+    listingFeeAmount: Number(row.contract?.monthlyFee ?? 0),
+    listingFeeCurrency: "CZK",
+    listingOnly: Boolean(row.contract?.listingOnly),
     lastSentAt: (row.billing?.last_sent_at as string | null) ?? null,
   }));
 }

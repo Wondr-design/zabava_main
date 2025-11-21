@@ -165,6 +165,8 @@ export function AdminBillingsClient({
         {
           billingEmail: payload.billingEmail,
           autoSendEnabled: payload.autoSendEnabled,
+          autoSendDay: payload.autoSendDay,
+          commissionBasis: payload.commissionBasis,
         },
         { headers: csrfToken ? { "x-csrf-token": csrfToken } : undefined },
       );
@@ -172,7 +174,13 @@ export function AdminBillingsClient({
       setItems((prev) =>
         prev.map((item) =>
           item.partnerId === partnerId
-            ? { ...item, billingEmail: payload.billingEmail ?? item.billingEmail, autoSendEnabled: payload.autoSendEnabled ?? item.autoSendEnabled }
+            ? {
+                ...item,
+                billingEmail: payload.billingEmail ?? item.billingEmail,
+                autoSendEnabled: payload.autoSendEnabled ?? item.autoSendEnabled,
+                autoSendDay: payload.autoSendDay ?? item.autoSendDay,
+                commissionBasis: payload.commissionBasis ?? item.commissionBasis,
+              }
             : item,
         ),
       );
@@ -271,21 +279,9 @@ export function AdminBillingsClient({
                   />
                 </div>
               </div>
-                <div className="text-xs text-muted-foreground">
-                <p>Commission basis: {item.commissionBasis}</p>
-                <p>Listing only: {item.listingOnly ? "Yes" : "No"}</p>
-                <p>
-                  Listing fee: {item.listingFeeAmount.toLocaleString()} {item.listingFeeCurrency}
-                </p>
-                {item.lastSentAt ? (
-                  <p>Last sent: {format(new Date(item.lastSentAt), "PP")}</p>
-               ) : (
-                  <p>Never sent</p>
-                )}
-              </div>
-              <div className="grid gap-2 md:grid-cols-2">
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Commission basis</Label>
+              <div className="grid gap-3 rounded-lg border border-muted px-3 py-2">
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm font-semibold text-foreground">Commission basis</p>
                   <select
                     defaultValue={item.commissionBasis}
                     onChange={(e) =>
@@ -294,49 +290,28 @@ export function AdminBillingsClient({
                       })
                     }
                     className="w-full rounded-md border border-muted bg-transparent px-2 py-1 text-sm"
+                    disabled={saving === item.partnerId}
                   >
                     <option value="discounted">Discounted</option>
                     <option value="original">Original</option>
                   </select>
                 </div>
-                <div className="flex items-center justify-between rounded-lg border border-muted px-3 py-2">
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-medium">Listing only</p>
-                    <p className="text-xs text-muted-foreground">No commission, listing fee only.</p>
-                  </div>
-                  <Switch
-                    checked={item.listingOnly ?? false}
-                    onCheckedChange={(checked) =>
-                      handleSaveSettings(item.partnerId, { listingOnly: checked })
-                    }
-                    disabled={saving === item.partnerId}
-                  />
+                <div className="rounded-lg border border-dashed border-muted bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+                  <p>
+                    Listing only: <strong>{item.listingOnly ? "Yes" : "No"}</strong>
+                  </p>
+                  <p>
+                    Listing fee: {item.listingFeeAmount.toLocaleString()} {item.listingFeeCurrency}
+                  </p>
+                  <p>Edit listing-only status and fee in Partner → Financials.</p>
                 </div>
-              </div>
-              <div className="grid gap-2 md:grid-cols-2">
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Listing fee</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    defaultValue={item.listingFeeAmount}
-                    onBlur={(e) =>
-                      handleSaveSettings(item.partnerId, {
-                        listingFeeAmount: Number(e.target.value) || 0,
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Currency</Label>
-                  <Input
-                    defaultValue={item.listingFeeCurrency}
-                    onBlur={(e) =>
-                      handleSaveSettings(item.partnerId, {
-                        listingFeeCurrency: e.target.value || item.listingFeeCurrency,
-                      })
-                    }
-                  />
+                <div className="text-xs text-muted-foreground">
+                  <p>Commission basis: {item.commissionBasis}</p>
+                  {item.lastSentAt ? (
+                    <p>Last sent: {format(new Date(item.lastSentAt), "PP")}</p>
+                  ) : (
+                    <p>Never sent</p>
+                  )}
                 </div>
               </div>
 

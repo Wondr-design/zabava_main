@@ -10,7 +10,10 @@ import {
   EMAIL_TEMPLATE_DEFAULTS,
   emailTemplateTypes,
 } from "@/lib/email-template-constants";
-import { listEmailTemplates, upsertEmailTemplates } from "@/lib/data/email-templates";
+import {
+  listEmailTemplates,
+  upsertEmailTemplates,
+} from "@/lib/data/email-templates";
 
 const BASE_CORS = {
   methods: "GET,POST,OPTIONS",
@@ -39,6 +42,7 @@ const templateSchema = z.object({
   subject: z.string().min(1),
   body: z.string().min(1),
   description: z.string().optional().nullable(),
+  structure: z.any().optional().nullable(), // JSON structure for template elements
 });
 
 const upsertSchema = z.object({
@@ -51,12 +55,15 @@ export function OPTIONS(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   if (!isAdminRequestAuthorized(req)) {
-    return cors(req, NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+    return cors(
+      req,
+      NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    );
   }
 
   try {
     const params = listSchema.parse(
-      Object.fromEntries(req.nextUrl.searchParams.entries()),
+      Object.fromEntries(req.nextUrl.searchParams.entries())
     );
     const locale = params.locale || "en";
     const items = await listEmailTemplates(locale);
@@ -72,8 +79,8 @@ export async function GET(req: NextRequest) {
         req,
         NextResponse.json(
           { error: "ValidationError", issues: error.flatten() },
-          { status: 400 },
-        ),
+          { status: 400 }
+        )
       );
     }
     log.error("admin_email_templates_list_error", error, {
@@ -81,19 +88,22 @@ export async function GET(req: NextRequest) {
     });
     return cors(
       req,
-      NextResponse.json({ error: "Internal server error" }, { status: 500 }),
+      NextResponse.json({ error: "Internal server error" }, { status: 500 })
     );
   }
 }
 
 export async function POST(req: NextRequest) {
   if (!isAdminRequestAuthorized(req)) {
-    return cors(req, NextResponse.json({ error: "Unauthorized" }, { status: 401 }));
+    return cors(
+      req,
+      NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    );
   }
   if (!verifyCsrf(req)) {
     return cors(
       req,
-      NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 }),
+      NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 })
     );
   }
 
@@ -112,8 +122,8 @@ export async function POST(req: NextRequest) {
         req,
         NextResponse.json(
           { error: "ValidationError", issues: error.flatten() },
-          { status: 400 },
-        ),
+          { status: 400 }
+        )
       );
     }
     log.error("admin_email_templates_upsert_error", error, {
@@ -121,7 +131,7 @@ export async function POST(req: NextRequest) {
     });
     return cors(
       req,
-      NextResponse.json({ error: "Internal server error" }, { status: 500 }),
+      NextResponse.json({ error: "Internal server error" }, { status: 500 })
     );
   }
 }

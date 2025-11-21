@@ -1,3 +1,5 @@
+"use client";
+
 import {
   DesignButton,
   DesignFormField,
@@ -140,17 +142,28 @@ export default function AdminDesignPreviewPage() {
         description="Inputs and selects used throughout configuration flows."
       >
         <div className="grid gap-6 md:grid-cols-2">
-          <DesignFormField label="Email address" helper="We’ll send the confirmation here." required>
+          <DesignFormField
+            label="Email address"
+            helper="We’ll send the confirmation here."
+            required
+          >
             <DesignInput placeholder="name@example.com" type="email" />
           </DesignFormField>
-          <DesignFormField label="Partner location" helper="Pick the venue you’re working with.">
+          <DesignFormField
+            label="Partner location"
+            helper="Pick the venue you’re working with."
+          >
             <DesignSelect defaultValue="prague">
               <DesignSelectTrigger>
                 <DesignSelectValue placeholder="Select partner" />
               </DesignSelectTrigger>
               <DesignSelectContent>
-                <DesignSelectItem value="prague">Prague Lounge</DesignSelectItem>
-                <DesignSelectItem value="vienna">Vienna Terrace</DesignSelectItem>
+                <DesignSelectItem value="prague">
+                  Prague Lounge
+                </DesignSelectItem>
+                <DesignSelectItem value="vienna">
+                  Vienna Terrace
+                </DesignSelectItem>
                 <DesignSelectItem value="berlin">Berlin Loft</DesignSelectItem>
               </DesignSelectContent>
             </DesignSelect>
@@ -207,12 +220,12 @@ export default function AdminDesignPreviewPage() {
               Elevated modal
             </p>
             <p className="text-xs text-[color:var(--ds-text-muted)]">
-              Wrap draw-over experiences in rounded surfaces with generous padding.
+              Wrap draw-over experiences in rounded surfaces with generous
+              padding.
             </p>
           </SurfaceCard>
         </div>
       </SectionCard>
-
 
       <SectionCard
         title="Modal / popover"
@@ -232,7 +245,11 @@ export default function AdminDesignPreviewPage() {
                   </DesignDialogDescription>
                 </div>
                 <DesignDialogClose asChild>
-                  <DesignButton variant="ghost" size="icon" aria-label="Close dialog">
+                  <DesignButton
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Close dialog"
+                  >
                     ✕
                   </DesignButton>
                 </DesignDialogClose>
@@ -250,39 +267,47 @@ export default function AdminDesignPreviewPage() {
                   </span>
                 </div>
                 <div className="ml-auto">
-                  <FilterChip selected size="sm">Enabled</FilterChip>
+                  <FilterChip selected size="sm">
+                    Enabled
+                  </FilterChip>
                 </div>
               </SurfaceCard>
 
               <div className="space-y-3">
-                {["Denim Fabric Jacket", "Beautiful composition", "Strawberry Body Mist", "Black Friday Sale", "Customers who"].map(
-                  (item) => (
-                    <SurfaceCard
-                      key={item}
-                      className="flex items-center gap-4 rounded-[26px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] px-4 py-3"
-                    >
-                      <SurfaceCard className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] text-xs text-[color:var(--ds-text-muted)]">
-                        Img
-                      </SurfaceCard>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-[color:var(--ds-text-strong)]">
-                          {item}
-                        </span>
-                        <span className="text-xs text-[color:var(--ds-text-muted)]">
-                          Size: M | Color: BW
-                        </span>
-                      </div>
-                      <span className="ml-auto text-sm font-semibold text-[color:var(--ds-text-strong)]">
-                        $45.90
-                      </span>
+                {[
+                  "Denim Fabric Jacket",
+                  "Beautiful composition",
+                  "Strawberry Body Mist",
+                  "Black Friday Sale",
+                  "Customers who",
+                ].map((item) => (
+                  <SurfaceCard
+                    key={item}
+                    className="flex items-center gap-4 rounded-[26px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] px-4 py-3"
+                  >
+                    <SurfaceCard className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] text-xs text-[color:var(--ds-text-muted)]">
+                      Img
                     </SurfaceCard>
-                  ),
-                )}
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-[color:var(--ds-text-strong)]">
+                        {item}
+                      </span>
+                      <span className="text-xs text-[color:var(--ds-text-muted)]">
+                        Size: M | Color: BW
+                      </span>
+                    </div>
+                    <span className="ml-auto text-sm font-semibold text-[color:var(--ds-text-strong)]">
+                      $45.90
+                    </span>
+                  </SurfaceCard>
+                ))}
               </div>
             </DesignDialogBody>
 
             <DesignDialogFooter>
-              <DesignButton className="h-12 w-full rounded-full">Connect store</DesignButton>
+              <DesignButton className="h-12 w-full rounded-full">
+                Connect store
+              </DesignButton>
             </DesignDialogFooter>
           </DesignDialogContent>
         </DesignDialog>
@@ -292,144 +317,166 @@ export default function AdminDesignPreviewPage() {
         title="Table pattern"
         description="Embed the design table primitives to present analytics and logs."
       >
-      <SurfaceCard className="rounded-[40px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-6 shadow-[var(--ds-shadow-soft)]">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h3 className="text-base font-semibold text-[color:var(--ds-text-strong)]">
-              Actions
-            </h3>
-            <p className="text-xs text-[color:var(--ds-text-muted)]">
-              Preview of the import list table.
-            </p>
+        <SurfaceCard className="rounded-[40px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-6 shadow-[var(--ds-shadow-soft)]">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+            <div className="space-y-1">
+              <h3 className="text-base font-semibold text-[color:var(--ds-text-strong)]">
+                Actions
+              </h3>
+              <p className="text-xs text-[color:var(--ds-text-muted)]">
+                Preview of the import list table.
+              </p>
+            </div>
+            <DesignSelect defaultValue="all">
+              <DesignSelectTrigger className="w-36">
+                <DesignSelectValue placeholder="Select" />
+              </DesignSelectTrigger>
+              <DesignSelectContent>
+                <DesignSelectItem value="all">All actions</DesignSelectItem>
+                <DesignSelectItem value="active">Active</DesignSelectItem>
+                <DesignSelectItem value="errors">Errors</DesignSelectItem>
+              </DesignSelectContent>
+            </DesignSelect>
           </div>
-          <DesignSelect defaultValue="all">
-            <DesignSelectTrigger className="w-36">
-              <DesignSelectValue placeholder="Select" />
-            </DesignSelectTrigger>
-            <DesignSelectContent>
-              <DesignSelectItem value="all">All actions</DesignSelectItem>
-              <DesignSelectItem value="active">Active</DesignSelectItem>
-              <DesignSelectItem value="errors">Errors</DesignSelectItem>
-            </DesignSelectContent>
-          </DesignSelect>
-        </div>
 
-        <DesignTableWrapper className="bg-[color:var(--ds-surface-card)] p-0">
-          <DesignTable>
-            <DesignTableHead>
-              <tr>
-                <DesignTableHeader />
-                <DesignTableHeader>Product name</DesignTableHeader>
-                <DesignTableHeader>Price</DesignTableHeader>
-                <DesignTableHeader>Size</DesignTableHeader>
-                <DesignTableHeader>Date</DesignTableHeader>
-                <DesignTableHeader>Mexico</DesignTableHeader>
-                <DesignTableHeader>Select</DesignTableHeader>
-                <DesignTableHeader className="text-right">View</DesignTableHeader>
-              </tr>
-            </DesignTableHead>
-            <DesignTableBody>
-              {TABLE_ROWS.map((row, index) => (
-                <DesignTableRow
-                  key={row.product}
-                  selected={index === 2}
-                  className={index === 2 ? "border-[color:var(--ds-primary)] bg-[color:var(--ds-surface-card)]" : ""}
-                >
-                  <DesignTableCell className="w-12">
-                    <label className="flex h-6 w-6 items-center justify-center rounded-full border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)]">
-                      <input type="checkbox" className="sr-only" defaultChecked={index === 2} />
-                      <span
-                        className={cn(
-                          "size-2 rounded-full bg-transparent transition",
-                          index === 2 && "bg-[color:var(--ds-primary)]",
-                        )}
-                      />
-                    </label>
-                  </DesignTableCell>
-                  <DesignTableCell>
-                    <div className="flex items-center gap-3">
-                      <SurfaceCard className="flex h-12 w-12 items-center justify-center rounded-[20px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] text-[11px] font-semibold text-[color:var(--ds-text-muted)]">
-                        {row.product.slice(0, 2)}
-                      </SurfaceCard>
-                      <div>
-                        <p className="font-semibold text-[color:var(--ds-text-strong)]">
-                          {row.product}
-                        </p>
-                        <p className="text-xs text-[color:var(--ds-text-muted)]">
-                          {row.sku}
-                        </p>
+          <DesignTableWrapper className="bg-[color:var(--ds-surface-card)] p-0">
+            <DesignTable>
+              <DesignTableHead>
+                <tr>
+                  <DesignTableHeader />
+                  <DesignTableHeader>Product name</DesignTableHeader>
+                  <DesignTableHeader>Price</DesignTableHeader>
+                  <DesignTableHeader>Size</DesignTableHeader>
+                  <DesignTableHeader>Date</DesignTableHeader>
+                  <DesignTableHeader>Mexico</DesignTableHeader>
+                  <DesignTableHeader>Select</DesignTableHeader>
+                  <DesignTableHeader className="text-right">
+                    View
+                  </DesignTableHeader>
+                </tr>
+              </DesignTableHead>
+              <DesignTableBody>
+                {TABLE_ROWS.map((row, index) => (
+                  <DesignTableRow
+                    key={row.product}
+                    selected={index === 2}
+                    className={
+                      index === 2
+                        ? "border-[color:var(--ds-primary)] bg-[color:var(--ds-surface-card)]"
+                        : ""
+                    }
+                  >
+                    <DesignTableCell className="w-12">
+                      <label className="flex h-6 w-6 items-center justify-center rounded-full border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)]">
+                        <input
+                          type="checkbox"
+                          className="sr-only"
+                          defaultChecked={index === 2}
+                        />
+                        <span
+                          className={cn(
+                            "size-2 rounded-full bg-transparent transition",
+                            index === 2 && "bg-[color:var(--ds-primary)]"
+                          )}
+                        />
+                      </label>
+                    </DesignTableCell>
+                    <DesignTableCell>
+                      <div className="flex items-center gap-3">
+                        <SurfaceCard className="flex h-12 w-12 items-center justify-center rounded-[20px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] text-[11px] font-semibold text-[color:var(--ds-text-muted)]">
+                          {row.product.slice(0, 2)}
+                        </SurfaceCard>
+                        <div>
+                          <p className="font-semibold text-[color:var(--ds-text-strong)]">
+                            {row.product}
+                          </p>
+                          <p className="text-xs text-[color:var(--ds-text-muted)]">
+                            {row.sku}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </DesignTableCell>
-                  <DesignTableCell className="font-medium text-[color:var(--ds-text-strong)]">
-                    {row.price}
-                  </DesignTableCell>
-                  <DesignTableCell className="text-[color:var(--ds-text-muted)]">
-                    {row.size}
-                  </DesignTableCell>
-                  <DesignTableCell className="text-[color:var(--ds-text-muted)]">
-                    {row.date}
-                  </DesignTableCell>
-                  <DesignTableCell>
-                    <StatusPill tone={row.status.tone} size="sm">
-                      {row.status.label}
-                    </StatusPill>
-                  </DesignTableCell>
-                  <DesignTableCell>
-                    <DesignSelect defaultValue="select">
-                      <DesignSelectTrigger className="w-32">
-                        <DesignSelectValue placeholder="Select" />
-                      </DesignSelectTrigger>
-                      <DesignSelectContent>
-                        <DesignSelectItem value="select">Select</DesignSelectItem>
-                        <DesignSelectItem value="push">Push to store</DesignSelectItem>
-                        <DesignSelectItem value="remove">Remove</DesignSelectItem>
-                      </DesignSelectContent>
-                    </DesignSelect>
-                  </DesignTableCell>
-                  <DesignTableCell className="text-right">
-                    <DesignButton size="sm">View</DesignButton>
-                  </DesignTableCell>
-                </DesignTableRow>
-              ))}
-            </DesignTableBody>
-          </DesignTable>
-        </DesignTableWrapper>
+                    </DesignTableCell>
+                    <DesignTableCell className="font-medium text-[color:var(--ds-text-strong)]">
+                      {row.price}
+                    </DesignTableCell>
+                    <DesignTableCell className="text-[color:var(--ds-text-muted)]">
+                      {row.size}
+                    </DesignTableCell>
+                    <DesignTableCell className="text-[color:var(--ds-text-muted)]">
+                      {row.date}
+                    </DesignTableCell>
+                    <DesignTableCell>
+                      <StatusPill tone={row.status.tone} size="sm">
+                        {row.status.label}
+                      </StatusPill>
+                    </DesignTableCell>
+                    <DesignTableCell>
+                      <DesignSelect defaultValue="select">
+                        <DesignSelectTrigger className="w-32">
+                          <DesignSelectValue placeholder="Select" />
+                        </DesignSelectTrigger>
+                        <DesignSelectContent>
+                          <DesignSelectItem value="select">
+                            Select
+                          </DesignSelectItem>
+                          <DesignSelectItem value="push">
+                            Push to store
+                          </DesignSelectItem>
+                          <DesignSelectItem value="remove">
+                            Remove
+                          </DesignSelectItem>
+                        </DesignSelectContent>
+                      </DesignSelect>
+                    </DesignTableCell>
+                    <DesignTableCell className="text-right">
+                      <DesignButton size="sm">View</DesignButton>
+                    </DesignTableCell>
+                  </DesignTableRow>
+                ))}
+              </DesignTableBody>
+            </DesignTable>
+          </DesignTableWrapper>
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 text-xs text-[color:var(--ds-text-muted)]">
-          <div className="flex items-center gap-2">
-            {[1, 2, 3, 4, 5].map((page) => (
-              <DesignButton
-                key={page}
-                variant={page === 1 ? "primary" : "tonal"}
-                size="sm"
-                className="h-8 rounded-full px-4 text-xs"
-              >
-                {page}
-              </DesignButton>
-            ))}
-            <span className="px-2 text-sm text-[color:var(--ds-text-muted)]">… 10</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span>
-              Go to page <strong className="mx-1 text-[color:var(--ds-text-strong)]">01</strong> of 10
-            </span>
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 text-xs text-[color:var(--ds-text-muted)]">
             <div className="flex items-center gap-2">
-              <span>Show entries</span>
-              <DesignSelect defaultValue="10">
-                <DesignSelectTrigger className="w-24">
-                  <DesignSelectValue />
-                </DesignSelectTrigger>
-                <DesignSelectContent>
-                  <DesignSelectItem value="10">10</DesignSelectItem>
-                  <DesignSelectItem value="25">25</DesignSelectItem>
-                  <DesignSelectItem value="50">50</DesignSelectItem>
-                </DesignSelectContent>
-              </DesignSelect>
+              {[1, 2, 3, 4, 5].map((page) => (
+                <DesignButton
+                  key={page}
+                  variant={page === 1 ? "primary" : "tonal"}
+                  size="sm"
+                  className="h-8 rounded-full px-4 text-xs"
+                >
+                  {page}
+                </DesignButton>
+              ))}
+              <span className="px-2 text-sm text-[color:var(--ds-text-muted)]">
+                … 10
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span>
+                Go to page{" "}
+                <strong className="mx-1 text-[color:var(--ds-text-strong)]">
+                  01
+                </strong>{" "}
+                of 10
+              </span>
+              <div className="flex items-center gap-2">
+                <span>Show entries</span>
+                <DesignSelect defaultValue="10">
+                  <DesignSelectTrigger className="w-24">
+                    <DesignSelectValue />
+                  </DesignSelectTrigger>
+                  <DesignSelectContent>
+                    <DesignSelectItem value="10">10</DesignSelectItem>
+                    <DesignSelectItem value="25">25</DesignSelectItem>
+                    <DesignSelectItem value="50">50</DesignSelectItem>
+                  </DesignSelectContent>
+                </DesignSelect>
+              </div>
             </div>
           </div>
-        </div>
-      </SurfaceCard>
+        </SurfaceCard>
       </SectionCard>
     </div>
   );

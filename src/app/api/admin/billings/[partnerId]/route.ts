@@ -39,10 +39,7 @@ const settingsSchema = z.object({
   billingEmail: z.string().email().optional().nullable(),
   autoSendEnabled: z.boolean().optional(),
   autoSendDay: z.number().int().min(1).max(28).optional(),
-  listingFeeAmount: z.number().nonnegative().optional(),
-  listingFeeCurrency: z.string().min(1).optional(),
   commissionBasis: z.enum(["discounted", "original"]).optional(),
-  listingOnly: z.boolean().optional(),
 });
 
 export function OPTIONS(req: NextRequest) {

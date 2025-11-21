@@ -7,6 +7,8 @@ import {
   EmailTemplateType,
   emailTemplateTypes,
 } from "@/lib/email-template-constants";
+import type { EmailTemplateStructure } from "@/lib/types/email-template-structure";
+import { getDefaultStructure } from "@/lib/types/email-template-structure";
 
 export interface EmailTemplateRecord {
   id?: string;
@@ -15,6 +17,7 @@ export interface EmailTemplateRecord {
   subject: string;
   body: string;
   description?: string | null;
+  structure?: EmailTemplateStructure | null;
   updatedBy?: string | null;
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -45,6 +48,11 @@ export async function listEmailTemplates(locale: string) {
     subject: row.subject as string,
     body: row.body as string,
     description: (row.description as string | null) ?? null,
+    structure: row.structure
+      ? (row.structure as EmailTemplateStructure)
+      : (getDefaultStructure(
+          row.template_type as string
+        ) as EmailTemplateStructure | null),
     updatedBy: (row.updated_by as string | null) ?? null,
     updatedAt: (row.updated_at as string | null) ?? null,
     createdAt: (row.created_at as string | null) ?? null,
@@ -52,7 +60,16 @@ export async function listEmailTemplates(locale: string) {
 
   const merged: EmailTemplateRecord[] = emailTemplateTypes.map((type) => {
     const match = records.find((row) => row.templateType === type);
-    if (match) return match;
+    if (match) {
+      // Ensure structure exists
+      if (!match.structure) {
+        return {
+          ...match,
+          structure: getDefaultStructure(type),
+        };
+      }
+      return match;
+    }
     const defaults = EMAIL_TEMPLATE_DEFAULTS[type];
     return {
       templateType: type,
@@ -60,6 +77,7 @@ export async function listEmailTemplates(locale: string) {
       subject: defaults.subject,
       body: defaults.body,
       description: defaults.description,
+      structure: getDefaultStructure(type),
     };
   });
 
@@ -68,7 +86,7 @@ export async function listEmailTemplates(locale: string) {
 
 export async function getEmailTemplate(
   templateType: EmailTemplateType,
-  locale: string,
+  locale: string
 ) {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
@@ -91,6 +109,11 @@ export async function getEmailTemplate(
       subject: data.subject as string,
       body: data.body as string,
       description: (data.description as string | null) ?? null,
+      structure: data.structure
+        ? (data.structure as EmailTemplateStructure)
+        : (getDefaultStructure(
+            data.template_type as string
+          ) as EmailTemplateStructure | null),
       updatedBy: (data.updated_by as string | null) ?? null,
       updatedAt: (data.updated_at as string | null) ?? null,
       createdAt: (data.created_at as string | null) ?? null,
@@ -102,12 +125,14 @@ export async function getEmailTemplate(
 
 export async function upsertEmailTemplates(
   templates: EmailTemplateRecord[],
-  opts?: { actor?: { email?: string | null } },
+  opts?: { actor?: { email?: string | null } }
 ) {
   const supabase = getSupabaseAdmin();
   const results = templateSchema
     .array()
-    .safeParse(templates.map((t) => ({ ...t, description: t.description ?? undefined })));
+    .safeParse(
+      templates.map((t) => ({ ...t, description: t.description ?? undefined }))
+    );
 
   if (!results.success) {
     throw new Error("Invalid template payload");
@@ -119,16 +144,21 @@ export async function upsertEmailTemplates(
     subject: template.subject,
     body: template.body,
     description: template.description ?? null,
+    structure: template.structure ?? null,
     updated_by: opts?.actor?.email ?? null,
     updated_at: new Date().toISOString(),
   }));
 
-  const { error } = await supabase.from("email_templates").upsert(rows as never, {
-    onConflict: "template_type,locale",
-  });
+  const { error } = await supabase
+    .from("email_templates")
+    .upsert(rows as never, {
+      onConflict: "template_type,locale",
+    });
 
   if (error) {
-    log.error("email_templates_upsert_error", error, { actor: opts?.actor?.email });
+    log.error("email_templates_upsert_error", error, {
+      actor: opts?.actor?.email,
+    });
     throw new Error(`Failed to save templates: ${error.message}`);
   }
 

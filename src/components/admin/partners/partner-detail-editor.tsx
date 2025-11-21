@@ -116,7 +116,6 @@ interface TicketDetailDraft {
   adults: string;
   children: string;
   teens: string;
-  maxGuests: string;
 }
 
 type TicketDetailsPayloadItem = {
@@ -129,6 +128,12 @@ type TicketDetailsPayloadItem = {
     adults?: number | null;
     children?: number | null;
     teens?: number | null;
+  };
+  limits?: {
+    adults?: number | null;
+    children?: number | null;
+    teens?: number | null;
+    total?: number | null;
   };
   maxGuests?: number | null;
 };
@@ -242,8 +247,6 @@ interface PartnerProfileFormState {
   payments: string[];
   facilities: string[];
   cashCurrencies: string[];
-  visitorsMin: string;
-  visitorsMax: string;
   minAge: string;
   publicTransport: string;
   reservationRequired: boolean;
@@ -278,8 +281,6 @@ const PROFILE_FORM_DEFAULT: PartnerProfileFormState = {
   payments: [],
   facilities: [],
   cashCurrencies: [],
-  visitorsMin: "",
-  visitorsMax: "",
   minAge: "",
   publicTransport: "",
   reservationRequired: false,
@@ -295,6 +296,8 @@ interface PartnerPricingFormState {
   commissionRateDiscounted: string;
   commissionRatesLinked: boolean;
   bonusPointsPerCzk: string;
+  listingOnly: boolean;
+  maxGuestsPerBooking: string;
 }
 
 const PRICING_FORM_DEFAULT: PartnerPricingFormState = {
@@ -305,6 +308,8 @@ const PRICING_FORM_DEFAULT: PartnerPricingFormState = {
   commissionRateDiscounted: "",
   commissionRatesLinked: true,
   bonusPointsPerCzk: "",
+  listingOnly: false,
+  maxGuestsPerBooking: "",
 };
 
 function formatNumberInput(value?: number | null, allowZero = false) {
@@ -396,8 +401,6 @@ function buildProfileFormFromMeta(
       meta.info.cashCurrencies && meta.info.cashCurrencies.length > 0
         ? [...meta.info.cashCurrencies]
         : ["czk"],
-    visitorsMin: formatNumberInput(meta.info.visitorsMin),
-    visitorsMax: formatNumberInput(meta.info.visitorsMax),
     minAge: formatNumberInput(meta.info.minAge),
     publicTransport: meta.info.publicTransport ?? "",
     reservationRequired: Boolean(meta.info.reservationRequired),
@@ -430,6 +433,8 @@ function buildPricingFormFromMeta(
     commissionRateDiscounted: formatNumberInput(commissionRateDiscounted),
     commissionRatesLinked,
     bonusPointsPerCzk: formatNumberInput(meta.contract.bonusPointsPerCzk),
+    listingOnly: Boolean(meta.contract.listingOnly),
+    maxGuestsPerBooking: formatNumberInput(meta.ticketing.maxGuestsPerBooking, true),
   };
 }
 
@@ -874,7 +879,6 @@ function buildTicketDetailDrafts(
     adults: formatNumberInput(entry.inclusions?.adults),
     children: formatNumberInput(entry.inclusions?.children),
     teens: formatNumberInput(entry.inclusions?.teens),
-    maxGuests: formatNumberInput(entry.maxGuests),
   }));
 }
 
@@ -1011,6 +1015,7 @@ export function PartnerDetailEditor({
   const [ticketDetailsForm, setTicketDetailsForm] = useState<
     TicketDetailDraft[]
   >([]);
+  const [maxGuestsPerBooking, setMaxGuestsPerBooking] = useState("");
   const [ticketAddonsForm, setTicketAddonsForm] = useState<TicketAddonDraft[]>(
     []
   );
@@ -1172,7 +1177,6 @@ export function PartnerDetailEditor({
         adults: "",
         children: "",
         teens: "",
-        maxGuests: "",
       },
     ]);
   }, []);
@@ -1435,6 +1439,9 @@ export function PartnerDetailEditor({
         setBonusProgramEnabled(Boolean(item.bonusProgramEnabled));
         setNotes(item.notes ?? []);
         setNewNoteBody("");
+        setMaxGuestsPerBooking(
+          formatNumberInput(item.ticketing?.maxGuestsPerBooking, true)
+        );
       } else {
         setStatus("active");
         setPartnerType("standard");
@@ -1451,6 +1458,7 @@ export function PartnerDetailEditor({
         setBonusProgramEnabled(false);
         setNotes([]);
         setNewNoteBody("");
+        setMaxGuestsPerBooking("");
       }
     } catch (error) {
       console.error("Failed to load partner meta", error);
@@ -1760,9 +1768,8 @@ export function PartnerDetailEditor({
     const commissionDiscountValue = parsePercentInput(
       pricingForm.commissionRateDiscounted
     );
-    const visitorsMinValue = parseIntegerInput(profileForm.visitorsMin);
-    const visitorsMaxValue = parseIntegerInput(profileForm.visitorsMax);
     const minAgeValue = parseIntegerInput(profileForm.minAge);
+    const maxGuestsPerBookingValue = parseIntegerInput(maxGuestsPerBooking);
     const contractPayload: Record<string, unknown> = {
       commissionBasis: pricingForm.commissionBasis,
     };
@@ -1788,6 +1795,7 @@ export function PartnerDetailEditor({
     if (bonusPointsValue !== undefined) {
       contractPayload.bonusPointsPerCzk = Math.max(0, bonusPointsValue);
     }
+    contractPayload.listingOnly = Boolean(pricingForm.listingOnly);
     const sanitizedCashCurrencies = Array.from(
       new Set(
         (profileForm.cashCurrencies ?? []).map((currency) =>
@@ -1810,6 +1818,11 @@ export function PartnerDetailEditor({
     );
     const normalizedWebsite = ensureExternalUrl(profileForm.website);
     const normalizedGoogleMapUrl = ensureExternalUrl(profileForm.googleMapUrl);
+    const bookingCap =
+      typeof maxGuestsPerBookingValue === "number" && maxGuestsPerBookingValue > 0
+        ? maxGuestsPerBookingValue
+        : null;
+    let limitValidationError: string | null = null;
     const ticketDetailsPayload: TicketDetailsPayloadItem[] = ticketDetailsForm
       .map<TicketDetailsPayloadItem | null>((detail) => {
         const description = detail.description.trim();
@@ -1819,9 +1832,27 @@ export function PartnerDetailEditor({
         const adultsValue = parseIntegerInput(detail.adults);
         const childrenValue = parseIntegerInput(detail.children);
         const teensValue = parseIntegerInput(detail.teens);
-        const maxGuestsValue = parseIntegerInput(detail.maxGuests);
+        const limitAdultsValue = parseIntegerInput(detail.limitAdults);
+        const limitChildrenValue = parseIntegerInput(detail.limitChildren);
+        const limitTeensValue = parseIntegerInput(detail.limitTeens);
+        const limitTotalValue = parseIntegerInput(detail.limitTotal);
         if (!description && !label && priceValue === undefined && !ticketType) {
           return null;
+        }
+        if (bookingCap && bookingCap > 0) {
+          const limitsToCheck = [
+            { label: "total", value: limitTotalValue },
+            { label: "adults", value: limitAdultsValue },
+            { label: "children", value: limitChildrenValue },
+            { label: "teens", value: limitTeensValue },
+          ];
+          const over = limitsToCheck.find(
+            (entry) => typeof entry.value === "number" && entry.value > bookingCap
+          );
+          if (over) {
+            limitValidationError = `Limit for ${label || ticketType || "ticket"} (${over.label}) exceeds max guests per booking (${bookingCap}).`;
+            return null;
+          }
         }
         return {
           id: detail.id,
@@ -1839,12 +1870,27 @@ export function PartnerDetailEditor({
                   teens: teensValue ?? null,
                 }
               : undefined,
-          maxGuests: maxGuestsValue ?? null,
+          limits:
+            limitAdultsValue !== undefined ||
+            limitChildrenValue !== undefined ||
+            limitTeensValue !== undefined ||
+            limitTotalValue !== undefined
+              ? {
+                  adults: limitAdultsValue ?? null,
+                  children: limitChildrenValue ?? null,
+                  teens: limitTeensValue ?? null,
+                  total: limitTotalValue ?? null,
+                }
+              : undefined,
         };
       })
       .filter(
         (detail): detail is TicketDetailsPayloadItem => Boolean(detail)
       );
+    if (limitValidationError) {
+      toast.error(limitValidationError);
+      return;
+    }
     const ticketAddonsPayload: TicketAddonPayloadItem[] = ticketAddonsForm
       .map<TicketAddonPayloadItem | null>((addon) => {
         const label = addon.label.trim();
@@ -1909,8 +1955,6 @@ export function PartnerDetailEditor({
       payments: [...profileForm.payments],
       facilities: [...profileForm.facilities],
       cashCurrencies: sanitizedCashCurrencies,
-      visitorsMin: visitorsMinValue,
-      visitorsMax: visitorsMaxValue,
       minAge: minAgeValue,
       openingHours: openingHoursPayload,
       publicTransport: profileForm.publicTransport.trim(),
@@ -2027,6 +2071,7 @@ export function PartnerDetailEditor({
               familyRule: familyRule.trim() || undefined,
               ticketDetails: ticketDetailsPayload,
               addons: ticketAddonsPayload,
+              maxGuestsPerBooking: bookingCap ?? null,
             },
             media: mediaPayload,
             notes,
@@ -2356,6 +2401,19 @@ export function PartnerDetailEditor({
               placeholder="Example: 2 adults + 2 children"
             />
           </div>
+          <div className="space-y-1">
+            <Label>Max guests per booking (all tickets)</Label>
+            <Input
+              type="number"
+              min={0}
+              value={maxGuestsPerBooking}
+              onChange={(event) => setMaxGuestsPerBooking(event.target.value)}
+              placeholder="Leave blank for no cap"
+            />
+            <p className="text-xs text-muted-foreground">
+              Caps total ticket quantities per booking across all ticket types.
+            </p>
+          </div>
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -2490,117 +2548,174 @@ export function PartnerDetailEditor({
                           teens: "teens",
                         };
 
+                        let inclusionFields: React.ReactElement;
+                        if (showSubOptionFields) {
+                          inclusionFields = (
+                            <>
+                              {subOptions.map((subOption) => {
+                                const fieldName =
+                                  fieldMap[subOption.key.toLowerCase()] ?? "adults";
+                                return (
+                                  <div key={subOption.key} className="space-y-1">
+                                    <Label>{subOption.label} included</Label>
+                                    <Input
+                                      type="number"
+                                      min={0}
+                                      step={1}
+                                      value={
+                                        detail[fieldName as keyof TicketDetailDraft] || ""
+                                      }
+                                      onChange={(event) =>
+                                        updateTicketDetail(
+                                          detail.id,
+                                          fieldName as keyof Omit<
+                                            TicketDetailDraft,
+                                            "id"
+                                          >,
+                                          event.target.value
+                                        )
+                                      }
+                                      placeholder="0"
+                                    />
+                                  </div>
+                                );
+                              })}
+                            </>
+                          );
+                        } else if (detail.ticketType) {
+                          inclusionFields = (
+                            <>
+                              <div className="space-y-1">
+                                <Label>
+                                  {globalTicketType?.label ?? detail.ticketType}{" "}
+                                  included
+                                </Label>
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  step={1}
+                                  value={detail.adults}
+                                  onChange={(event) =>
+                                    updateTicketDetail(
+                                      detail.id,
+                                      "adults",
+                                      event.target.value
+                                    )
+                                  }
+                                  placeholder="Number included"
+                                />
+                              </div>
+                            </>
+                          );
+                        } else {
+                          inclusionFields = (
+                            <>
+                              <div className="space-y-1">
+                                <Label>Adults included</Label>
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  value={detail.adults}
+                                  onChange={(event) =>
+                                    updateTicketDetail(
+                                      detail.id,
+                                      "adults",
+                                      event.target.value
+                                    )
+                                  }
+                                  placeholder="2"
+                                />
+                              </div>
+                            </>
+                          );
+                        }
+
                         return (
-                          <div className="grid gap-3 md:grid-cols-3">
-                            {showSubOptionFields
-                              ? subOptions.map((subOption) => {
+                          <>
+                            <div className="grid gap-3 md:grid-cols-3">
+                              {inclusionFields}
+                            </div>
+
+                            <div className="grid gap-3 md:grid-cols-3">
+                              <div className="space-y-1">
+                                <Label>Max per booking</Label>
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  value={detail.limitAdults}
+                                  onChange={(event) =>
+                                    updateTicketDetail(
+                                      detail.id,
+                                      "limitAdults",
+                                      event.target.value
+                                    )
+                                  }
+                                  placeholder="e.g. 5"
+                                />
+                                <p className="text-[11px] text-muted-foreground">
+                                  Caps this ticket&apos;s quantity per booking.
+                                </p>
+                              </div>
+                              {showSubOptionFields ? (
+                                subOptions.slice(0, 2).map((sub, idx) => {
                                   const fieldName =
-                                    fieldMap[subOption.key.toLowerCase()] ??
-                                    "adults";
+                                    fieldMap[sub.key.toLowerCase()] ?? "adults";
+                                  const limitKeyMap: Record<string, keyof TicketDetailDraft> =
+                                    {
+                                      adults: "limitAdults",
+                                      children: "limitChildren",
+                                      teens: "limitTeens",
+                                    };
+                                  const limitKey =
+                                    (limitKeyMap[
+                                      fieldName as keyof typeof limitKeyMap
+                                    ] ?? "limitAdults") as
+                                      | "limitAdults"
+                                      | "limitChildren"
+                                      | "limitTeens"
+                                      | "limitTotal";
                                   return (
-                                    <div key={subOption.key} className="space-y-1">
-                                      <Label>{subOption.label} included</Label>
+                                    <div key={`limit-${sub.key}`} className="space-y-1">
+                                      <Label>Max {sub.label}</Label>
                                       <Input
                                         type="number"
                                         min={0}
-                                        step={1}
-                                        value={
-                                          detail[
-                                            fieldName as keyof TicketDetailDraft
-                                          ] || ""
-                                        }
+                                        value={detail[limitKey] as string}
                                         onChange={(event) =>
                                           updateTicketDetail(
                                             detail.id,
-                                            fieldName as keyof Omit<
-                                              TicketDetailDraft,
-                                              "id"
-                                            >,
+                                            limitKey,
                                             event.target.value
                                           )
                                         }
-                                        placeholder="0"
+                                        placeholder="e.g. 3"
                                       />
                                     </div>
                                   );
                                 })
-                              : detail.ticketType
-                                ? (
-                                    <div className="space-y-1">
-                                      <Label>
-                                        {globalTicketType?.label ??
-                                          detail.ticketType}{" "}
-                                        included
-                                      </Label>
-                                      <Input
-                                        type="number"
-                                        min={0}
-                                        step={1}
-                                        value={detail.adults}
-                                        onChange={(event) =>
-                                          updateTicketDetail(
-                                            detail.id,
-                                            "adults",
-                                            event.target.value
-                                          )
-                                        }
-                                        placeholder="Number included"
-                                      />
-                                    </div>
-                                  )
-                                : (
-                                    <>
-                                      <div className="space-y-1">
-                                        <Label>Adults included</Label>
-                                        <Input
-                                          type="number"
-                                          min={0}
-                                          value={detail.adults}
-                                          onChange={(event) =>
-                                            updateTicketDetail(
-                                              detail.id,
-                                              "adults",
-                                              event.target.value
-                                            )
-                                          }
-                                          placeholder="2"
-                                        />
-                                      </div>
-                                      <div className="space-y-1">
-                                        <Label>Children included</Label>
-                                        <Input
-                                          type="number"
-                                          min={0}
-                                          value={detail.children}
-                                          onChange={(event) =>
-                                            updateTicketDetail(
-                                              detail.id,
-                                              "children",
-                                              event.target.value
-                                            )
-                                          }
-                                          placeholder="2"
-                                        />
-                                      </div>
-                                    </>
-                                  )}
-                            <div className="space-y-1">
-                              <Label>Max guests</Label>
-                              <Input
-                                type="number"
-                                min={0}
-                                value={detail.maxGuests}
-                                onChange={(event) =>
-                                  updateTicketDetail(
-                                    detail.id,
-                                    "maxGuests",
-                                    event.target.value
-                                  )
-                                }
-                                placeholder="4"
-                              />
+                              ) : (
+                                <div className="space-y-1">
+                                  <Label>Max total for this ticket</Label>
+                                  <Input
+                                    type="number"
+                                    min={0}
+                                    value={detail.limitTotal}
+                                    onChange={(event) =>
+                                      updateTicketDetail(
+                                        detail.id,
+                                        "limitTotal",
+                                        event.target.value
+                                      )
+                                    }
+                                    placeholder="e.g. 5"
+                                  />
+                                  <p className="text-[11px] text-muted-foreground">
+                                    Limits the combined quantity for this ticket.
+                                  </p>
+                                </div>
+                              )}
                             </div>
-                          </div>
+                          </>
                         );
                       })()}
                       <div className="grid gap-3 md:grid-cols-2">
@@ -2856,26 +2971,6 @@ export function PartnerDetailEditor({
       >
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-1">
-              <Label>Min visitors per booking</Label>
-              <Input
-                type="number"
-                min={0}
-                value={profileForm.visitorsMin}
-                onChange={handleProfileInputChange("visitorsMin")}
-                placeholder="e.g. 2"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Max visitors per booking</Label>
-              <Input
-                type="number"
-                min={0}
-                value={profileForm.visitorsMax}
-                onChange={handleProfileInputChange("visitorsMax")}
-                placeholder="e.g. 10"
-              />
-            </div>
             <div className="space-y-1">
               <Label>Minimum age</Label>
               <Input
@@ -3505,6 +3600,23 @@ export function PartnerDetailEditor({
             <p className="text-xs text-muted-foreground">
               Percentage off the original price shown to visitors.
             </p>
+          </div>
+        </div>
+        <div className="rounded-2xl border border-slate-200/70 bg-card/30 p-4 dark:border-slate-700/70">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Listing-only partner</p>
+              <p className="text-xs text-muted-foreground">
+                Disable commission calculations and bill only the listing fee.
+              </p>
+            </div>
+            <Switch
+              checked={pricingForm.listingOnly}
+              onCheckedChange={(checked) =>
+                setPricingForm((prev) => ({ ...prev, listingOnly: checked }))
+              }
+              disabled={saving}
+            />
           </div>
         </div>
         <div className="space-y-4 rounded-2xl border border-slate-200/70 p-4 dark:border-slate-700/70">

@@ -387,10 +387,13 @@ export const adminApi = {
       partnerId: string;
       partnerName: string | null;
       billingEmail: string | null;
+      contactEmail?: string | null;
       autoSendEnabled: boolean;
+      autoSendDay?: number;
       commissionBasis: string;
       listingFeeAmount: number;
       listingFeeCurrency: string;
+      listingOnly?: boolean;
       lastSentAt: string | null;
     }> }>(`/api/admin/billings`, { method: "GET" }, opts),
   billingSettingsGet: (
