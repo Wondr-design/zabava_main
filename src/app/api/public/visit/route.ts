@@ -24,6 +24,12 @@ import { notifyQrEmail } from "@/lib/services/notifications/qr-email";
 import { loadPartnerBranding } from "@/lib/services/partner-branding";
 import { loadPartnerMeta } from "@/lib/data/partners";
 import { parseTicketSelections } from "@/lib/services/ticket-selections";
+import {
+  DEAL_TICKET_REQUIREMENT_METADATA_KEY,
+  buildDealRequirementKey,
+  parseDealTicketRequirement,
+  type DealTicketRequirement,
+} from "@/lib/deals/ticket-requirements";
 
 const legacyFormSchema = z.object({
   fullName: z.string().min(1).max(120),
@@ -521,10 +527,78 @@ async function handleDealFormSubmission(params: {
     );
   }
 
+  const ticketRequirements =
+    (dealMeta?.deal.ticket_requirements as DealTicketRequirement[] | null) ?? [];
+  const selectedRequirementMetadata =
+    metadata?.[DEAL_TICKET_REQUIREMENT_METADATA_KEY];
+  const selectedRequirement =
+    ticketRequirements.length > 0
+      ? parseDealTicketRequirement(selectedRequirementMetadata)
+      : null;
+  let normalizedTicketBreakdown: DealTicketRequirement[] | null = null;
+
+  if (ticketRequirements.length > 0) {
+    if (!selectedRequirement) {
+      return withCors(
+        NextResponse.json(
+          {
+            error: "TicketSelectionRequired",
+            message: "Select a ticket type before continuing.",
+          },
+          { status: 400 },
+        ),
+      );
+    }
+    const requirementMap = new Map(
+      ticketRequirements.map((entry) => [
+        buildDealRequirementKey(entry.ticketType, entry.subType),
+        entry.quantity,
+      ]),
+    );
+    const selectedKey = buildDealRequirementKey(
+      selectedRequirement.ticketType,
+      selectedRequirement.subType ?? null,
+    );
+    const expectedQuantity = requirementMap.get(selectedKey);
+    if (!expectedQuantity) {
+      return withCors(
+        NextResponse.json(
+          {
+            error: "TicketSelectionInvalid",
+            message: "The selected ticket type is not available for this deal.",
+          },
+          { status: 409 },
+        ),
+      );
+    }
+    if (selectedRequirement.quantity !== expectedQuantity) {
+      return withCors(
+        NextResponse.json(
+          {
+            error: "TicketSelectionMismatch",
+            message: "Selected ticket quantity does not match the requirement.",
+          },
+          { status: 409 },
+        ),
+      );
+    }
+    normalizedTicketBreakdown = [
+      {
+        ticketType: selectedRequirement.ticketType,
+        subType: selectedRequirement.subType ?? undefined,
+        quantity: expectedQuantity,
+      },
+    ];
+  }
+
+  const resolvedVisitors =
+    normalizedTicketBreakdown?.[0]?.quantity ??
+    Math.max(1, Math.floor(visitors));
   const requestBody = {
     email: normalizedEmail,
-    visitors: Math.max(1, Math.floor(visitors)),
+    visitors: resolvedVisitors,
     consentMarketing,
+    ticketBreakdown: normalizedTicketBreakdown ?? undefined,
     metadata: {
       ...(metadata ?? {}),
       formId: partnerFormRecord.id,

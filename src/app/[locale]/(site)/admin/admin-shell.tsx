@@ -15,6 +15,7 @@ import { useLocale } from "@/i18n/provider";
 import { buildLocalizedPath } from "@/i18n/routing";
 import {
   BarChart3,
+  BookText,
   FileText,
   Gift,
   HandshakeIcon,
@@ -49,6 +50,7 @@ const PRIMARY_NAV: Array<{
   { href: "/admin/forms", label: "Forms", icon: FileText, section: "Operations" },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3, section: "Insights" },
   { href: "/admin/accounts", label: "Team", icon: Users2, section: "Insights" },
+  { href: "/admin/cms", label: "CMS", icon: BookText, section: "Configuration" },
   { href: "/admin/email-templates", label: "Email templates", icon: MailCheck, section: "Configuration" },
   { href: "/admin/billings", label: "Billings", icon: FileText, section: "Configuration" },
   { href: "/admin/globals", label: "Globals", icon: Globe2, section: "Configuration" },

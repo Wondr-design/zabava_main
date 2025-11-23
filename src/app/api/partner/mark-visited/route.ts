@@ -33,6 +33,8 @@ const markVisitedSchema = z.object({
   visitDate: z.string().optional(),
   notes: z.string().optional(),
   actualVisitors: z.number().int().positive().optional(),
+  action: z.enum(["use", "reject"]).optional(),
+  rejectReason: z.string().optional(),
 });
 
 function isAuthorized(req: NextRequest, partnerId: string) {
@@ -154,7 +156,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { email, partnerId, visitId, visitDate, notes, actualVisitors } =
+    const { email, partnerId, visitId, visitDate, notes, actualVisitors, action, rejectReason } =
       parsed.data;
     const auth = getAuthFromRequest(req);
     if (!auth || !isAuthorized(req, partnerId)) {
@@ -287,6 +289,14 @@ export async function POST(req: NextRequest) {
     const isFlashDeal =
       (visit as { qr_type?: string }).qr_type === "flash" ||
       payload.source === "special_flash_deal";
+    const ticketRequirements =
+      Array.isArray(payload.ticketRequirements) && payload.ticketRequirements.length
+        ? (payload.ticketRequirements as Array<{ ticketType: string; subType?: string; quantity: number }>)
+        : null;
+    const ticketBreakdown =
+      Array.isArray(payload.ticketBreakdown) && payload.ticketBreakdown.length
+        ? (payload.ticketBreakdown as Array<{ ticketType: string; subType?: string; quantity: number }>)
+        : null;
 
     const nowIso = visitDate || new Date().toISOString();
     const nowDate = new Date(nowIso);
@@ -304,6 +314,7 @@ export async function POST(req: NextRequest) {
         : typeof visit.num_people === "number"
         ? visit.num_people
         : undefined;
+    const trimmedRejectReason = rejectReason?.trim() ?? "";
 
     if (isFlashDeal) {
       if (!flashDealId && typeof payload.deal_id === "string") {
@@ -330,6 +341,16 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      if (action === "reject" && !trimmedRejectReason) {
+        return cors(
+          req,
+          NextResponse.json(
+            { error: "Rejection note is required." },
+            { status: 400 },
+          ),
+        );
+      }
+
       flashDealMinVisitors =
         flashDealMinVisitors ?? deal.min_visitors ?? visit.num_people ?? 1;
       actualVisitorCount =
@@ -343,6 +364,20 @@ export async function POST(req: NextRequest) {
       actualVisitorCount = Math.max(1, Math.floor(actualVisitorCount));
 
       if (actualVisitorCount < flashDealMinVisitors) {
+        if (!trimmedRejectReason) {
+          return cors(
+            req,
+            NextResponse.json(
+              {
+                error: "Minimum visitors not met",
+                message: "Add a rejection note and decline the QR.",
+                required: flashDealMinVisitors,
+                provided: actualVisitorCount,
+              },
+              { status: 409 },
+            ),
+          );
+        }
         await markFlashRedemptionRejected({
           flashDealId,
           visitId: visit.id,
@@ -352,6 +387,7 @@ export async function POST(req: NextRequest) {
             provided: actualVisitorCount,
             checkedAt: nowIso,
             staffId: actingStaffId ?? undefined,
+            note: trimmedRejectReason,
           },
         });
 
@@ -365,6 +401,7 @@ export async function POST(req: NextRequest) {
             reason: "min_visitors",
             required: flashDealMinVisitors,
             provided: actualVisitorCount,
+            note: trimmedRejectReason,
           },
         });
 
@@ -448,6 +485,151 @@ export async function POST(req: NextRequest) {
           ),
         );
       }
+
+      if (ticketRequirements && ticketRequirements.length > 0) {
+        if (!ticketBreakdown || ticketBreakdown.length === 0) {
+          if (!trimmedRejectReason) {
+            return cors(
+              req,
+              NextResponse.json(
+                { error: "Ticket requirements missing. Add a rejection note and decline." },
+                { status: 409 },
+              ),
+            );
+          }
+        } else {
+          const requirementMap = new Map(
+            ticketRequirements.map((item) => [
+              `${String(item.ticketType).toLowerCase()}::${(item as { subType?: string }).subType?.toLowerCase() ?? ""}`,
+              item.quantity,
+            ]),
+          );
+          const invalid =
+            ticketBreakdown.length !== 1 ||
+            ticketBreakdown.some((item) => {
+              const key = `${String(item.ticketType).toLowerCase()}::${(item as { subType?: string }).subType?.toLowerCase() ?? ""}`;
+              const expected = requirementMap.get(key);
+              return !expected || expected !== item.quantity;
+            });
+          if (invalid) {
+            if (!trimmedRejectReason) {
+              return cors(
+                req,
+                NextResponse.json(
+                  {
+                    error: "Ticket mix does not match requirements. Add a rejection note and decline.",
+                  },
+                  { status: 409 },
+                ),
+              );
+            }
+          }
+        }
+      }
+
+      if (
+        ticketRequirements &&
+        ticketRequirements.length > 0 &&
+        ticketBreakdown &&
+        ticketBreakdown.length > 0
+      ) {
+        const reqMap = new Map(
+          ticketRequirements.map((item) => [
+            `${String(item.ticketType).toLowerCase()}::${(item as { subType?: string }).subType?.toLowerCase() ?? ""}`,
+            item.quantity,
+          ]),
+        );
+        const inputMap = new Map(
+          ticketBreakdown.map((item) => [
+            `${String(item.ticketType).toLowerCase()}::${(item as { subType?: string }).subType?.toLowerCase() ?? ""}`,
+            item.quantity,
+          ]),
+        );
+        const mismatch =
+          inputMap.size > 1 ||
+          Array.from(inputMap.entries()).some(
+            ([key, qty]) => reqMap.get(key) !== qty,
+          );
+        if (mismatch) {
+          if (!trimmedRejectReason) {
+            return cors(
+              req,
+              NextResponse.json(
+                {
+                  error: "Ticket mix does not match requirements. Add a rejection note and decline.",
+                },
+                { status: 409 },
+              ),
+            );
+          }
+          return cors(
+            req,
+            NextResponse.json(
+              {
+                error: "Ticket mix does not match requirements. Please reject with a note.",
+              },
+              { status: 409 },
+            ),
+          );
+        }
+      }
+    }
+
+    if (action === "reject") {
+      if (!trimmedRejectReason) {
+        return cors(
+          req,
+          NextResponse.json(
+            { error: "Rejection note is required." },
+            { status: 400 },
+          ),
+        );
+      }
+
+      if (isFlashDeal && flashDealId) {
+        await markFlashRedemptionRejected({
+          flashDealId,
+          visitId: visit.id,
+          metadata: {
+            reason: "staff_reject",
+            note: trimmedRejectReason,
+            ticketRequirements,
+            ticketBreakdown,
+            providedVisitors: actualVisitorCount ?? null,
+            checkedAt: nowIso,
+            staffId: actingStaffId ?? undefined,
+          },
+        });
+        await recordQrEvent({
+          eventType: "rejected",
+          qrType: "flash",
+          flashDealId,
+          visitId: visit.id,
+          source: "partner_mark_visited",
+          metadata: {
+            reason: "staff_reject",
+            note: trimmedRejectReason,
+          },
+        });
+      }
+
+      await updateVisitStatus({
+        visitId: visit.id,
+        status: "cancelled",
+        visitNotes: trimmedRejectReason,
+        numPeople:
+          typeof actualVisitorCount === "number"
+            ? actualVisitorCount
+            : typeof visit.num_people === "number"
+            ? visit.num_people
+            : undefined,
+        checkedInByStaffId: actingStaffId,
+      });
+
+      return cors(
+        req,
+        NextResponse.json({ success: true, message: "Visit rejected." }, { status: 200 }),
+      );
     }
 
     const { ratioCzk } = isFlashDeal ? { ratioCzk: 0 } : await getActivePointRatio();
@@ -512,6 +694,8 @@ export async function POST(req: NextRequest) {
               typeof actualVisitorCount === "number"
                 ? actualVisitorCount
                 : undefined,
+            ticketRequirements,
+            ticketBreakdown,
           },
         });
         await recordQrEvent({

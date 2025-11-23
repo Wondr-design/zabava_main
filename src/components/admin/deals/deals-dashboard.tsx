@@ -21,13 +21,12 @@ import {
   type DashboardTableColumn,
 } from "@/components/dashboard/table/dashboard-data-table";
 import { RefreshButton } from "@/components/ui/refresh-button";
+import { LocalizedLink } from "@/components/ui/localized-link";
+import { useLocalizedRouter } from "@/i18n/use-localized-router";
 import { cn } from "@/lib/utils";
 import { FlashDealStatus, DealType } from "@/lib/data/flash-deals";
-import type { GlobalValueRecord } from "@/lib/data/global-values";
 import { getCsrfToken } from "@/lib/web/csrf";
-import { DealCreateDialog, type PartnerOption } from "./deal-create-dialog";
 import { DealUsageExportDialog } from "./deal-usage-export-dialog";
-import { DealDetailDrawer } from "./deal-detail-drawer";
 
 const USE_DEALS_DESIGN_SYSTEM =
   process.env.NEXT_PUBLIC_ADMIN_DEALS_USE_NEW_UI === "true";
@@ -89,6 +88,9 @@ export interface AdminDealListItem {
   priceOverrideCzk: number | null;
   bonusPointsOverride: number | null;
   qrValiditySeconds: number;
+  isFeatured: boolean;
+  bannerLeadHours: number;
+  ticketRequirements: Array<{ ticketType: string; subType?: string; quantity: number }>;
   usageLimit: number | null;
   usageLimitDaily: number | null;
   usageCount: number;
@@ -119,29 +121,20 @@ export interface AdminDealListItem {
 
 interface DealsDashboardProps {
   initialItems: AdminDealListItem[];
-  partnerOptions?: PartnerOption[];
-  ticketTypeValues?: GlobalValueRecord[];
 }
 
-export function DealsDashboard({
-  initialItems,
-  partnerOptions,
-  ticketTypeValues,
-}: DealsDashboardProps) {
+export function DealsDashboard({ initialItems }: DealsDashboardProps) {
   const [items, setItems] = useState<AdminDealListItem[]>(initialItems);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<FlashDealStatus | "all">("all");
   const [dealType, setDealType] = useState<DealType | "all">("all");
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [selectedDealId, setSelectedDealId] = useState<string | null>(null);
-  const [selectedDealFallback, setSelectedDealFallback] =
-    useState<AdminDealListItem | null>(null);
   const [actionState, setActionState] = useState<{
     id: string;
     type: "clone" | "disable";
   } | null>(null);
   const useDesignSystem = USE_DEALS_DESIGN_SYSTEM;
+  const router = useLocalizedRouter();
 
   const refetch = useCallback(
     async (options?: { showToast?: boolean }) => {
@@ -373,11 +366,9 @@ export function DealsDashboard({
 
   const handleView = useCallback(
     (item: AdminDealListItem) => {
-      setSelectedDealId(item.id);
-      setSelectedDealFallback(item);
-      setDetailOpen(true);
+      router.push(`/admin/deals/${item.id}`);
     },
-    [],
+    [router],
   );
 
   const dealColumns = useMemo<DashboardTableColumn<FormattedDealItem>[]>(
@@ -514,16 +505,18 @@ export function DealsDashboard({
           return (
             <div className="flex flex-wrap justify-end gap-2">
               <DesignButton
+                asChild
                 variant="tonal"
                 size="sm"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  handleView(deal);
-                }}
                 disabled={loading || disabled}
               >
-                <Eye className="size-4" />
-                View
+                <LocalizedLink
+                  href={`/admin/deals/${deal.id}`}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <Eye className="size-4" />
+                  View
+                </LocalizedLink>
               </DesignButton>
               <DesignButton
                 variant="ghost"
@@ -586,36 +579,14 @@ export function DealsDashboard({
     <>
       {refreshAction}
       <DealUsageExportDialog />
-      <DealCreateDialog
-        onCreated={handleManualRefresh}
-        partnerOptions={partnerOptions}
-        initialTicketTypes={ticketTypeValues}
-      />
+      <DesignButton asChild size="sm">
+        <LocalizedLink href="/admin/deals/new">New deal</LocalizedLink>
+      </DesignButton>
     </>
   );
 
   const detailDrawer = (
-    <DealDetailDrawer
-      dealId={detailOpen ? selectedDealId : null}
-      open={detailOpen}
-      fallbackDeal={selectedDealFallback}
-      onOpenChange={(open) => {
-        setDetailOpen(open);
-        if (!open) {
-          setSelectedDealId(null);
-        }
-      }}
-      onHydrated={(detail) => {
-        const { slug: _unusedSlug, ...rest } = detail;
-        void _unusedSlug;
-        setItems((current) =>
-          current.map((entry) => (entry.id === rest.id ? { ...entry, ...rest } : entry)),
-        );
-        setSelectedDealFallback((prev) =>
-          prev && prev.id === rest.id ? { ...prev, ...rest } : prev,
-        );
-      }}
-    />
+    null
   );
 
   const filterToolbar = (

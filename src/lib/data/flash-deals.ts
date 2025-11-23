@@ -33,6 +33,17 @@ const flashDealRowSchema = z.object({
   commission_percent: z.number(),
   price_override_czk: z.number().nullable(),
   bonus_points_override: z.number().nullable(),
+  is_featured: z.boolean(),
+  banner_lead_hours: z.number(),
+  ticket_requirements: z
+    .array(
+      z.object({
+        ticketType: z.string(),
+        subType: z.string().optional(),
+        quantity: z.number().int().min(1),
+      }),
+    )
+    .nullable(),
   ticket_types: z.array(z.string()).nullable(),
   qr_validity_seconds: z.number(),
   usage_limit: z.number().nullable(),
@@ -71,6 +82,17 @@ const flashDealInsertSchema = z.object({
   commissionPercent: z.number().min(0).max(100),
   priceOverrideCzk: z.number().positive().optional(),
   bonusPointsOverride: z.number().int().nonnegative().optional(),
+  isFeatured: z.boolean().optional(),
+  bannerLeadHours: z.number().int().nonnegative().optional(),
+  ticketRequirements: z
+    .array(
+      z.object({
+        ticketType: z.string().min(1),
+        subType: z.string().optional(),
+        quantity: z.number().int().min(1),
+      }),
+    )
+    .optional(),
   qrValiditySeconds: z.number().int().positive().default(864000),
   usageLimit: z.number().int().positive().optional(),
   usageLimitDaily: z.number().int().positive().optional(),
@@ -105,12 +127,24 @@ const flashDealUpdateSchema = z
     validFrom: z.string().datetime({ offset: true }).nullable().optional(),
     validTo: z.string().datetime({ offset: true }).nullable().optional(),
     validDays: z.array(z.number().int().min(0).max(6)).nullable().optional(),
-    commissionPercent: z.number().min(0).max(100).optional(),
-    priceOverrideCzk: z.number().positive().nullable().optional(),
-    bonusPointsOverride: z.number().int().nonnegative().nullable().optional(),
-    qrValiditySeconds: z.number().int().positive().optional(),
-    usageLimit: z.number().int().positive().nullable().optional(),
-    usageLimitDaily: z.number().int().positive().nullable().optional(),
+  commissionPercent: z.number().min(0).max(100).optional(),
+  priceOverrideCzk: z.number().positive().nullable().optional(),
+  bonusPointsOverride: z.number().int().nonnegative().nullable().optional(),
+  isFeatured: z.boolean().optional(),
+  bannerLeadHours: z.number().int().nonnegative().optional(),
+  ticketRequirements: z
+    .array(
+      z.object({
+        ticketType: z.string().min(1),
+        subType: z.string().optional(),
+        quantity: z.number().int().min(1),
+      }),
+    )
+    .nullable()
+    .optional(),
+  qrValiditySeconds: z.number().int().positive().optional(),
+  usageLimit: z.number().int().positive().nullable().optional(),
+  usageLimitDaily: z.number().int().positive().nullable().optional(),
     autoExpire: z.boolean().optional(),
     sendReminders: z.boolean().optional(),
     tags: z.array(z.string()).optional(),
@@ -179,6 +213,16 @@ const OPTIONAL_FLASH_DEAL_COLUMNS = new Set([
   "slug",
   "deal_type",
 ]);
+
+function computeRequirementMinimum(
+  requirements?: Array<{ quantity: number }> | null,
+): number {
+  if (!requirements || requirements.length === 0) return 0;
+  return requirements.reduce(
+    (max, item) => Math.max(max, Math.max(0, item.quantity)),
+    0,
+  );
+}
 
 function normalizeTicketTypeList(
   values: string[] | null | undefined,
@@ -455,6 +499,7 @@ export interface PublicDealSummary {
   usageLimit: number | null;
   usageCount: number;
   usageRemaining: number | null;
+  isFeatured: boolean;
   isActive: boolean;
   isUpcoming: boolean;
   isExpiringSoon: boolean;
@@ -497,11 +542,14 @@ function mapFlashDeal(row: FlashDealRow | DealRowWithRelations): FlashDeal {
     if (error instanceof z.ZodError) {
       const withDefaults = {
         tags: [],
-        audience: [],
-        ticket_types: null,
-        city: null,
-        auto_expire: true,
-        send_reminders: false,
+      audience: [],
+      ticket_types: null,
+      ticket_requirements: null,
+      is_featured: false,
+      banner_lead_hours: 0,
+      city: null,
+      auto_expire: true,
+      send_reminders: false,
         usage_limit: null,
         usage_limit_daily: null,
         price_override_czk: null,
@@ -603,6 +651,17 @@ export async function createFlashDeal(
   const { media: mediaItems = [], ticketTypes, ...rest } = payload;
   const supabase = getSupabaseAdminTyped();
   const normalizedTicketTypes = normalizeTicketTypeList(ticketTypes);
+  const ticketRequirements =
+    payload.ticketRequirements && payload.ticketRequirements.length > 0
+      ? payload.ticketRequirements.map((item) => ({
+          ticketType: item.ticketType,
+          subType: item.subType?.trim() || undefined,
+          quantity: item.quantity,
+        }))
+      : null;
+  const requirementMinimum = computeRequirementMinimum(ticketRequirements);
+  const configuredMin = Math.max(1, rest.minVisitors);
+  const requiredVisitors = Math.max(configuredMin, requirementMinimum || 0);
 
   const generatedSlug = rest.title
     .toLowerCase()
@@ -620,13 +679,16 @@ export async function createFlashDeal(
     description: rest.description ?? null,
     deal_type: rest.dealType ?? "flash",
     discount_percent: rest.discountPercent,
-    min_visitors: rest.minVisitors,
+    min_visitors: requiredVisitors,
     valid_from: rest.validFrom ?? null,
     valid_to: rest.validTo ?? null,
     valid_days: rest.validDays ?? null,
     commission_percent: rest.commissionPercent,
     price_override_czk: rest.priceOverrideCzk ?? null,
     bonus_points_override: rest.bonusPointsOverride ?? null,
+    is_featured: rest.isFeatured ?? false,
+    banner_lead_hours: rest.bannerLeadHours ?? 0,
+    ticket_requirements: ticketRequirements,
     ticket_types: normalizedTicketTypes,
     qr_validity_seconds: rest.qrValiditySeconds,
     usage_limit: rest.usageLimit ?? null,
@@ -714,6 +776,17 @@ export async function updateFlashDeal(
   }
 
   const supabase = getSupabaseAdminTyped();
+  let cachedExistingDeal: FlashDeal | null | undefined;
+  const ensureExistingDeal = async () => {
+    if (cachedExistingDeal === undefined) {
+      cachedExistingDeal = await getFlashDeal(id);
+    }
+    if (!cachedExistingDeal) {
+      throw new Error("Flash deal not found");
+    }
+    return cachedExistingDeal;
+  };
+
   const updatePayload: Record<string, unknown> = {
     updated_at: new Date().toISOString(),
   };
@@ -744,6 +817,30 @@ export async function updateFlashDeal(
     updatePayload.price_override_czk = payload.priceOverrideCzk ?? null;
   if (payload.bonusPointsOverride !== undefined)
     updatePayload.bonus_points_override = payload.bonusPointsOverride ?? null;
+  if (payload.isFeatured !== undefined)
+    updatePayload.is_featured = payload.isFeatured;
+  if (payload.bannerLeadHours !== undefined)
+    updatePayload.banner_lead_hours = payload.bannerLeadHours;
+  if (payload.ticketRequirements !== undefined) {
+    const normalized =
+      payload.ticketRequirements?.map((item) => ({
+        ticketType: item.ticketType,
+        subType: item.subType?.trim() || undefined,
+        quantity: item.quantity,
+      })) ?? null;
+    updatePayload.ticket_requirements = normalized;
+    const requirementMinimum = computeRequirementMinimum(normalized);
+    if (requirementMinimum > 0) {
+      const baseMin =
+        payload.minVisitors !== undefined
+          ? payload.minVisitors
+          : (await ensureExistingDeal()).min_visitors ?? 1;
+      updatePayload.min_visitors = Math.max(
+        typeof baseMin === "number" && baseMin > 0 ? baseMin : 1,
+        requirementMinimum,
+      );
+    }
+  }
   if (payload.qrValiditySeconds !== undefined)
     updatePayload.qr_validity_seconds = payload.qrValiditySeconds;
   if (payload.ticketTypes !== undefined) {
@@ -986,6 +1083,8 @@ interface PublicDealDetailExtras {
   qrValiditySeconds: number;
   bonusPointsOverride: number | null;
   ticketTypes: string[];
+  ticketRequirements: Array<{ ticketType: string; subType?: string; quantity: number }>;
+  bannerLeadHours: number;
   usageLimitDaily: number | null;
   media: Array<{
     id: string;
@@ -1067,6 +1166,7 @@ function transformDealToPublic(entry: DealWithMeta): PublicDealTransform | null 
     usageLimit: deal.usage_limit,
     usageCount: deal.usage_count,
     usageRemaining,
+    isFeatured: deal.is_featured,
     isActive,
     isUpcoming,
     isExpiringSoon,
@@ -1086,6 +1186,8 @@ function transformDealToPublic(entry: DealWithMeta): PublicDealTransform | null 
     qrValiditySeconds: deal.qr_validity_seconds,
     bonusPointsOverride: deal.bonus_points_override ?? null,
     ticketTypes: deal.ticket_types ?? [],
+    ticketRequirements: (deal.ticket_requirements as Array<{ ticketType: string; subType?: string; quantity: number }> | null) ?? [],
+    bannerLeadHours: deal.banner_lead_hours,
     usageLimitDaily: deal.usage_limit_daily ?? null,
     media:
       sortedMedia?.map((item) => ({

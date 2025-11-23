@@ -29,6 +29,14 @@ import { loadPartnerBranding } from "@/lib/services/partner-branding";
 const bodySchema = z.object({
   email: z.string().email(),
   visitors: z.number().int().positive().max(500),
+  ticketBreakdown: z
+    .array(
+      z.object({
+        ticketType: z.string().min(1),
+        quantity: z.number().int().min(1),
+      }),
+    )
+    .optional(),
   consentMarketing: z.boolean().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
@@ -204,7 +212,61 @@ export async function POST(
     }
 
     const dealMeta = await getDealWithMetaBySlug(slug);
-    assertDealIsIssuable(dealMeta, new Date(), parsed.data.visitors);
+    if (!dealMeta || dealMeta.deal.deal_type !== "flash") {
+      return NextResponse.json(
+        { error: "UnsupportedDeal", message: "Only flash deals can be generated here." },
+        { status: 400 },
+      );
+    }
+
+    const ticketRequirements = (dealMeta.deal.ticket_requirements ??
+      []) as Array<{ ticketType: string; subType?: string; quantity: number }>;
+    let normalizedTicketBreakdown: Array<{ ticketType: string; subType?: string; quantity: number }> | null =
+      null;
+
+    if (ticketRequirements.length > 0) {
+      const breakdown = parsed.data.ticketBreakdown ?? [];
+      if (breakdown.length !== 1) {
+        return NextResponse.json(
+          { error: "ValidationError", message: "Select a single ticket type to continue." },
+          { status: 400 },
+        );
+      }
+      const normalizedReq = ticketRequirements.map((item) => ({
+        ticketType: item.ticketType.trim().toLowerCase(),
+        subType: item.subType?.trim().toLowerCase() || "",
+        quantity: item.quantity,
+      }));
+      const reqMap = new Map(
+        normalizedReq.map((item) => [`${item.ticketType}::${item.subType}`, item.quantity]),
+      );
+      const selection = breakdown[0];
+      const selectionKey = `${selection.ticketType.trim().toLowerCase()}::${(
+        (selection as { subType?: string }).subType ?? ""
+      )
+        .trim()
+        .toLowerCase()}`;
+      const expectedQuantity = reqMap.get(selectionKey);
+      if (!expectedQuantity || selection.quantity !== expectedQuantity) {
+        return NextResponse.json(
+          { error: "ValidationError", message: "Selected ticket type does not match the requirement." },
+          { status: 400 },
+        );
+      }
+      const safeTicketType = selection.ticketType.trim();
+      const safeSubType = (selection as { subType?: string }).subType?.trim() || undefined;
+      normalizedTicketBreakdown = [
+        {
+          ticketType: safeTicketType,
+          subType: safeSubType,
+          quantity: expectedQuantity,
+        },
+      ];
+      parsed.data.visitors = expectedQuantity;
+      assertDealIsIssuable(dealMeta, new Date(), expectedQuantity);
+    } else {
+      assertDealIsIssuable(dealMeta, new Date(), parsed.data.visitors);
+    }
 
     const publicDeal = await getPublicDealBySlug(slug);
     if (!publicDeal || !publicDeal.isActive) {
@@ -252,6 +314,11 @@ export async function POST(
       partnerName: publicDeal.partnerName ?? dealMeta?.deal.partner_id ?? "",
       dealType: publicDeal.dealType,
       visitors: parsed.data.visitors,
+      ticketRequirements: ticketRequirements,
+      ticketBreakdown:
+        ticketRequirements.length > 0
+          ? normalizedTicketBreakdown ?? null
+          : parsed.data.ticketBreakdown ?? null,
       consentMarketing: parsed.data.consentMarketing ?? false,
       extraMetadata: parsed.data.metadata ?? {},
     });
@@ -339,6 +406,8 @@ export async function POST(
       metadata: {
         email: normalizedEmail,
         visitors: parsed.data.visitors,
+        ticketBreakdown: parsed.data.ticketBreakdown ?? null,
+        ticketRequirements,
         consentMarketing: parsed.data.consentMarketing ?? false,
         dealSlug: publicDeal.slug,
         qrCodeUrl: qrInfo.url,
@@ -356,6 +425,7 @@ export async function POST(
         email: normalizedEmail,
         visitors: parsed.data.visitors,
         slug: publicDeal.slug,
+        ticketBreakdown: parsed.data.ticketBreakdown ?? null,
       },
     });
 

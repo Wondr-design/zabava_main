@@ -9,6 +9,8 @@ import { getPartnerBySlug } from "@/lib/data/site-directory";
 import { SiteNav } from "@/site/components/site-nav";
 import { PartnerFormRunner } from "@/site/forms/partner-form-runner";
 import { LocalizedLink } from "@/components/ui/localized-link";
+import { getDealWithMeta } from "@/lib/data/flash-deals";
+import type { DealTicketRequirement } from "@/lib/deals/ticket-requirements";
 
 type PartnerBookingPageContext = {
   params: Promise<{ slug: string }>;
@@ -51,6 +53,39 @@ export default async function PartnerBookingPage({
   const bookingCap = partner.ticketing?.maxGuestsPerBooking ?? null;
   const enrichedForm =
     form && bookingCap ? applyBookingCapToForm(form, bookingCap) : form;
+  let dealSnapshot:
+    | {
+        id: string;
+        slug: string | null;
+        title: string;
+        minVisitors: number;
+        validFrom: string | null;
+        validTo: string | null;
+        validDays: number[] | null;
+        ticketRequirements: DealTicketRequirement[];
+      }
+    | null = null;
+
+  if (enrichedForm && enrichedForm.usageType === "deal" && enrichedForm.dealId) {
+    try {
+      const entry = await getDealWithMeta(enrichedForm.dealId);
+      if (entry?.deal) {
+        dealSnapshot = {
+          id: entry.deal.id,
+          slug: entry.deal.slug,
+          title: entry.deal.title,
+          minVisitors: entry.deal.min_visitors,
+          validFrom: entry.deal.valid_from,
+          validTo: entry.deal.valid_to,
+          validDays: entry.deal.valid_days,
+          ticketRequirements:
+            (entry.deal.ticket_requirements as DealTicketRequirement[] | null) ?? [],
+        };
+      }
+    } catch (error) {
+      console.error("partner_booking_deal_load_failed", error);
+    }
+  }
 
   return (
     <main className="flex min-h-screen flex-col bg-slate-950 text-white">
@@ -91,6 +126,7 @@ export default async function PartnerBookingPage({
               categories={partner.categories.map((category) => category.name)}
               ticketCatalog={partner.ticketDetails ?? []}
               ticketAddons={partner.ticketAddons ?? []}
+              dealSnapshot={dealSnapshot ?? undefined}
             />
           ) : (
             <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-sm text-indigo-200/80 shadow-2xl shadow-black/30">

@@ -326,10 +326,6 @@ function DealCard({ deal }: { deal: PublicDealSummary }) {
           ) : null}
         </div>
         <ul className="space-y-1.5 text-xs text-slate-200 leading-relaxed">
-          <li>
-            <span className="font-bold text-violet-300">{deal.discountPercent}% off</span> • minimum{" "}
-            <span className="font-semibold text-white">{deal.minVisitors}</span> visitors
-          </li>
           <li>{formatValidity(deal.validFrom, deal.validTo)}</li>
           {deal.city ? <li>City focus: <span className="font-semibold text-slate-100">{deal.city}</span></li> : null}
           {typeof deal.usageRemaining === "number" ? (

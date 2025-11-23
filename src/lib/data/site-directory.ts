@@ -156,6 +156,13 @@ export async function getPartnerBySlug(slug: string) {
   };
 }
 
+export async function getPartnerById(partnerId: string) {
+  const directory = await loadDirectory();
+  const partner = directory.partners.find((item) => item.partnerId === partnerId);
+  if (!partner) return null;
+  return { partner };
+}
+
 export function revalidatePublicDirectory() {
   revalidateTag(SITE_DIRECTORY_TAG);
 }

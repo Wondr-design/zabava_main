@@ -32,6 +32,22 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { QrPreviewCard } from "@/site/components/qr-preview-card";
+import { LocalizedLink } from "@/components/ui/localized-link";
+import {
+  DEAL_TICKET_REQUIREMENT_METADATA_KEY,
+  type DealTicketRequirement,
+} from "@/lib/deals/ticket-requirements";
+
+interface DealSnapshotSummary {
+  id: string;
+  slug: string | null;
+  title: string;
+  minVisitors: number;
+  validFrom: string | null;
+  validTo: string | null;
+  validDays: number[] | null;
+  ticketRequirements: DealTicketRequirement[];
+}
 
 interface PartnerFormRunnerProps {
   partnerId: string;
@@ -40,6 +56,7 @@ interface PartnerFormRunnerProps {
   categories: string[];
   ticketCatalog?: PartnerTicketDetail[];
   ticketAddons?: PartnerTicketAddon[];
+  dealSnapshot?: DealSnapshotSummary;
 }
 
 interface BookingResult {
@@ -161,9 +178,62 @@ export function PartnerFormRunner({
   categories,
   ticketCatalog = [],
   ticketAddons = [],
+  dealSnapshot,
 }: PartnerFormRunnerProps) {
   const steps = form.config.steps;
   const transportConfig = form.config.transport ?? null;
+  const isDealForm = form.usageType === "deal";
+  const dealIntegration = isDealForm ? form.config.deal ?? null : null;
+  const dealVisitorsFieldId = dealIntegration?.visitorsFieldId ?? null;
+  type NormalizedDealRequirement = DealTicketRequirement & { key: string; label: string };
+  const normalizedDealRequirements = useMemo<NormalizedDealRequirement[]>(() => {
+    if (!isDealForm || !dealSnapshot?.ticketRequirements?.length) {
+      return [];
+    }
+    return dealSnapshot.ticketRequirements.map((requirement, index) => {
+      const label = requirement.subType
+        ? `${requirement.subType} · ${requirement.ticketType}`
+        : requirement.ticketType;
+      return {
+        ...requirement,
+        subType: requirement.subType ?? undefined,
+        key: `${requirement.ticketType.toLowerCase()}::${(requirement.subType ?? "").toLowerCase()}::${index}`,
+        label,
+      };
+    });
+  }, [dealSnapshot?.ticketRequirements, isDealForm]);
+  const hasDealRequirementStep = normalizedDealRequirements.length > 0;
+  const [dealGateComplete, setDealGateComplete] = useState(!hasDealRequirementStep);
+  const [dealRequirementConfirmed, setDealRequirementConfirmed] = useState(false);
+  const [dealSelectedRequirementKey, setDealSelectedRequirementKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!hasDealRequirementStep) {
+      setDealGateComplete(true);
+      setDealSelectedRequirementKey(null);
+      setDealRequirementConfirmed(false);
+      return;
+    }
+    setDealSelectedRequirementKey((current) => {
+      if (current && normalizedDealRequirements.some((requirement) => requirement.key === current)) {
+        return current;
+      }
+      return normalizedDealRequirements[0]?.key ?? null;
+    });
+    setDealRequirementConfirmed(false);
+  }, [hasDealRequirementStep, normalizedDealRequirements]);
+
+  const selectedDealRequirement = useMemo(() => {
+    if (!hasDealRequirementStep || !dealSelectedRequirementKey) {
+      return null;
+    }
+    return (
+      normalizedDealRequirements.find((requirement) => requirement.key === dealSelectedRequirementKey) ??
+      null
+    );
+  }, [dealSelectedRequirementKey, hasDealRequirementStep, normalizedDealRequirements]);
+
+  const dealGateRequired = isDealForm && hasDealRequirementStep;
   const pricingStep = useMemo(() => {
     return (
       steps.find(
@@ -175,12 +245,16 @@ export function PartnerFormRunner({
     );
   }, [steps]);
   const bookingCap = useMemo(() => {
-    const cap =
-      (pricingStep?.pricing as any)?.maxGuestsPerBooking ??
-      (form.config.pricing as any)?.maxGuestsPerBooking ??
-      null;
-    return typeof cap === "number" && cap > 0 ? cap : null;
-  }, [pricingStep?.pricing, form.config.pricing]);
+    const stepCap = pricingStep?.pricing?.maxGuestsPerBooking;
+    const formCap = form.config.pricing?.maxGuestsPerBooking;
+    const selectedCap =
+      typeof stepCap === "number" && Number.isFinite(stepCap)
+        ? stepCap
+        : typeof formCap === "number" && Number.isFinite(formCap)
+        ? formCap
+        : null;
+    return selectedCap && selectedCap > 0 ? selectedCap : null;
+  }, [pricingStep, form.config.pricing]);
   const [currentStep, setCurrentStep] = useState(0);
   const [values, setValues] = useState<Record<string, unknown>>(() =>
     initializeValues(form)
@@ -708,6 +782,24 @@ export function PartnerFormRunner({
     setResult(null);
   }, [form]);
 
+  useEffect(() => {
+    if (!isDealForm || !dealVisitorsFieldId) {
+      return;
+    }
+    const lockedValue =
+      selectedDealRequirement?.quantity ??
+      (typeof dealSnapshot?.minVisitors === "number" ? dealSnapshot.minVisitors : null);
+    if (lockedValue === null || lockedValue === undefined) {
+      return;
+    }
+    setValues((prev) => {
+      if (prev[dealVisitorsFieldId] === lockedValue) {
+        return prev;
+      }
+      return { ...prev, [dealVisitorsFieldId]: lockedValue };
+    });
+  }, [dealVisitorsFieldId, dealSnapshot?.minVisitors, isDealForm, selectedDealRequirement?.quantity, setValues]);
+
   const fieldDefinitions = useMemo(() => {
     const map = new Map<string, PartnerFormField>();
     form.config.steps.forEach((step) => {
@@ -1004,6 +1096,10 @@ export function PartnerFormRunner({
 
   async function handleSubmit() {
     setError(null);
+    if (dealGateRequired && !dealGateComplete) {
+      setError("Select a ticket type to continue.");
+      return;
+    }
     for (const stepIndex of visibleStepIndexes) {
       if (!validateStep(stepIndex)) {
         setCurrentStep(stepIndex);
@@ -1064,6 +1160,15 @@ export function PartnerFormRunner({
         ? {
             ticketAddons: addonSelectionPayload,
             ticketAddonsTotal: addonSelectionsTotal ?? undefined,
+          }
+        : {}),
+      ...(selectedDealRequirement
+        ? {
+            [DEAL_TICKET_REQUIREMENT_METADATA_KEY]: {
+              ticketType: selectedDealRequirement.ticketType,
+              subType: selectedDealRequirement.subType ?? null,
+              quantity: selectedDealRequirement.quantity,
+            },
           }
         : {}),
     };
@@ -1143,6 +1248,25 @@ export function PartnerFormRunner({
           </div>
         );
       case "checkbox":
+        const isPrivacyField =
+          typeof field.id === "string" &&
+          field.id.trim().toLowerCase() === "privacy";
+        const checkboxLabel = isPrivacyField ? (
+          <>
+            I agree to the{" "}
+            <LocalizedLink
+              href="/privacy"
+              target="_blank"
+              rel="noreferrer"
+              className="text-indigo-200 underline underline-offset-4 hover:text-white"
+            >
+              Privacy Policy
+            </LocalizedLink>{" "}
+            (required)
+          </>
+        ) : (
+          label
+        );
         return (
           <label
             key={field.id}
@@ -1160,7 +1284,7 @@ export function PartnerFormRunner({
               className="h-5 w-5 rounded border-white/20 bg-transparent text-indigo-400"
             />
             <span className="flex-1">
-              {label}
+              {checkboxLabel}
               {helper ? (
                 <span className="block text-xs text-indigo-200/70">
                   {helper}
@@ -1383,6 +1507,29 @@ export function PartnerFormRunner({
         );
       case "counter": {
         const numericValue = Number(value ?? 1);
+        const isLockedVisitorsField =
+          isDealForm && dealVisitorsFieldId && field.id === dealVisitorsFieldId;
+        if (isLockedVisitorsField) {
+          return (
+            <div className="space-y-2" key={field.id}>
+              <label className="text-sm font-medium text-white">{label}</label>
+              <div className="flex items-center justify-between rounded-2xl border border-white/15 bg-slate-950/60 px-4 py-3">
+                <span className="text-lg font-semibold text-white">
+                  {numericValue}
+                </span>
+                <span className="text-xs text-indigo-200/80">
+                  Locked to selected ticket type
+                </span>
+              </div>
+              {helper ? (
+                <p className="text-xs text-indigo-200/70">{helper}</p>
+              ) : null}
+              {fieldError ? (
+                <p className="text-xs text-rose-300">{fieldError}</p>
+              ) : null}
+            </div>
+          );
+        }
         return (
           <div className="space-y-2" key={field.id}>
             <label className="text-sm font-medium text-white">{label}</label>
@@ -1429,6 +1576,29 @@ export function PartnerFormRunner({
         );
       }
       default:
+        const isLockedVisitorsField =
+          isDealForm && dealVisitorsFieldId && field.id === dealVisitorsFieldId;
+        if (isLockedVisitorsField) {
+          return (
+            <div className="space-y-2" key={field.id}>
+              <label className="text-sm font-medium text-white">{label}</label>
+              <div className="rounded-2xl border border-white/15 bg-slate-950/60 px-4 py-3 text-sm text-indigo-100">
+                <span className="text-lg font-semibold text-white">
+                  {String(value ?? "")}
+                </span>
+                <p className="text-xs text-indigo-200/80">
+                  Locked to the ticket requirement selected in step one.
+                </p>
+              </div>
+              {helper ? (
+                <p className="text-xs text-indigo-200/70">{helper}</p>
+              ) : null}
+              {fieldError ? (
+                <p className="text-xs text-rose-300">{fieldError}</p>
+              ) : null}
+            </div>
+          );
+        }
         return (
           <div className="space-y-2" key={field.id}>
             <label className="text-sm font-medium text-white">{label}</label>
@@ -1614,6 +1784,18 @@ export function PartnerFormRunner({
     );
   }
 
+  if (isDealForm && !dealSnapshot) {
+    return (
+      <div className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-8 text-white shadow-2xl shadow-black/30">
+        <h2 className="text-2xl font-semibold">Flash deal unavailable</h2>
+        <p className="text-sm text-indigo-200/80">
+          We couldn&apos;t load the ticket requirements for this deal. Please refresh the page or contact
+          support so we can restore the booking form.
+        </p>
+      </div>
+    );
+  }
+
   const reviewStepIndex = steps.length;
   const isReviewStep = currentStep === reviewStepIndex;
   const currentStepData = !isReviewStep ? steps[currentStep] ?? null : null;
@@ -1633,6 +1815,8 @@ export function PartnerFormRunner({
       : "Next");
   const backButtonLabel =
     currentStepData?.previousLabel ?? form.config.summary?.editLabel ?? "Back";
+  const effectiveProgressLabel =
+    dealGateRequired && !dealGateComplete ? "Ticket confirmation" : progressLabel;
 
   return (
     <div className="space-y-10 rounded-3xl border border-white/10 bg-white/5 p-8 text-white shadow-2xl shadow-black/30">
@@ -1651,9 +1835,111 @@ export function PartnerFormRunner({
         className="bg-white/10"
       />
 
+      {dealGateRequired && dealGateComplete && selectedDealRequirement ? (
+        <div className="rounded-3xl border border-indigo-400/30 bg-indigo-500/10 p-5 text-sm text-indigo-100">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-indigo-200/70">
+                Ticket type locked
+              </p>
+              <p className="text-lg font-semibold text-white">{selectedDealRequirement.label}</p>
+              <p className="text-xs text-indigo-200/80">
+                Requires{" "}
+                <span className="font-semibold text-white">{selectedDealRequirement.quantity}</span>{" "}
+                guest{selectedDealRequirement.quantity === 1 ? "" : "s"} for this reservation.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-indigo-100 hover:bg-indigo-500/20"
+              onClick={() => {
+                setDealGateComplete(false);
+                setDealRequirementConfirmed(false);
+              }}
+            >
+              Change selection
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
       <div className="space-y-6">
         <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-6">
-          {isReviewStep ? (
+          {dealGateRequired && !dealGateComplete ? (
+            <div className="space-y-5">
+              <div className="space-y-1">
+                <div className="text-xs uppercase tracking-[0.3em] text-indigo-200/70">
+                  Step 1 · Ticket confirmation
+                </div>
+                <h3 className="text-xl font-semibold text-white">
+                  Choose the ticket type configured for this deal
+                </h3>
+                <p className="text-sm text-indigo-200/80">
+                  These options are pulled directly from the flash deal setup. Confirm the mix that matches your group.
+                </p>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                {normalizedDealRequirements.map((requirement) => {
+                  const selected = dealSelectedRequirementKey === requirement.key;
+                  return (
+                    <button
+                      type="button"
+                      key={requirement.key}
+                      onClick={() => setDealSelectedRequirementKey(requirement.key)}
+                      className={cn(
+                        "flex flex-col gap-1 rounded-2xl border px-4 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400",
+                        selected
+                          ? "border-indigo-400 bg-indigo-500/20 text-white shadow-lg shadow-indigo-500/30"
+                          : "border-white/10 bg-slate-950/60 text-indigo-100 hover:border-indigo-300/60"
+                      )}
+                    >
+                      <span className="text-sm font-semibold">{requirement.label}</span>
+                      <span className="text-xs text-indigo-200/80">
+                        Requires{" "}
+                        <span className="font-semibold text-white">{requirement.quantity}</span>{" "}
+                        guest{requirement.quantity === 1 ? "" : "s"}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <label className="flex items-start gap-3 text-xs text-indigo-200/80">
+                <input
+                  type="checkbox"
+                  className="mt-1 h-4 w-4 rounded border border-white/20 bg-transparent text-indigo-400"
+                  checked={dealRequirementConfirmed}
+                  onChange={(event) => setDealRequirementConfirmed(event.target.checked)}
+                  disabled={!dealSelectedRequirementKey}
+                />
+                <span>
+                  I confirm my group has{" "}
+                  <span className="font-semibold text-white">
+                    {selectedDealRequirement?.quantity ?? "—"}
+                  </span>{" "}
+                  guest{(selectedDealRequirement?.quantity ?? 0) === 1 ? "" : "s"} for this ticket type.
+                </span>
+              </label>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-xs uppercase tracking-[0.3em] text-indigo-200/70">
+                  Ticket gate
+                </span>
+                <Button
+                  type="button"
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    setDealGateComplete(true);
+                    setError(null);
+                  }}
+                  disabled={!dealSelectedRequirementKey || !dealRequirementConfirmed}
+                >
+                  Continue
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ) : isReviewStep ? (
             renderSummary()
           ) : currentStepData ? (
             <div className="space-y-5">
@@ -1685,57 +1971,63 @@ export function PartnerFormRunner({
           ) : null}
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-xs uppercase tracking-[0.3em] text-indigo-200/60">
-            {progressLabel}
+        {dealGateRequired && !dealGateComplete ? (
+          <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-xs text-indigo-200/80">
+            Complete the ticket confirmation above to continue with the form.
           </div>
-          <div className="flex gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleBack}
-              disabled={
-                submitting ||
-                (visibleStepIndexes.length === 0
-                  ? isReviewStep
-                  : !isReviewStep &&
-                    visibleStepIndexes[0] === currentStep &&
-                    currentVisiblePosition === 0)
-              }
-              className="flex items-center gap-2"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              {backButtonLabel}
-            </Button>
-            {isReviewStep ? (
+        ) : (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-xs uppercase tracking-[0.3em] text-indigo-200/60">
+              {effectiveProgressLabel}
+            </div>
+            <div className="flex gap-3">
               <Button
                 type="button"
-                onClick={handleSubmit}
-                disabled={submitting}
+                variant="outline"
+                onClick={handleBack}
+                disabled={
+                  submitting ||
+                  (visibleStepIndexes.length === 0
+                    ? isReviewStep
+                    : !isReviewStep &&
+                      visibleStepIndexes[0] === currentStep &&
+                      currentVisiblePosition === 0)
+                }
                 className="flex items-center gap-2"
               >
-                {submitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <ShieldCheck className="h-4 w-4" />
-                )}
-                {form.config.summary?.confirmLabel ?? "Confirm & Generate QR"}
+                <ChevronLeft className="h-4 w-4" />
+                {backButtonLabel}
               </Button>
-            ) : (
-              <Button
-                type="button"
-                onClick={handleNext}
-                className="flex items-center gap-2"
-              >
-                {nextButtonLabel}
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            )}
+              {isReviewStep ? (
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="flex items-center gap-2"
+                >
+                  {submitting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ShieldCheck className="h-4 w-4" />
+                  )}
+                  {form.config.summary?.confirmLabel ?? "Confirm & Generate QR"}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={handleNext}
+                  className="flex items-center gap-2"
+                >
+                  {nextButtonLabel}
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {error ? (
+      {error && (!dealGateRequired || dealGateComplete) ? (
         <p className="rounded-2xl border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
           {error}
         </p>

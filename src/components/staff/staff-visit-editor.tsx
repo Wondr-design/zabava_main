@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   Save,
   ClipboardCheck,
+  ClipboardX,
   Pencil,
   X,
   Minus,
@@ -160,6 +161,7 @@ export function StaffVisitEditor({
   const [saving, setSaving] = useState(false);
   const [marking, setMarking] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [rejectNote, setRejectNote] = useState("");
   const [editing, setEditing] = useState<Record<EditableKey, boolean>>({
     visitNotes: false,
   });
@@ -187,6 +189,38 @@ export function StaffVisitEditor({
       : typeof payload.minVisitors === "number"
         ? payload.minVisitors
         : undefined;
+  const ticketRequirements =
+    Array.isArray(payload.ticketRequirements) && payload.ticketRequirements.length
+      ? (payload.ticketRequirements as Array<{ ticketType: string; subType?: string; quantity: number }>)
+      : null;
+  const ticketBreakdown =
+    Array.isArray(payload.ticketBreakdown) && payload.ticketBreakdown.length
+      ? (payload.ticketBreakdown as Array<{ ticketType: string; subType?: string; quantity: number }>)
+      : null;
+  const requirementsSummary = ticketRequirements
+    ? ticketRequirements
+        .map((item) => `${item.quantity} × ${item.ticketType}${item.subType ? ` (${item.subType})` : ""}`)
+        .join(", ")
+    : null;
+  const breakdownSummary = ticketBreakdown
+    ? ticketBreakdown
+        .map((item) => `${item.quantity} × ${item.ticketType}${item.subType ? ` (${item.subType})` : ""}`)
+        .join(", ")
+    : null;
+  const ticketMismatch =
+    ticketRequirements &&
+    ticketRequirements.length > 0 &&
+    ticketBreakdown &&
+    (ticketBreakdown.length !== 1 ||
+      (() => {
+        const entry = ticketBreakdown[0];
+        const match = ticketRequirements.find(
+          (req) =>
+            req.ticketType.toLowerCase() === entry.ticketType.toLowerCase() &&
+            (req.subType ?? "").toLowerCase() === (entry.subType ?? "").toLowerCase(),
+        );
+        return !match || match.quantity !== entry.quantity;
+      })());
   const actualVisitorsCurrent =
     typeof numPeople === "number"
       ? numPeople
@@ -197,7 +231,8 @@ export function StaffVisitEditor({
     isFlashDeal &&
     typeof requiredVisitors === "number" &&
     typeof actualVisitorsCurrent === "number" &&
-    actualVisitorsCurrent < requiredVisitors;
+    actualVisitorsCurrent < requiredVisitors ||
+    Boolean(ticketMismatch);
 
   const payloadSummary = useMemo(() => {
     const payloadData = visit.payload ?? {};
@@ -332,6 +367,7 @@ export function StaffVisitEditor({
               : typeof visit.num_people === "number"
                 ? visit.num_people
                 : undefined,
+          action: "use",
         }),
       });
       if (!res.ok) {
@@ -355,6 +391,57 @@ export function StaffVisitEditor({
       setMarking(false);
     }
   }, [numPeople, partnerId, router, visit.email, visit.num_people, visitId]);
+
+  const handleReject = useCallback(async () => {
+    const reason = rejectNote.trim();
+    if (!reason) {
+      toast.error("Please add a note explaining the rejection.");
+      return;
+    }
+    setMarking(true);
+    try {
+      const csrf = getCsrfToken();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (csrf) headers["x-csrf-token"] = csrf;
+      const res = await fetch("/api/partner/mark-visited", {
+        method: "POST",
+        headers,
+        credentials: "include",
+        body: JSON.stringify({
+          email: visit.email,
+          partnerId,
+          visitId,
+          actualVisitors:
+            typeof numPeople === "number"
+              ? numPeople
+              : typeof visit.num_people === "number"
+                ? visit.num_people
+                : undefined,
+          action: "reject",
+          rejectReason: reason,
+        }),
+      });
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        throw new Error(payload?.error ?? "Failed to reject visit.");
+      }
+      await res.json();
+      toast.success("QR rejected and noted.");
+      setTimeout(() => {
+        router.replace("/staff/console");
+      }, 600);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Unable to reject QR."
+      );
+    } finally {
+      setMarking(false);
+    }
+  }, [numPeople, partnerId, rejectNote, router, visit.email, visit.num_people, visitId]);
 
   const createdAt = formatDateTime(visit.created_at);
   const visitedAt = formatDateTime(visit.visited_at);
@@ -688,6 +775,19 @@ export function StaffVisitEditor({
                 </dd>
               </SurfaceCard>
             ) : null}
+            {ticketRequirements ? (
+              <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
+                <dt className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
+                  Required ticket mix
+                </dt>
+                <dd className="mt-1 text-base font-semibold">
+                  {requirementsSummary}
+                </dd>
+                <dd className="mt-1 text-[11px] text-[color:var(--ds-text-muted)]">
+                  Guests must match this mix to redeem.
+                </dd>
+              </SurfaceCard>
+            ) : null}
             <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
               <dt className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
                 Recorded visitors
@@ -699,11 +799,26 @@ export function StaffVisitEditor({
                 Update the guest count before confirming arrival.
               </dd>
             </SurfaceCard>
+            {ticketBreakdown ? (
+              <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
+                <dt className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
+                  Submitted ticket mix
+                </dt>
+                <dd className="mt-1 text-base font-semibold">
+                  {breakdownSummary ?? "—"}
+                </dd>
+                <dd className="mt-1 text-[11px] text-[color:var(--ds-text-muted)]">
+                  Provided during booking. Verify on arrival.
+                </dd>
+              </SurfaceCard>
+            ) : null}
           </dl>
           {visitorsWarning ? (
             <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-danger)]/10 p-4 text-sm text-[color:var(--ds-danger)]">
               <span className="font-semibold">
-                At least {requiredVisitors} visitors must be present.
+                {ticketMismatch
+                  ? "Ticket mix does not match the requirement."
+                  : `At least ${requiredVisitors} visitors must be present.`}
               </span>{" "}
               Update the guest count or decline the QR until the full group
               arrives.
@@ -1037,6 +1152,19 @@ export function StaffVisitEditor({
               </p>
             ),
           })}
+          {isFlashDeal ? (
+            <div className="space-y-2">
+              <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
+                Rejection note (required to decline)
+              </p>
+              <DesignTextarea
+                value={rejectNote}
+                onChange={(event) => setRejectNote(event.target.value)}
+                rows={3}
+                placeholder="Add a short reason if you need to reject this QR."
+              />
+            </div>
+          ) : null}
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -1096,6 +1224,27 @@ export function StaffVisitEditor({
               </>
             )}
           </DesignButton>
+          {isFlashDeal ? (
+            <DesignButton
+              variant="destructive"
+              type="button"
+              onClick={handleReject}
+              disabled={marking}
+              className="w-full sm:w-auto"
+            >
+              {marking ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Rejecting…
+                </>
+              ) : (
+                <>
+                  <ClipboardX className="size-4" />
+                  Reject QR
+                </>
+              )}
+            </DesignButton>
+          ) : null}
         </div>
       </SectionCard>
 

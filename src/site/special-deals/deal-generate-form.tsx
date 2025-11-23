@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { QrPreviewCard } from "@/site/components/qr-preview-card";
 
 interface DealGenerateFormProps {
@@ -13,6 +14,7 @@ interface DealGenerateFormProps {
   qrValiditySeconds: number;
   partnerName: string | null;
   title: string;
+  ticketRequirements: Array<{ ticketType: string; subType?: string; quantity: number }>;
 }
 
 interface DealGenerationResult {
@@ -34,9 +36,13 @@ export function DealGenerateForm({
   qrValiditySeconds,
   partnerName,
   title,
+  ticketRequirements,
 }: DealGenerateFormProps) {
   const [email, setEmail] = useState("");
   const [emailVerified, setEmailVerified] = useState(false);
+  const [step, setStep] = useState(ticketRequirements.length > 0 ? 0 : 1);
+  const [selectedTicketKey, setSelectedTicketKey] = useState<string | null>(null);
+  const [confirmedRequirement, setConfirmedRequirement] = useState(false);
   const [visitors, setVisitors] = useState<number>(minVisitors);
   const [consentMarketing, setConsentMarketing] = useState(true);
   const [metadataNote, setMetadataNote] = useState("");
@@ -51,6 +57,64 @@ export function DealGenerateForm({
 
   const qrValidityDays = secondsToDays(qrValiditySeconds);
 
+  const normalizedRequirements = useMemo(() => {
+    return ticketRequirements.map((item, index) => {
+      const key = `${item.ticketType.toLowerCase()}::${(item.subType ?? "").toLowerCase()}::${index}`;
+      const formattedLabel = item.subType
+        ? `${item.subType} · ${item.ticketType}`
+        : item.ticketType;
+      return {
+        ...item,
+        key,
+        label: formattedLabel,
+      };
+    });
+  }, [ticketRequirements]);
+
+  useEffect(() => {
+    if (!ticketRequirements.length) {
+      setStep(1);
+      setSelectedTicketKey(null);
+      setVisitors(minVisitors);
+      return;
+    }
+    setStep(0);
+    setSelectedTicketKey((current) => {
+      if (current && normalizedRequirements.some((req) => req.key === current)) {
+        return current;
+      }
+      return normalizedRequirements[0]?.key ?? null;
+    });
+  }, [ticketRequirements, normalizedRequirements, minVisitors]);
+
+  const selectedRequirement = useMemo(
+    () => normalizedRequirements.find((req) => req.key === selectedTicketKey) ?? null,
+    [normalizedRequirements, selectedTicketKey],
+  );
+
+  useEffect(() => {
+    if (selectedRequirement) {
+      setVisitors(selectedRequirement.quantity);
+    } else if (!ticketRequirements.length) {
+      setVisitors(minVisitors);
+    }
+  }, [selectedRequirement, ticketRequirements.length, minVisitors]);
+
+  useEffect(() => {
+    setConfirmedRequirement(false);
+  }, [selectedTicketKey]);
+
+  const ticketBreakdown = useMemo(() => {
+    if (!selectedRequirement) return [];
+    return [
+      {
+        ticketType: selectedRequirement.ticketType,
+        subType: selectedRequirement.subType,
+        quantity: selectedRequirement.quantity,
+      },
+    ];
+  }, [selectedRequirement]);
+
   useEffect(() => {
     setEmailVerified(false);
     setVerificationCode("");
@@ -64,7 +128,8 @@ export function DealGenerateForm({
     return trimmed.length > 0 && /^[^@]+@[^@]+\.[^@]+$/.test(trimmed);
   }, [email]);
 
-  const disableGenerate = submitting || !emailVerified;
+  const disableGenerate =
+    submitting || !emailVerified || (ticketRequirements.length > 0 && !selectedRequirement);
 
   return (
     <div className="space-y-6 rounded-3xl border border-white/10 bg-white/5 p-6">
@@ -77,7 +142,7 @@ export function DealGenerateForm({
         </p>
       </header>
 
-      {!isActive ? (
+      {!isActive && (
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
           <p>
             This deal is not currently active. You can browse other specials or contact us at{" "}
@@ -90,60 +155,153 @@ export function DealGenerateForm({
             for concierge assistance.
           </p>
         </div>
-      ) : (
-        <form
-          className="space-y-4"
-          onSubmit={async (event) => {
-            event.preventDefault();
-            if (disableGenerate) return;
-            setError(null);
-            setResult(null);
-            setSubmitting(true);
-            try {
-              const response = await fetch(`/api/public/special-deals/${slug}/generate`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  email,
-                  visitors,
-                  consentMarketing,
-                  metadata: metadataNote ? { note: metadataNote } : undefined,
-                }),
-              });
-              if (!response.ok) {
-                let message = "Unable to generate QR code. Please try again.";
+      )}
+
+      {isActive && (
+        <div className="space-y-4">
+          {ticketRequirements.length > 0 && step === 0 ? (
+            <section className="space-y-5 rounded-3xl border border-white/10 bg-white/5 p-5 text-sm text-slate-200">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-violet-300">
+                  Step 1 · Ticket confirmation
+                </p>
+                <h3 className="text-lg font-semibold text-white">Choose the ticket type for your group</h3>
+                <p className="text-xs text-slate-300">
+                  Each ticket type requires a specific headcount. Select the one that matches your group and confirm the size.
+                </p>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                {normalizedRequirements.map((requirement) => {
+                  const selected = requirement.key === selectedTicketKey;
+                  return (
+                    <button
+                      type="button"
+                      key={requirement.key}
+                      onClick={() => setSelectedTicketKey(requirement.key)}
+                      className={`flex flex-col gap-2 rounded-2xl border px-4 py-3 text-left transition focus:outline-none ${
+                        selected
+                          ? "border-violet-400 bg-violet-500/20 text-white shadow-lg shadow-violet-500/30"
+                          : "border-white/15 bg-white/5 hover:border-white/40"
+                      }`}
+                    >
+                      <span className="text-sm font-semibold">{requirement.label}</span>
+                      <span className="text-xs text-slate-300">
+                        Requires <span className="font-semibold text-white">{requirement.quantity}</span>{" "}
+                        guest{requirement.quantity === 1 ? "" : "s"}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <label className="flex items-start gap-3 text-xs text-slate-200">
+                <input
+                  type="checkbox"
+                  className="mt-1 h-4 w-4 rounded border border-white/30 bg-slate-900/80 text-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  checked={confirmedRequirement}
+                  onChange={(event) => setConfirmedRequirement(event.target.checked)}
+                  disabled={!selectedRequirement}
+                />
+                <span>
+                  I confirm my group has exactly{" "}
+                  <span className="font-semibold text-white">
+                    {selectedRequirement?.quantity ?? "—"}
+                  </span>{" "}
+                  guest{(selectedRequirement?.quantity ?? 0) === 1 ? "" : "s"} for the selected ticket type.
+                </span>
+              </label>
+              {error ? (
+                <div className="rounded-2xl border border-rose-400/30 bg-rose-500/20 p-4 text-xs text-rose-100">
+                  {error}
+                </div>
+              ) : null}
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">
+                  Step 1 of 2
+                </span>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    if (!selectedRequirement) {
+                      setError("Select a ticket type to continue.");
+                      return;
+                    }
+                    if (!confirmedRequirement) {
+                      setError("Please confirm your group size matches the requirement.");
+                      return;
+                    }
+                    setError(null);
+                    setStep(1);
+                  }}
+                  disabled={!selectedRequirement || !confirmedRequirement}
+                  className="w-full rounded-full bg-indigo-500 px-6 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:bg-indigo-500/40 sm:w-auto"
+                >
+                  Continue
+                </Button>
+              </div>
+            </section>
+          ) : null}
+
+          {step === 1 ? (
+            <form
+              className="space-y-4"
+              onSubmit={async (event) => {
+                event.preventDefault();
+                if (disableGenerate) return;
+                setError(null);
+                setResult(null);
+                setSubmitting(true);
                 try {
-                  const data = (await response.json()) as { error?: string };
-                  if (data?.error) message = data.error;
-                } catch {
-                  // ignore
+                  const response = await fetch(`/api/public/special-deals/${slug}/generate`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      email,
+                      visitors,
+                      ticketBreakdown: ticketRequirements.length ? ticketBreakdown : undefined,
+                      consentMarketing,
+                      metadata: metadataNote ? { note: metadataNote } : undefined,
+                    }),
+                  });
+                  if (!response.ok) {
+                    let message = "Unable to generate QR code. Please try again.";
+                    try {
+                      const data = (await response.json()) as { error?: string };
+                      if (data?.error) message = data.error;
+                    } catch {
+                      // ignore
+                    }
+                    setError(message);
+                    return;
+                  }
+                  const data = (await response.json()) as {
+                    visitId: string;
+                    verifyUrl: string | null;
+                    qrCodeUrl: string | null;
+                    qrCodeExpiresAt: string | null;
+                    staffScanUrl: string | null;
+                  };
+                  setResult({
+                    visitId: data.visitId,
+                    verifyUrl: data.verifyUrl,
+                    qrCodeUrl: data.qrCodeUrl,
+                    qrCodeExpiresAt: data.qrCodeExpiresAt,
+                    staffScanUrl: data.staffScanUrl,
+                  });
+                } catch (err) {
+                  const message =
+                    err instanceof Error ? err.message : "Unable to generate QR code. Please try again.";
+                  setError(message);
+                } finally {
+                  setSubmitting(false);
                 }
-                setError(message);
-                return;
-              }
-              const data = (await response.json()) as {
-                visitId: string;
-                verifyUrl: string | null;
-                qrCodeUrl: string | null;
-                qrCodeExpiresAt: string | null;
-                staffScanUrl: string | null;
-              };
-              setResult({
-                visitId: data.visitId,
-                verifyUrl: data.verifyUrl,
-                qrCodeUrl: data.qrCodeUrl,
-                qrCodeExpiresAt: data.qrCodeExpiresAt,
-                staffScanUrl: data.staffScanUrl,
-              });
-            } catch (err) {
-              const message =
-                err instanceof Error ? err.message : "Unable to generate QR code. Please try again.";
-              setError(message);
-            } finally {
-              setSubmitting(false);
-            }
-          }}
-        >
+              }}
+            >
+          {ticketRequirements.length > 0 ? (
+            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-violet-300">
+              Step 2 of 2 · Contact details
+            </p>
+          ) : null}
+
           <div className="grid gap-4 md:grid-cols-2">
             <label className="flex flex-col gap-1">
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
@@ -161,23 +319,65 @@ export function DealGenerateForm({
                 We&apos;ll send verification and QR links to this address.
               </span>
             </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Visitors
-              </span>
-              <input
-                required
-                type="number"
-                min={minVisitors}
-                value={visitors}
-                onChange={(event) => setVisitors(Number(event.target.value))}
-                className="rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-white shadow-inner focus:border-indigo-400 focus:outline-none"
-              />
-              <span className="text-[11px] text-slate-400">
-                Minimum {minVisitors} visitors required for {title}.
-              </span>
-            </label>
+            {ticketRequirements.length > 0 && selectedRequirement ? (
+              <div className="flex flex-col gap-1 rounded-2xl border border-white/10 bg-slate-900/40 px-4 py-3">
+                <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  Selected ticket type
+                </span>
+                <p className="text-sm font-semibold text-white">{selectedRequirement.label}</p>
+                <p className="text-xs text-slate-300">
+                  {selectedRequirement.quantity} guest
+                  {selectedRequirement.quantity === 1 ? "" : "s"} required · visitors auto-set to{" "}
+                  {selectedRequirement.quantity}.
+                </p>
+              </div>
+            ) : (
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  Visitors
+                </span>
+                <input
+                  required
+                  type="number"
+                  min={minVisitors}
+                  value={visitors}
+                  onChange={(event) => setVisitors(Number(event.target.value))}
+                  className="rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-white shadow-inner focus:border-indigo-400 focus:outline-none"
+                />
+                <span className="text-[11px] text-slate-400">
+                  Minimum {minVisitors} visitor{minVisitors === 1 ? "" : "s"} required for {title}.
+                </span>
+              </label>
+            )}
           </div>
+
+            {ticketRequirements.length > 0 && selectedRequirement ? (
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                      Ticket requirement summary
+                    </p>
+                    <p className="text-sm font-semibold text-white">{selectedRequirement.label}</p>
+                    <p className="text-xs text-slate-300">
+                      We&apos;ll validate {selectedRequirement.quantity} guest
+                      {selectedRequirement.quantity === 1 ? "" : "s"} for this ticket type at check-in.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="text-xs font-semibold text-indigo-300 hover:text-indigo-200"
+                    onClick={() => {
+                      setError(null);
+                      setStep(0);
+                    }}
+                  >
+                    Change
+                  </Button>
+                </div>
+              </div>
+            ) : null}
           <label className="flex flex-col gap-1">
             <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
               Special requests (optional)
@@ -327,6 +527,8 @@ export function DealGenerateForm({
             {submitting ? "Generating…" : "Generate QR"}
           </button>
         </form>
+          ) : null}
+        </div>
       )}
 
       {result ? (

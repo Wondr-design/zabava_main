@@ -9,6 +9,7 @@ import {
   createFlashDeal,
   type DealWithMeta,
 } from "@/lib/data/flash-deals";
+import { loadPartnerMeta } from "@/lib/data/partners";
 import { getAuthFromRequest } from "@/lib/auth/request";
 import { log, getCorrelationId } from "@/lib/logging";
 import { generateCsrfToken, verifyCsrf } from "@/lib/http/csrf";
@@ -39,14 +40,20 @@ const createPayloadSchema = z.object({
     .min(1)
     .regex(/^[a-z0-9-]+$/i, { message: "Slug may only contain letters, numbers, and hyphens." })
     .optional(),
-  discountPercent: z.number().min(0).max(100),
-  minVisitors: z.number().int().min(1).default(1),
   validFrom: z.string().datetime().optional(),
   validTo: z.string().datetime().optional(),
   validDays: z.array(z.number().int().min(0).max(6)).optional(),
-  commissionPercent: z.number().min(0).max(100),
-  priceOverrideCzk: z.number().positive().optional(),
-  bonusPointsOverride: z.number().int().nonnegative().optional(),
+  isFeatured: z.boolean().optional(),
+  bannerLeadHours: z.number().int().nonnegative().optional(),
+  ticketRequirements: z
+    .array(
+      z.object({
+        ticketType: z.string().min(1),
+        subType: z.string().optional(),
+        quantity: z.number().int().min(1),
+      }),
+    )
+    .optional(),
   qrValiditySeconds: z.number().int().positive().default(864000),
   usageLimit: z.number().int().positive().optional(),
   usageLimitDaily: z.number().int().positive().optional(),
@@ -68,6 +75,18 @@ const createPayloadSchema = z.object({
     )
     .optional(),
 });
+
+function normalizeTicketTypeList(values?: string[] | null): string[] {
+  if (!values) return [];
+  const result = Array.from(
+    new Set(
+      values
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0),
+    ),
+  );
+  return result;
+}
 
 function isAuthorized(req: NextRequest) {
   const auth = getAuthFromRequest(req);
@@ -108,6 +127,9 @@ function presentDeal(entry: DealWithMeta) {
   return {
     id: deal.id,
     partnerId: deal.partner_id,
+    isFeatured: deal.is_featured,
+    bannerLeadHours: deal.banner_lead_hours,
+    ticketRequirements: (deal.ticket_requirements as Array<{ ticketType: string; subType?: string; quantity: number }> | null) ?? [],
     dealType: deal.deal_type,
     slug: deal.slug,
     title: deal.title,
@@ -235,7 +257,105 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const payload = createPayloadSchema.parse(body ?? {});
+    const parsed = createPayloadSchema.parse(body ?? {});
+    const partnerMeta = await loadPartnerMeta(parsed.partnerId);
+
+    const partnerTicketTypes = normalizeTicketTypeList(
+      partnerMeta?.ticketing.ticketTypes ?? [],
+    );
+    let ticketTypes = normalizeTicketTypeList(parsed.ticketTypes);
+
+    if (partnerTicketTypes.length) {
+      ticketTypes =
+        ticketTypes.length > 0
+          ? ticketTypes.filter((value) => partnerTicketTypes.includes(value))
+          : partnerTicketTypes;
+    }
+
+    const validityMode: "valid_days" | "date_range" | "always_on" =
+      (parsed.validDays && parsed.validDays.length > 0)
+        ? "valid_days"
+        : parsed.validFrom || parsed.validTo
+        ? "date_range"
+        : "always_on";
+
+    if (validityMode === "valid_days" && (!parsed.validDays || parsed.validDays.length === 0)) {
+      return withCors(
+        NextResponse.json(
+          { error: "ValidationError", message: "Select at least one valid day." },
+          { status: 400 },
+        ),
+        CORS_CONFIG,
+      );
+    }
+
+    if (validityMode === "date_range") {
+      if (!parsed.validFrom || !parsed.validTo) {
+        return withCors(
+          NextResponse.json(
+            { error: "ValidationError", message: "Both start and end dates are required." },
+            { status: 400 },
+          ),
+          CORS_CONFIG,
+        );
+      }
+      const start = new Date(parsed.validFrom).getTime();
+      const end = new Date(parsed.validTo).getTime();
+      if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+        return withCors(
+          NextResponse.json(
+            { error: "ValidationError", message: "End date must be after start date." },
+            { status: 400 },
+          ),
+          CORS_CONFIG,
+        );
+      }
+    }
+
+    const normalizedRequirements =
+      parsed.ticketRequirements?.map((item) => ({
+        ticketType: item.ticketType.trim(),
+        subType: item.subType?.trim() || undefined,
+        quantity: item.quantity,
+      })) ?? [];
+    const requirementMinimum = normalizedRequirements.reduce(
+      (max, item) => Math.max(max, item.quantity),
+      0,
+    );
+    const minVisitors = requirementMinimum > 0 ? requirementMinimum : 1;
+    const commissionPercent =
+      typeof partnerMeta?.contract.commissionRate === "number"
+        ? partnerMeta.contract.commissionRate
+        : 0;
+    const payload = {
+      partnerId: parsed.partnerId,
+      title: parsed.title,
+      description: parsed.description,
+      dealType: "flash" as const,
+      slug: parsed.slug,
+      discountPercent: 0,
+      minVisitors,
+      commissionPercent,
+      priceOverrideCzk: undefined,
+      bonusPointsOverride: undefined,
+      isFeatured: parsed.isFeatured,
+      bannerLeadHours: parsed.bannerLeadHours,
+      ticketRequirements: normalizedRequirements,
+      qrValiditySeconds: parsed.qrValiditySeconds,
+      usageLimit: parsed.usageLimit,
+      usageLimitDaily: parsed.usageLimitDaily,
+      autoExpire: parsed.autoExpire,
+      sendReminders: parsed.sendReminders,
+      tags: parsed.tags,
+      audience: parsed.audience,
+      ticketTypes,
+      city: parsed.city,
+      status: parsed.status,
+      validDays: validityMode === "valid_days" ? parsed.validDays : undefined,
+      validFrom: validityMode === "date_range" ? parsed.validFrom : undefined,
+      validTo: validityMode === "date_range" ? parsed.validTo : undefined,
+      media: parsed.media,
+    };
     const auth = getAuthFromRequest(req);
     const created = await createFlashDeal({
       ...payload,

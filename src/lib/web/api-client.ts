@@ -29,6 +29,11 @@ import type { TransportServiceType } from '@/lib/data/transport';
 import type { PartnerBillingSummary } from '@/lib/services/reporting/billing-export';
 import type { GlobalValueRecord, GlobalValueType } from '@/lib/data/global-values';
 import type { AdminAccountOverview } from '@/lib/data/admin-account-overview';
+import type {
+  CmsPageRecord,
+  CmsPageVersionRecord,
+  CmsRenderableBlock,
+} from "@/lib/data/cms";
 
 function buildHeaders(opts?: RequestOptions, contentType: string | null = 'application/json') {
   const h: Record<string, string> = {};
@@ -227,6 +232,52 @@ export const adminApi = {
   ) =>
     json<{ ok: boolean }>(
       `/api/admin/email-templates`,
+      { method: "POST", body: JSON.stringify(body) },
+      opts,
+    ),
+  cmsPages: (opts: RequestOptions = {}) =>
+    json<{ pages: CmsPageRecord[] }>(
+      `/api/admin/cms`,
+      { method: "GET" },
+      opts,
+    ),
+  cmsPageCreate: (
+    body: { slug: string; displayName: string; description?: string | null; seedLocale?: string },
+    opts: RequestOptions = {},
+  ) =>
+    json<{ page: CmsPageRecord }>(
+      `/api/admin/cms`,
+      { method: "POST", body: JSON.stringify(body) },
+      opts,
+    ),
+  cmsVersionGet: (versionId: string, opts: RequestOptions = {}) =>
+    json<{ version: CmsPageVersionRecord; blocks: CmsRenderableBlock[] }>(
+      `/api/admin/cms/versions?id=${encodeURIComponent(versionId)}`,
+      { method: "GET" },
+      opts,
+    ),
+  cmsVersionSave: (
+    body: {
+      pageId: string;
+      slug: string;
+      locale: string;
+      versionId?: string;
+      summary?: string | null;
+      blocks: unknown[];
+    },
+    opts: RequestOptions = {},
+  ) =>
+    json<{ version: CmsPageVersionRecord; blocks: CmsRenderableBlock[] }>(
+      `/api/admin/cms/versions`,
+      { method: "POST", body: JSON.stringify(body) },
+      opts,
+    ),
+  cmsVersionPublish: (
+    body: { versionId: string },
+    opts: RequestOptions = {},
+  ) =>
+    json<{ version: CmsPageVersionRecord; blocks: CmsRenderableBlock[] }>(
+      `/api/admin/cms/publish`,
       { method: "POST", body: JSON.stringify(body) },
       opts,
     ),

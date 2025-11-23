@@ -1,27 +1,21 @@
 "use client";
 
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
+import { SurfaceCard } from "@/components/design-system";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { AdminDrawerVisibilityContext } from "@/app/[locale]/(site)/admin/admin-shell";
-import { type FlashDealAnalytics, type DealType } from "@/lib/data/flash-deals";
+import { LocalizedLink } from "@/components/ui/localized-link";
+import { Loader2 } from "lucide-react";
+import type { DealType, FlashDealAnalytics } from "@/lib/data/flash-deals";
+import { formatDate, formatDateTime } from "@/lib/format/date";
 import type { AdminDealListItem } from "./deals-dashboard";
-import {
-  DealEditDialog,
-  type DealEditDialogDeal,
-} from "./deal-edit-dialog";
+import { UsageChip } from "./usage-chip";
+import { cn } from "@/lib/utils";
+
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
 interface DealDetailResponse {
   deal: {
@@ -50,6 +44,9 @@ interface DealDetailResponse {
     tags: string[];
     audience: string[];
     ticketTypes: string[];
+    ticketRequirements: Array<{ ticketType: string; subType?: string; quantity: number }> | null;
+    isFeatured: boolean;
+    bannerLeadHours: number;
     city: string | null;
     createdAt: string;
     updatedAt: string;
@@ -75,25 +72,18 @@ interface DealDetailResponse {
 
 export interface DealDetailDrawerProps {
   dealId: string | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   fallbackDeal: AdminDealListItem | null;
   onHydrated?: (deal: AdminDealListItem & { slug: string | null }) => void;
+  onNavigateBack?: () => void;
 }
-
-type AdminDealDetail = AdminDealListItem & { slug: string | null };
-
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
 export function DealDetailDrawer({
   dealId,
-  open,
-  onOpenChange,
   fallbackDeal,
   onHydrated,
+  onNavigateBack,
 }: DealDetailDrawerProps) {
-  const setDrawerVisible = useContext(AdminDrawerVisibilityContext);
-  const [detail, setDetail] = useState<AdminDealDetail | null>(
+  const [detail, setDetail] = useState<AdminDealListItem & { slug: string | null } | null>(
     fallbackDeal ? { ...fallbackDeal, slug: null } : null,
   );
   const [loading, setLoading] = useState(false);
@@ -101,24 +91,9 @@ export function DealDetailDrawer({
   const [analytics, setAnalytics] = useState<FlashDealAnalytics | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
-  const [editOpen, setEditOpen] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    if (setDrawerVisible) {
-      setDrawerVisible(open);
-      return () => setDrawerVisible(false);
-    }
-    return undefined;
-  }, [open, setDrawerVisible]);
-
-  useEffect(() => {
-    if (!open) return;
-    if (!dealId) {
-      setDetail(null);
-      setError("Unable to determine deal ID.");
-      return;
-    }
+    if (!dealId) return;
     let cancelled = false;
     setError(null);
     setLoading(true);
@@ -154,18 +129,16 @@ export function DealDetailDrawer({
     return () => {
       cancelled = true;
     };
-  }, [dealId, onHydrated, open, refreshKey]);
+  }, [dealId, onHydrated]);
 
   useEffect(() => {
     if (fallbackDeal) {
-      setDetail((current) =>
-        current ? current : { ...fallbackDeal, slug: null },
-      );
+      setDetail((current) => (current ? current : { ...fallbackDeal, slug: null }));
     }
   }, [fallbackDeal]);
 
   useEffect(() => {
-    if (!open || !dealId) {
+    if (!dealId) {
       setAnalytics(null);
       return;
     }
@@ -192,8 +165,7 @@ export function DealDetailDrawer({
       })
       .catch((err) => {
         if (cancelled) return;
-        const message =
-          err instanceof Error ? err.message : "Failed to load deal analytics.";
+        const message = err instanceof Error ? err.message : "Failed to load deal analytics.";
         setAnalyticsError(message);
         toast.error(message);
       })
@@ -203,14 +175,12 @@ export function DealDetailDrawer({
     return () => {
       cancelled = true;
     };
-  }, [dealId, open, refreshKey]);
+  }, [dealId]);
 
   const validDaysDisplay = useMemo(() => {
     if (!detail?.validDays || detail.validDays.length === 0) return "All days";
     const ordered = [...detail.validDays].sort((a, b) => a - b);
-    return ordered
-      .map((index) => WEEKDAYS[index] ?? `Day ${index}`)
-      .join(", ");
+    return ordered.map((index) => WEEKDAYS[index] ?? `Day ${index}`).join(", ");
   }, [detail?.validDays]);
 
   const validityRange = useMemo(() => {
@@ -231,383 +201,404 @@ export function DealDetailDrawer({
     return `${Math.round(seconds / 86400)} days`;
   }, [detail]);
 
-  const usageStats = detail?.usageStats;
+  const validityModeLabel = useMemo(() => {
+    if (!detail) return "Unconfigured";
+    if (detail.validDays && detail.validDays.length) return "Recurring days";
+    if (detail.validFrom || detail.validTo) return "Scheduled window";
+    return "Always on";
+  }, [detail]);
 
-  const editDeal: DealEditDialogDeal | null = detail
-    ? {
-        id: detail.id,
-        partnerId: detail.partnerId,
-        partnerName: detail.partnerName ?? null,
-        dealType: detail.dealType,
-        status: detail.status,
-        slug: detail.slug ?? null,
-        title: detail.title,
-        description: detail.description ?? null,
-        discountPercent: detail.discountPercent,
-        minVisitors: detail.minVisitors,
-        commissionPercent: detail.commissionPercent,
-        priceOverrideCzk: detail.priceOverrideCzk ?? null,
-        bonusPointsOverride: detail.bonusPointsOverride ?? null,
-        qrValiditySeconds: detail.qrValiditySeconds,
-        usageLimit: detail.usageLimit ?? null,
-        usageLimitDaily: detail.usageLimitDaily ?? null,
-        validFrom: detail.validFrom,
-        validTo: detail.validTo,
-        validDays: detail.validDays ?? null,
-        tags: detail.tags,
-        audience: detail.audience,
-        ticketTypes: detail.ticketTypes,
-        city: detail.city ?? null,
-        autoExpire: detail.autoExpire,
-        sendReminders: detail.sendReminders,
-        createdAt: detail.createdAt,
-        updatedAt: detail.updatedAt,
-      }
-    : null;
+  const usageLimitSummary = useMemo(() => {
+    if (!detail) return "Unlimited";
+    if (typeof detail.usageLimit === "number") {
+      return `${Math.min(detail.usageCount, detail.usageLimit)}/${detail.usageLimit} redeemed`;
+    }
+    return "Unlimited";
+  }, [detail]);
 
-  const handleEditUpdated = useCallback(async () => {
-    setRefreshKey((key) => key + 1);
-    setEditOpen(false);
-  }, []);
+  const usageDailySummary = useMemo(() => {
+    if (!detail) return "Unlimited per day";
+    return typeof detail.usageLimitDaily === "number"
+      ? `${detail.usageLimitDaily} redemptions/day`
+      : "Unlimited per day";
+  }, [detail]);
+
+  const featuredSummary = useMemo(() => {
+    if (!detail) return "Hidden";
+    return detail.isFeatured ? "Featured on public site" : "Internal only";
+  }, [detail]);
+
+  const bannerLeadCopy = useMemo(() => {
+    if (!detail) return "—";
+    if (!detail.bannerLeadHours || detail.bannerLeadHours <= 0) return "Show banner at expiry";
+    return `Show banner ${detail.bannerLeadHours}h before expiry`;
+  }, [detail]);
 
   return (
-    <>
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="bg-background text-foreground sm:max-w-3xl">
-        <DrawerHeader className="space-y-1 border-b border-border bg-muted/40 py-5">
-          <DrawerTitle className="flex items-center justify-between gap-3 text-xl font-semibold">
-            <span>{detail?.title ?? "Deal detail"}</span>
-            <div className="flex items-center gap-2">
-              {detail ? (
-                <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
-                  Edit
-                </Button>
-              ) : null}
-              {detail ? <StatusBadge status={detail.status} /> : null}
-            </div>
-          </DrawerTitle>
-          <DrawerDescription className="flex flex-wrap items-center gap-3 text-sm">
-            <span className="capitalize">{detail?.dealType.replace("_", " ") ?? "—"}</span>
-            <Separator orientation="vertical" className="hidden h-4 sm:block" />
-            <span className="text-sm font-semibold text-foreground">
-              {detail?.partnerName ?? detail?.partnerId ?? "—"}
-            </span>
-            <Separator orientation="vertical" className="hidden h-4 sm:block" />
-            <span className="font-mono text-xs text-muted-foreground">
-              {detail?.partnerId ?? "—"}
-            </span>
-            {detail?.slug ? (
-              <>
-                <Separator orientation="vertical" className="hidden h-4 sm:block" />
-                <span className="font-mono text-xs text-muted-foreground">
-                  Slug: {detail.slug}
-                </span>
-              </>
+    <div className="space-y-6">
+      {onNavigateBack ? (
+        <div>
+          <Button variant="ghost" size="sm" onClick={onNavigateBack}>
+            ← Back to deals
+          </Button>
+        </div>
+      ) : null}
+      <div className="space-y-2 rounded-2xl border border-border bg-muted/30 px-5 py-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 text-xl font-semibold text-foreground">
+          <span>{detail?.title ?? "Deal detail"}</span>
+          <div className="flex items-center gap-2">
+            {detail ? (
+              <Button asChild size="sm" variant="outline">
+                <LocalizedLink href={`/admin/deals/${detail.id}/edit`}>Edit</LocalizedLink>
+              </Button>
             ) : null}
-          </DrawerDescription>
-        </DrawerHeader>
-
-        <div className="max-h-[65vh] space-y-6 overflow-y-auto px-6 py-6 text-sm leading-relaxed">
-          {loading && (
-            <p className="text-sm text-muted-foreground">Loading latest deal information…</p>
-          )}
-          {error && !loading ? (
-            <p className="text-sm text-destructive">{error}</p>
-          ) : null}
-
-          {detail ? (
+            {detail ? <StatusBadge status={detail.status} /> : null}
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+          <span className="capitalize">{detail?.dealType.replace("_", " ") ?? "—"}</span>
+          <Separator orientation="vertical" className="hidden h-4 sm:block" />
+          <span className="text-sm font-semibold text-foreground">
+            {detail?.partnerName ?? detail?.partnerId ?? "—"}
+          </span>
+          <Separator orientation="vertical" className="hidden h-4 sm:block" />
+          <span className="font-mono text-xs text-muted-foreground">{detail?.partnerId ?? "—"}</span>
+          {detail?.slug ? (
             <>
-          {detail.description ? (
-            <section className="space-y-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Overview
-              </h3>
-                  <p className="whitespace-pre-wrap rounded-lg border border-border/60 bg-card px-4 py-3 text-sm text-muted-foreground">
-                    {detail.description}
-                  </p>
-                </section>
-              ) : null}
-
-              <section className="grid gap-4 sm:grid-cols-2">
-                <InfoTile label="Discount" value={`${detail.discountPercent}% off`} />
-                <InfoTile label="Min visitors" value={String(detail.minVisitors)} />
-                <InfoTile label="QR validity" value={qrValidityDays} />
-                <InfoTile label="Commission" value={`${detail.commissionPercent}% platform`} />
-                <InfoTile
-                  label="Price override"
-                  value={
-                    typeof detail.priceOverrideCzk === "number"
-                      ? `${formatCurrency(detail.priceOverrideCzk)} CZK`
-                      : "—"
-                  }
-                />
-                <InfoTile
-                  label="Bonus override"
-                  value={
-                    typeof detail.bonusPointsOverride === "number"
-                      ? `${detail.bonusPointsOverride} pts`
-                      : "No bonus on redemption"
-                  }
-                />
-              </section>
-
-              <section className="grid gap-4 sm:grid-cols-2">
-                <InfoTile label="Validity" value={validityRange} />
-                <InfoTile label="Valid days" value={validDaysDisplay} />
-                <InfoTile
-                  label="Usage limits"
-                  value={formatUsageLimit(detail.usageLimit, detail.usageLimitDaily)}
-                />
-                <InfoTile
-                  label="Automation"
-                  value={[
-                    detail.autoExpire ? "Auto-expire on lapse" : "Manual expiry",
-                    detail.sendReminders ? "Reminder emails on" : "Reminders disabled",
-                  ].join(" • ")}
-                />
-              </section>
-
-              <section className="space-y-2">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Targeting
-                </h3>
-                <div className="flex flex-wrap items-center gap-2">
-                  {detail.tags.length ? (
-                    detail.tags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="uppercase">
-                        {tag}
-                      </Badge>
-                    ))
-                  ) : (
-                    <span className="text-xs text-muted-foreground">No tags</span>
-                  )}
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  {detail.audience.length ? (
-                    detail.audience.map((item) => (
-                      <Badge key={item} variant="outline">
-                        {item}
-                      </Badge>
-                    ))
-                  ) : (
-                    <span className="text-xs text-muted-foreground">General audience</span>
-                  )}
-                  {detail.city ? (
-                    <Badge variant="outline" className="capitalize">
-                      {detail.city}
-                    </Badge>
-                  ) : null}
-                </div>
-              </section>
-
-              {usageStats ? (
-                <section className="space-y-3">
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Usage metrics
-                  </h3>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <MetricsTile label="QRs generated" value={usageStats.qrGenerated} />
-                    <MetricsTile label="QRs scanned" value={usageStats.qrScanned} />
-                    <MetricsTile label="QRs rejected" value={usageStats.qrRejected} />
-                    <MetricsTile
-                      label="Commission accrued"
-                      value={`${formatCurrency(usageStats.commissionCzk)} CZK`}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Updated {formatDateTime(usageStats.updatedAt)}
-                  </p>
-                </section>
-              ) : null}
-
-              {detail.media && detail.media.length ? (
-                <section className="space-y-2">
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Media
-                  </h3>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    {detail.media.map((item) => (
-                      <figure
-                        key={item.id}
-                        className="overflow-hidden rounded-xl border border-border bg-card"
-                      >
-                        {item.mediaType.startsWith("image") ? (
-                          <Image
-                            src={item.url}
-                            alt={item.altText ?? ""}
-                            width={320}
-                            height={200}
-                            className="h-32 w-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-32 items-center justify-center bg-muted text-xs text-muted-foreground">
-                            {item.mediaType.toUpperCase()}
-                          </div>
-                        )}
-                        {item.altText ? (
-                          <figcaption className="px-3 py-2 text-xs text-muted-foreground">
-                            {item.altText}
-                          </figcaption>
-                        ) : null}
-                      </figure>
-                    ))}
-                  </div>
-                </section>
-              ) : null}
+              <Separator orientation="vertical" className="hidden h-4 sm:block" />
+              <span className="font-mono text-xs text-muted-foreground">Slug: {detail.slug}</span>
             </>
           ) : null}
+        </div>
+      </div>
 
-          <section className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Usage insights
-            </h3>
-            {analyticsLoading && <p className="text-xs text-muted-foreground">Loading analytics…</p>}
-            {analyticsError && !analyticsLoading ? (
-              <p className="text-xs text-destructive">{analyticsError}</p>
-            ) : null}
-            {analytics ? (
-              <div className="space-y-4">
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  <UsageChip label="QR generated" value={analytics.usage.total} tone="bg-sky-100 text-sky-700" />
-                  <UsageChip label="Confirmed scans" value={analytics.usage.used} tone="bg-emerald-100 text-emerald-700" />
-                  <UsageChip label="Pending" value={analytics.usage.pending} tone="bg-amber-100 text-amber-700" />
-                  <UsageChip label="Rejected/Expired" value={analytics.usage.rejected + analytics.usage.expired} tone="bg-rose-100 text-rose-700" />
-                </div>
+      <div className="space-y-6">
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+        {!detail && !loading ? (
+          <p className="text-sm text-muted-foreground">
+            Select a deal or refresh to load the latest data.
+          </p>
+        ) : null}
+        {loading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" />
+            Loading deal detail…
+          </div>
+        ) : null}
 
-                {analytics.timeline.length ? (
-                  <div className="rounded-xl border border-border/60 bg-card">
-                    <header className="flex items-center justify-between border-b border-border/70 px-4 py-2">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        30-day trend
-                      </p>
-                      <span className="text-xs text-muted-foreground">Redemptions vs QR activity</span>
-                    </header>
-                    <table className="w-full text-xs">
-                      <thead className="bg-muted/50 text-muted-foreground">
-                        <tr>
-                          <th className="px-3 py-2 text-left font-medium">Date</th>
-                          <th className="px-3 py-2 text-left font-medium">Redemptions</th>
-                          <th className="px-3 py-2 text-left font-medium">Generated</th>
-                          <th className="px-3 py-2 text-left font-medium">Scanned</th>
-                          <th className="px-3 py-2 text-left font-medium">Redeemed</th>
-                          <th className="px-3 py-2 text-left font-medium">Expired</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {analytics.timeline
-                          .slice(-14)
-                          .reverse()
-                          .map((point) => (
-                            <tr key={point.date} className="border-t border-border/50 text-muted-foreground">
-                              <td className="px-3 py-2 font-medium text-foreground">
-                                {formatDate(point.date)}
-                              </td>
-                              <td className="px-3 py-2">{point.redemptions}</td>
-                              <td className="px-3 py-2">{point.qrGenerated}</td>
-                              <td className="px-3 py-2">{point.qrScans}</td>
-                              <td className="px-3 py-2">{point.qrRedeemed}</td>
-                              <td className="px-3 py-2">{point.qrExpired}</td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
+        {detail ? (
+          <div className="space-y-6">
+            {detail.description ? (
+              <SurfaceCard className="space-y-3">
+                <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Deal story</p>
+                <p className="text-sm leading-relaxed text-muted-foreground">{detail.description}</p>
+                {detail.tags.length ? (
+                  <div className="flex flex-wrap gap-2">
+                    {detail.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex rounded-full border border-border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                      >
+                        {tag}
+                      </span>
+                    ))}
                   </div>
                 ) : null}
+              </SurfaceCard>
+            ) : null}
 
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <div className="space-y-2 rounded-xl border border-border/60 bg-card p-4">
-                    <header className="flex items-center justify-between">
-                      <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Recent QR events
-                      </h4>
-                      <span className="text-xs text-muted-foreground">
-                        Total {analytics.qrSummary.total}
-                      </span>
-                    </header>
-                    {analytics.qrEvents.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">No QR activity recorded yet.</p>
+            <section className="grid gap-3 lg:grid-cols-3">
+              <SurfaceCard className="space-y-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Validity & usage</p>
+                  <p className="text-lg font-semibold text-foreground">{validityModeLabel}</p>
+                </div>
+                <dl className="space-y-2 text-xs text-muted-foreground">
+                  <div className="flex items-center justify-between">
+                    <dt>Window</dt>
+                    <dd className="text-right text-foreground" suppressHydrationWarning>
+                      {validityRange}
+                    </dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt>Valid days</dt>
+                    <dd className="text-right">{validDaysDisplay}</dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt>QR validity</dt>
+                    <dd className="text-right">{qrValidityDays}</dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt>Total cap</dt>
+                    <dd className="text-right">{usageLimitSummary}</dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt>Daily cap</dt>
+                    <dd className="text-right">{usageDailySummary}</dd>
+                  </div>
+                </dl>
+              </SurfaceCard>
+              <SurfaceCard className="space-y-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Ticketing & conditions</p>
+                  <p className="text-lg font-semibold text-foreground">
+                    Min {detail.minVisitors} visitors
+                  </p>
+                </div>
+                <div className="space-y-2 text-xs text-muted-foreground">
+                  <p>
+                    Ticket types:{" "}
+                    {detail.ticketTypes.length ? detail.ticketTypes.join(", ") : "All partner ticket types"}
+                  </p>
+                  {detail.ticketRequirements.length ? (
+                    <div className="rounded-2xl border border-border bg-card/60">
+                      {detail.ticketRequirements.map((item, index) => (
+                        <div
+                          key={`${item.ticketType}-${item.subType ?? "default"}-${index}`}
+                          className="flex items-center justify-between border-b border-border/70 px-4 py-2 text-sm text-foreground last:border-b-0"
+                        >
+                          <span className="font-medium">
+                            {item.quantity} × {item.ticketType}
+                            {item.subType ? ` (${item.subType})` : ""}
+                          </span>
+                          <span className="text-xs text-muted-foreground">Required</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p>No ticket-specific requirements set.</p>
+                  )}
+                </div>
+              </SurfaceCard>
+              <SurfaceCard className="space-y-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Visibility & promotion</p>
+                  <p className="text-lg font-semibold text-foreground">{featuredSummary}</p>
+                </div>
+                <dl className="space-y-2 text-xs text-muted-foreground">
+                  <div className="flex items-center justify-between">
+                    <dt>Banner lead</dt>
+                    <dd className="text-right">{bannerLeadCopy}</dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt>Slug</dt>
+                    <dd className="text-right">{detail.slug ?? "Auto-generated"}</dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt>Auto expire</dt>
+                    <dd className="text-right">{detail.autoExpire ? "Enabled" : "Disabled"}</dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt>Reminders</dt>
+                    <dd className="text-right">{detail.sendReminders ? "Enabled" : "Disabled"}</dd>
+                  </div>
+                </dl>
+              </SurfaceCard>
+            </section>
+
+            <section className="grid gap-3 lg:grid-cols-2">
+              <SurfaceCard className="space-y-2">
+                <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Pricing & bonus</p>
+                <p className="text-lg font-semibold text-foreground">{detail.discountPercent}% incentive</p>
+                <ul className="space-y-1 text-xs text-muted-foreground">
+                  <li>Commission: {detail.commissionPercent}%</li>
+                  <li>Price override: {detail.priceOverrideCzk ? `${detail.priceOverrideCzk} CZK` : "None"}</li>
+                  <li>
+                    Bonus override: {detail.bonusPointsOverride ? `${detail.bonusPointsOverride} pts` : "Default"}
+                  </li>
+                </ul>
+              </SurfaceCard>
+              <SurfaceCard className="space-y-3">
+                <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Operational controls</p>
+                <dl className="space-y-2 text-xs text-muted-foreground">
+                  <div className="flex items-center justify-between">
+                    <dt>QR validity</dt>
+                    <dd className="text-right">{qrValidityDays}</dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt>Status</dt>
+                    <dd className="text-right capitalize">{detail.status.replace("_", " ")}</dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt>Partner</dt>
+                    <dd className="text-right">{detail.partnerName ?? detail.partnerId}</dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt>Send reminders</dt>
+                    <dd className="text-right">{detail.sendReminders ? "Enabled" : "Disabled"}</dd>
+                  </div>
+                </dl>
+              </SurfaceCard>
+            </section>
+
+            <section className="space-y-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Notes & metadata
+              </h3>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <SurfaceCard className="space-y-1 text-xs text-muted-foreground">
+                  <p suppressHydrationWarning>Created {formatDateTime(detail.createdAt)}</p>
+                  <p suppressHydrationWarning>Updated {formatDateTime(detail.updatedAt)}</p>
+                  <p>City: {detail.city ?? "—"}</p>
+                  <p>Audience: {detail.audience.length ? detail.audience.join(", ") : "All"}</p>
+                </SurfaceCard>
+                <SurfaceCard className="space-y-1 text-xs text-muted-foreground">
+                  <p>Partner ID: {detail.partnerId}</p>
+                  <p>Deal ID: {detail.id}</p>
+                  <p>
+                    Tags:{" "}
+                    {detail.tags.length ? (
+                      detail.tags.map((tag) => (
+                        <span key={tag} className="mr-1 rounded-full border border-border px-2 py-0.5 text-[11px]">
+                          {tag}
+                        </span>
+                      ))
                     ) : (
-                      <ul className="space-y-2">
-                        {analytics.qrEvents.slice(0, 6).map((event) => (
-                          <li
-                            key={event.id}
-                            className="rounded-lg border border-border/60 bg-background px-3 py-2"
-                          >
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="font-semibold uppercase text-foreground">
-                                {event.eventType}
-                              </span>
-                              <span className="text-muted-foreground">
-                                {formatDateTime(event.occurredAt)}
-                              </span>
-                            </div>
-                            <div className="mt-1 text-[11px] text-muted-foreground">
-                              {event.visitId ? `Visit ${event.visitId.slice(0, 8)}` : "No visit"}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
+                      "No tags"
                     )}
+                  </p>
+                </SurfaceCard>
+              </div>
+            </section>
+
+            {detail.media && detail.media.length ? (
+              <section className="space-y-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Media</h3>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {detail.media.map((item) => (
+                    <figure key={item.id} className="overflow-hidden rounded-xl border border-border bg-card">
+                      {item.mediaType.startsWith("image") ? (
+                        <Image
+                          src={item.url}
+                          alt={item.altText ?? ""}
+                          width={320}
+                          height={200}
+                          className="h-32 w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-32 items-center justify-center bg-muted text-xs text-muted-foreground">
+                          {item.mediaType.toUpperCase()}
+                        </div>
+                      )}
+                      {item.altText ? (
+                        <figcaption className="px-3 py-2 text-xs text-muted-foreground">{item.altText}</figcaption>
+                      ) : null}
+                    </figure>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            <section className="space-y-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Usage insights</h3>
+              {analyticsLoading && <p className="text-xs text-muted-foreground">Loading analytics…</p>}
+              {analyticsError && !analyticsLoading ? (
+                <p className="text-xs text-destructive">{analyticsError}</p>
+              ) : null}
+              {analytics ? (
+                <div className="space-y-4">
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <UsageChip label="QR generated" value={analytics.usage.total} tone="bg-sky-100 text-sky-700" />
+                    <UsageChip label="Confirmed scans" value={analytics.usage.used} tone="bg-emerald-100 text-emerald-700" />
+                    <UsageChip label="Pending" value={analytics.usage.pending} tone="bg-amber-100 text-amber-700" />
+                    <UsageChip
+                      label="Rejected/Expired"
+                      value={analytics.usage.rejected + analytics.usage.expired}
+                      tone="bg-rose-100 text-rose-700"
+                    />
                   </div>
 
-                  <div className="space-y-2 rounded-xl border border-border/60 bg-card p-4">
-                    <header className="flex items-center justify-between">
-                      <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Recent redemptions
-                      </h4>
-                      <span className="text-xs text-muted-foreground">
-                        Total {analytics.redemptions.length}
-                      </span>
-                    </header>
-                    {analytics.redemptions.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">No redemptions logged for this deal.</p>
-                    ) : (
-                      <ul className="space-y-2">
-                        {analytics.redemptions.slice(0, 6).map((item) => (
-                          <li
-                            key={item.id}
-                            className="rounded-lg border border-border/60 bg-background px-3 py-2"
-                          >
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="font-semibold uppercase text-foreground">
-                                {item.status}
-                              </span>
-                              <span className="text-muted-foreground">
-                                {formatDateTime(item.createdAt)}
-                              </span>
-                            </div>
-                            <div className="mt-1 text-[11px] text-muted-foreground">
-                              {item.visitId ? `Visit ${item.visitId.slice(0, 8)}` : "No visit linked"}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                  {analytics.timeline.length ? (
+                    <div className="rounded-xl border border-border/60 bg-card">
+                      <header className="flex items-center justify-between border-b border-border/70 px-4 py-2">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">30-day trend</p>
+                        <span className="text-xs text-muted-foreground">Redemptions vs QR activity</span>
+                      </header>
+                      <table className="w-full text-xs">
+                        <thead className="bg-muted/50 text-muted-foreground">
+                          <tr>
+                            <th className="px-3 py-2 text-left font-medium">Date</th>
+                            <th className="px-3 py-2 text-left font-medium">Redemptions</th>
+                            <th className="px-3 py-2 text-left font-medium">Generated</th>
+                            <th className="px-3 py-2 text-left font-medium">Scanned</th>
+                            <th className="px-3 py-2 text-left font-medium">Redeemed</th>
+                            <th className="px-3 py-2 text-left font-medium">Expired</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {analytics.timeline
+                            .slice(-14)
+                            .reverse()
+                            .map((point) => (
+                              <tr key={point.date} className="border-t border-border/50 text-muted-foreground">
+                                <td className="px-3 py-2 font-medium text-foreground">{formatDate(point.date)}</td>
+                                <td className="px-3 py-2">{point.redemptions}</td>
+                                <td className="px-3 py-2">{point.qrGenerated}</td>
+                                <td className="px-3 py-2">{point.qrScans}</td>
+                                <td className="px-3 py-2">{point.qrRedeemed}</td>
+                                <td className="px-3 py-2">{point.qrExpired}</td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : null}
+
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <SurfaceCard className="space-y-2">
+                      <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Redemption timeline</p>
+                      {analytics.redemptions.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">No redemptions recorded yet.</p>
+                      ) : (
+                        <ul className="space-y-2">
+                          {analytics.redemptions.slice(0, 6).map((item) => (
+                            <li key={item.id} className="rounded-lg border border-border/60 bg-background px-3 py-2">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="font-semibold uppercase text-foreground">{item.status}</span>
+                                <span className="text-muted-foreground">{formatDateTime(item.createdAt)}</span>
+                              </div>
+                              <div className="mt-1 text-[11px] text-muted-foreground">
+                                {item.visitId ? `Visit ${item.visitId.slice(0, 8)}` : "No visit linked"}
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </SurfaceCard>
                   </div>
                 </div>
-              </div>
-            ) : null}
-          </section>
-        </div>
+              ) : null}
+            </section>
+          </div>
+        ) : null}
+      </div>
 
-        <DrawerFooter className="border-t border-border bg-muted/40 py-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
-    <DealEditDialog
-      deal={editDeal}
-      open={editOpen}
-      onOpenChange={setEditOpen}
-      onUpdated={handleEditUpdated}
-    />
-    </>
+    </div>
   );
 }
 
-function mapDealResponse(deal: DealDetailResponse["deal"]): AdminDealDetail {
+const STATUS_BADGE_STYLES: Record<AdminDealListItem["status"], string> = {
+  live: "border border-emerald-200 bg-emerald-50 text-emerald-700",
+  scheduled: "border border-sky-200 bg-sky-50 text-sky-700",
+  paused: "border border-amber-200 bg-amber-50 text-amber-700",
+  expired: "border border-rose-200 bg-rose-50 text-rose-700",
+  draft: "border border-slate-200 bg-slate-50 text-slate-600",
+};
+
+function StatusBadge({ status }: { status: AdminDealListItem["status"] }) {
+  return (
+    <span
+      className={cn(
+        "rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide",
+        STATUS_BADGE_STYLES[status] ?? "border border-slate-200 bg-slate-50 text-slate-600",
+      )}
+    >
+      {status.replace("_", " ")}
+    </span>
+  );
+}
+
+function mapDealResponse(deal: DealDetailResponse["deal"]): AdminDealListItem & { slug: string | null } {
   return {
     id: deal.id,
     partnerId: deal.partnerId,
@@ -628,129 +619,19 @@ function mapDealResponse(deal: DealDetailResponse["deal"]): AdminDealDetail {
     usageLimit: deal.usageLimit,
     usageLimitDaily: deal.usageLimitDaily,
     usageCount: deal.usageCount,
-    tags: deal.tags,
-    audience: deal.audience,
-    city: deal.city,
     autoExpire: deal.autoExpire,
     sendReminders: deal.sendReminders,
+    tags: deal.tags,
+    audience: deal.audience,
+    ticketTypes: deal.ticketTypes ?? [],
+    isFeatured: deal.isFeatured,
+    bannerLeadHours: deal.bannerLeadHours,
+    city: deal.city,
     createdAt: deal.createdAt,
     updatedAt: deal.updatedAt,
-    ticketTypes: deal.ticketTypes ?? [],
-    usageStats: deal.usageStats
-      ? {
-          qrGenerated: deal.usageStats.qrGenerated,
-          qrScanned: deal.usageStats.qrScanned,
-          qrRejected: deal.usageStats.qrRejected,
-          commissionCzk: deal.usageStats.commissionCzk,
-          bonusAwarded: deal.usageStats.bonusAwarded,
-          updatedAt: deal.usageStats.updatedAt,
-        }
-      : undefined,
-    media:
-      deal.media.length > 0
-        ? deal.media
-            .slice()
-            .sort((a, b) => a.sortOrder - b.sortOrder)
-            .map((item) => ({
-              id: item.id,
-              mediaType: item.mediaType,
-              url: item.url,
-              altText: item.altText,
-              sortOrder: item.sortOrder,
-            }))
-        : undefined,
+    ticketRequirements: deal.ticketRequirements ?? [],
+    usageStats: deal.usageStats ?? null,
+    media: deal.media?.length ? deal.media : undefined,
     slug: deal.slug,
   };
-}
-
-function InfoTile({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-border/80 bg-card px-4 py-3">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
-    </div>
-  );
-}
-
-function MetricsTile({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-xl border border-border/80 bg-card px-4 py-3">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-1 text-lg font-semibold text-foreground">{value}</p>
-    </div>
-  );
-}
-
-function StatusBadge({ status }: { status: AdminDealListItem["status"] }) {
-  const tone =
-    status === "live"
-      ? "bg-emerald-100 text-emerald-700"
-      : status === "scheduled"
-      ? "bg-sky-100 text-sky-700"
-      : status === "paused"
-      ? "bg-amber-100 text-amber-700"
-      : status === "expired"
-      ? "bg-rose-100 text-rose-700"
-      : "bg-slate-200 text-slate-700";
-  return (
-    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium capitalize ${tone}`}>
-      {status.replace("_", " ")}
-    </span>
-  );
-}
-
-function formatDate(iso: string) {
-  const parsed = Date.parse(iso);
-  if (Number.isNaN(parsed)) return iso;
-  return new Date(parsed).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatDateTime(iso: string) {
-  const parsed = Date.parse(iso);
-  if (Number.isNaN(parsed)) return iso;
-  return new Date(parsed).toLocaleString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat(undefined, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
-function formatUsageLimit(total: number | null, daily: number | null) {
-  if (!total && !daily) return "Unlimited";
-  const parts: string[] = [];
-  if (typeof total === "number") parts.push(`${total} total`);
-  if (typeof daily === "number") parts.push(`${daily} / day`);
-  return parts.join(" • ");
-}
-
-function UsageChip({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: number;
-  tone: string;
-}) {
-  return (
-    <div className={`rounded-xl px-4 py-3 text-sm font-semibold ${tone}`}>
-      <p className="text-[11px] font-medium uppercase tracking-wide opacity-70">
-        {label}
-      </p>
-      <p className="text-xl">{value}</p>
-    </div>
-  );
 }

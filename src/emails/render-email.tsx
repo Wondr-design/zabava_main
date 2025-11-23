@@ -23,10 +23,9 @@ export interface RenderEmailTemplateInput {
 export async function renderEmailTemplate(input: RenderEmailTemplateInput) {
   const normalizedDetails = normalizeDetails(input.details);
   const previewText = buildPreviewText(input.body);
-  const cta = extractFirstUrl(normalizedDetails);
   const highlightedCode = extractHighlightedCode(
     normalizedDetails,
-    input.templateType
+    input.templateType,
   );
   const attachmentsNote =
     input.templateType === "billing_report"
@@ -42,8 +41,6 @@ export async function renderEmailTemplate(input: RenderEmailTemplateInput) {
     previewText,
     details: normalizedDetails,
     imageSrc: input.imageSrc,
-    ctaHref: cta?.href,
-    ctaLabel: cta?.label,
     highlightedCode,
     attachmentsNote,
     partnerLabel: verificationPartnerLabel,
@@ -189,7 +186,7 @@ function extractFirstUrl(details?: EmailDetailsEntry[]) {
 
 function extractHighlightedCode(
   details: EmailDetailsEntry[] | undefined,
-  templateType: EmailTemplateType
+  templateType: EmailTemplateType,
 ) {
   if (!details) return undefined;
   const codeEntry =

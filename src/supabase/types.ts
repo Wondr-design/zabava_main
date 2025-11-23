@@ -29,6 +29,9 @@ type FlashDealsTable = {
     commission_percent: number;
     price_override_czk: number | null;
     bonus_points_override: number | null;
+    is_featured: boolean;
+    banner_lead_hours: number;
+    ticket_requirements: Json | null;
     qr_validity_seconds: number;
     usage_limit: number | null;
     usage_limit_daily: number | null;
@@ -60,6 +63,9 @@ type FlashDealsTable = {
     commission_percent: number;
     price_override_czk?: number | null;
     bonus_points_override?: number | null;
+    is_featured?: boolean;
+    banner_lead_hours?: number;
+    ticket_requirements?: Json | null;
     qr_validity_seconds: number;
     usage_limit?: number | null;
     usage_limit_daily?: number | null;
@@ -91,6 +97,9 @@ type FlashDealsTable = {
     commission_percent?: number;
     price_override_czk?: number | null;
     bonus_points_override?: number | null;
+    is_featured?: boolean;
+    banner_lead_hours?: number;
+    ticket_requirements?: Json | null;
     qr_validity_seconds?: number;
     usage_limit?: number | null;
     usage_limit_daily?: number | null;
@@ -219,6 +228,165 @@ type TransportRidesTable = {
     updated_at?: string;
   };
   Relationships: [];
+};
+
+type CmsEntriesTable = {
+  Row: {
+    id: string;
+    slug: string;
+    locale: string;
+    title: string;
+    content: Json;
+    updated_by: string | null;
+    created_at: string;
+    updated_at: string;
+  };
+  Insert: {
+    id?: string;
+    slug: string;
+    locale?: string;
+    title: string;
+    content?: Json;
+    updated_by?: string | null;
+    created_at?: string;
+    updated_at?: string;
+  };
+  Update: {
+    id?: string;
+    slug?: string;
+    locale?: string;
+    title?: string;
+    content?: Json;
+    updated_by?: string | null;
+    created_at?: string;
+    updated_at?: string;
+  };
+  Relationships: [];
+};
+
+type CmsPagesTable = {
+  Row: {
+    id: string;
+    slug: string;
+    display_name: string;
+    description: string | null;
+    status: 'draft' | 'ready' | 'archived' | string;
+    created_by: string | null;
+    updated_by: string | null;
+    created_at: string;
+    updated_at: string;
+  };
+  Insert: {
+    id?: string;
+    slug: string;
+    display_name: string;
+    description?: string | null;
+    status?: 'draft' | 'ready' | 'archived' | string;
+    created_by?: string | null;
+    updated_by?: string | null;
+    created_at?: string;
+    updated_at?: string;
+  };
+  Update: {
+    id?: string;
+    slug?: string;
+    display_name?: string;
+    description?: string | null;
+    status?: 'draft' | 'ready' | 'archived' | string;
+    created_by?: string | null;
+    updated_by?: string | null;
+    created_at?: string;
+    updated_at?: string;
+  };
+  Relationships: [];
+};
+
+type CmsPageVersionsTable = {
+  Row: {
+    id: string;
+    page_id: string;
+    locale: string;
+    version_number: number;
+    status: 'draft' | 'published' | 'archived' | string;
+    summary: string | null;
+    created_by: string | null;
+    published_at: string | null;
+    created_at: string;
+    updated_at: string;
+  };
+  Insert: {
+    id?: string;
+    page_id: string;
+    locale?: string;
+    version_number?: number;
+    status?: 'draft' | 'published' | 'archived' | string;
+    summary?: string | null;
+    created_by?: string | null;
+    published_at?: string | null;
+    created_at?: string;
+    updated_at?: string;
+  };
+  Update: {
+    id?: string;
+    page_id?: string;
+    locale?: string;
+    version_number?: number;
+    status?: 'draft' | 'published' | 'archived' | string;
+    summary?: string | null;
+    created_by?: string | null;
+    published_at?: string | null;
+    created_at?: string;
+    updated_at?: string;
+  };
+  Relationships: [
+    {
+      foreignKeyName: "cms_page_versions_page_id_fkey";
+      columns: ["page_id"];
+      referencedRelation: "cms_pages";
+      referencedColumns: ["id"];
+    },
+  ];
+};
+
+type CmsBlocksTable = {
+  Row: {
+    id: string;
+    page_version_id: string;
+    sort_order: number;
+    block_type: string;
+    data: Json;
+    visible: boolean;
+    created_at: string;
+    updated_at: string;
+  };
+  Insert: {
+    id?: string;
+    page_version_id: string;
+    sort_order?: number;
+    block_type: string;
+    data?: Json;
+    visible?: boolean;
+    created_at?: string;
+    updated_at?: string;
+  };
+  Update: {
+    id?: string;
+    page_version_id?: string;
+    sort_order?: number;
+    block_type?: string;
+    data?: Json;
+    visible?: boolean;
+    created_at?: string;
+    updated_at?: string;
+  };
+  Relationships: [
+    {
+      foreignKeyName: "cms_blocks_page_version_id_fkey";
+      columns: ["page_version_id"];
+      referencedRelation: "cms_page_versions";
+      referencedColumns: ["id"];
+    },
+  ];
 };
 
 type DealMediaTable = {
@@ -461,6 +629,10 @@ type TypedTables = {
   deal_usage_stats: DealUsageStatsTable;
   deal_reminder_queue: DealReminderQueueTable;
   global_values: GlobalValuesTable;
+  cms_entries: CmsEntriesTable;
+  cms_pages: CmsPagesTable;
+  cms_page_versions: CmsPageVersionsTable;
+  cms_blocks: CmsBlocksTable;
   partner_users: PartnerUsersTable;
   admin_invites: AdminInvitesTable;
 };

@@ -33,14 +33,22 @@ const updatePayloadSchema = z
       .regex(/^[a-z0-9-]+$/i, { message: "Slug may only contain letters, numbers, and hyphens." })
       .nullable()
       .optional(),
-    discountPercent: z.number().min(0).max(100).optional(),
-    minVisitors: z.number().int().min(1).optional(),
+    // Value & incentives fields are managed automatically and cannot be updated via API
     validFrom: z.string().datetime().nullable().optional(),
     validTo: z.string().datetime().nullable().optional(),
     validDays: z.array(z.number().int().min(0).max(6)).nullable().optional(),
-    commissionPercent: z.number().min(0).max(100).optional(),
-    priceOverrideCzk: z.number().positive().nullable().optional(),
-    bonusPointsOverride: z.number().int().nonnegative().nullable().optional(),
+    isFeatured: z.boolean().optional(),
+    bannerLeadHours: z.number().int().nonnegative().optional(),
+    ticketRequirements: z
+      .array(
+        z.object({
+          ticketType: z.string().min(1),
+          subType: z.string().optional(),
+          quantity: z.number().int().min(1),
+        }),
+      )
+      .nullable()
+      .optional(),
     qrValiditySeconds: z.number().int().positive().optional(),
     usageLimit: z.number().int().positive().nullable().optional(),
     usageLimitDaily: z.number().int().positive().nullable().optional(),
@@ -96,6 +104,11 @@ function presentDeal(entry: Awaited<ReturnType<typeof getDealWithMeta>>) {
   return {
     id: deal.id,
     partnerId: deal.partner_id,
+    isFeatured: deal.is_featured,
+    bannerLeadHours: deal.banner_lead_hours,
+    ticketRequirements:
+      (deal.ticket_requirements as Array<{ ticketType: string; subType?: string; quantity: number }> | null) ?? [],
+    ticketTypes: deal.ticket_types ?? [],
     dealType: deal.deal_type,
     slug: deal.slug,
     title: deal.title,

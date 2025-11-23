@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 
 import { listDealsWithMeta, type DealWithMeta } from "@/lib/data/flash-deals";
-import { listPartnerMetas } from "@/lib/data/partners";
 import { DealsDashboard, type AdminDealListItem } from "@/components/admin/deals/deals-dashboard";
-import { listGlobalValues, type GlobalValueRecord } from "@/lib/data/global-values";
 
 export const metadata: Metadata = {
   title: "Deals · Zabava admin",
@@ -24,6 +22,9 @@ function mapDeal(entry: DealWithMeta): AdminDealListItem {
     partnerId: deal.partner_id,
     partnerName: entry.partnerName ?? null,
     dealType: deal.deal_type,
+    isFeatured: deal.is_featured,
+    bannerLeadHours: deal.banner_lead_hours,
+    ticketRequirements: (deal.ticket_requirements as Array<{ ticketType: string; subType?: string; quantity: number }> | null) ?? [],
     title: deal.title,
     description: deal.description,
     status: deal.status,
@@ -70,16 +71,10 @@ function mapDeal(entry: DealWithMeta): AdminDealListItem {
 
 export default async function AdminDealsPage() {
   let deals: DealWithMeta[] = [];
-  let partners: Awaited<ReturnType<typeof listPartnerMetas>> = [];
-  let ticketTypes: GlobalValueRecord[] = [];
   let loadError: string | null = null;
 
   try {
-    [deals, partners, ticketTypes] = await Promise.all([
-      listDealsWithMeta(),
-      listPartnerMetas(),
-      listGlobalValues({ type: "ticket_type", includeInactive: true }),
-    ]);
+    deals = await listDealsWithMeta();
   } catch (error) {
     console.error("admin_deals_page_load_error", error);
     loadError =
@@ -91,33 +86,9 @@ export default async function AdminDealsPage() {
         console.error("admin_deals_page_retry_error", retryError);
       }
     }
-    if (partners.length === 0) {
-      try {
-        partners = await listPartnerMetas();
-      } catch (retryError) {
-        console.error("admin_deals_page_partner_retry_error", retryError);
-      }
-    }
-    if (ticketTypes.length === 0) {
-      try {
-        ticketTypes = await listGlobalValues({
-          type: "ticket_type",
-          includeInactive: true,
-        });
-      } catch (retryError) {
-        console.error("admin_deals_page_ticket_type_retry_error", retryError);
-      }
-    }
   }
 
   const items = deals.map(mapDeal);
-  const partnerOptions = partners.map((partner) => ({
-    id: partner.partnerId,
-    label: partner.displayName ?? partner.partnerId,
-    status: partner.status,
-    defaultCommission: partner.contract.commissionRate ?? null,
-  }));
-
   return (
     <div className="px-6 py-8 space-y-4">
       {loadError ? (
@@ -126,11 +97,7 @@ export default async function AdminDealsPage() {
       have been applied and refresh. Details: {loadError}
     </div>
   ) : null}
-      <DealsDashboard
-        initialItems={items}
-        partnerOptions={partnerOptions}
-        ticketTypeValues={ticketTypes}
-      />
+      <DealsDashboard initialItems={items} />
     </div>
   );
 }
