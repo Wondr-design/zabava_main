@@ -34,6 +34,7 @@ import type {
   CmsPageVersionRecord,
   CmsRenderableBlock,
 } from "@/lib/data/cms";
+import type { TimezoneSettingRecord } from "@/lib/data/timezone-settings";
 
 function buildHeaders(opts?: RequestOptions, contentType: string | null = 'application/json') {
   const h: Record<string, string> = {};
@@ -380,6 +381,26 @@ export const adminApi = {
   pointRatioUpdate: (body: { ratioCzk: number }, opts: RequestOptions = {}) =>
     json<{ ratioCzk: number }>(
       `/api/admin/settings/point-ratio`,
+      { method: 'PUT', body: JSON.stringify(body) },
+      opts,
+    ),
+  timezoneSettingGet: (opts: RequestOptions = {}) =>
+    json<{
+      adminTimeZone: string;
+      source: 'admin' | 'partner';
+      setting?: TimezoneSettingRecord | null;
+      history: TimezoneSettingRecord[];
+    }>(`/api/admin/settings/timezone`, { method: 'GET' }, opts),
+  timezoneSettingUpdate: (
+    body: { adminTimeZone: string; source: 'admin' | 'partner' },
+    opts: RequestOptions = {},
+  ) =>
+    json<{
+      adminTimeZone: string;
+      source: 'admin' | 'partner';
+      setting: TimezoneSettingRecord;
+    }>(
+      `/api/admin/settings/timezone`,
       { method: 'PUT', body: JSON.stringify(body) },
       opts,
     ),

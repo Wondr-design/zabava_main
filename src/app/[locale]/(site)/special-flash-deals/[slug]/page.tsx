@@ -49,6 +49,35 @@ export default async function SpecialFlashDealDetailPage({ params }: PageProps) 
     : deal.isUpcoming
     ? "secondary"
     : "outline";
+  const groupedTicketRequirements = (() => {
+    const entries = new Map<
+      string,
+      {
+        ticketType: string;
+        subItems: Array<{ subType: string | null; quantity: number }>;
+        totalQuantity: number;
+      }
+    >();
+    (deal.ticketRequirements ?? []).forEach((req) => {
+      const ticketType = req.ticketType?.trim();
+      if (!ticketType) return;
+      const quantity = typeof req.quantity === "number" ? req.quantity : 0;
+      const entry =
+        entries.get(ticketType) ??
+        {
+          ticketType,
+          subItems: [],
+          totalQuantity: 0,
+        };
+      entry.subItems.push({
+        subType: req.subType ?? null,
+        quantity,
+      });
+      entry.totalQuantity += quantity;
+      entries.set(ticketType, entry);
+    });
+    return Array.from(entries.values());
+  })();
 
   return (
     <main className="flex min-h-screen flex-col bg-slate-950 text-white">
@@ -122,6 +151,11 @@ export default async function SpecialFlashDealDetailPage({ params }: PageProps) 
             <ul className="space-y-2 text-slate-200">
               <li>QR validity: {Math.round(deal.qrValiditySeconds / 86400)} days from issuance</li>
               {deal.city ? <li>City focus: {deal.city}</li> : null}
+              {deal.timeZoneLabel ? (
+                <li>
+                  Time zone: <span className="font-semibold text-white">{deal.timeZoneLabel}</span>
+                </li>
+              ) : null}
             </ul>
             <div className="flex flex-wrap gap-2">
               {deal.tags.map((tag) => (
@@ -166,43 +200,33 @@ export default async function SpecialFlashDealDetailPage({ params }: PageProps) 
         </section>
 
         <section className="grid gap-4 rounded-3xl border border-white/10 bg-white/5 p-6 text-sm text-slate-200 md:grid-cols-2">
-          <article className="space-y-2 rounded-2xl border border-white/5 bg-white/5 p-5">
-            <h2 className="text-lg font-semibold text-white">Validity details</h2>
-            <ul className="space-y-2 text-slate-200">
-              <li>
-                Calendar window:{" "}
-                {deal.validFrom || deal.validTo
-                  ? `${formatDate(deal.validFrom)} → ${formatDate(deal.validTo)}`
-                  : "Flexible scheduling"}
-              </li>
-              <li>Valid days: {formatWeekdays(deal.validDays)}</li>
-              <li>QR passes remain valid for {Math.round(deal.qrValiditySeconds / 86400)} days</li>
-              <li>
-                Banner alerts start {deal.bannerLeadHours ? `${deal.bannerLeadHours}h` : "right"} before expiry
-              </li>
-              {deal.usageLimitDaily ? (
-                <li>Daily usage cap: {deal.usageLimitDaily} redemption{deal.usageLimitDaily === 1 ? "" : "s"}</li>
-              ) : (
-                <li>Daily usage cap: Unlimited</li>
-              )}
-            </ul>
-          </article>
           <article className="space-y-3 rounded-2xl border border-white/5 bg-white/5 p-5">
             <h2 className="text-lg font-semibold text-white">Ticket requirements</h2>
-            {deal.ticketRequirements?.length ? (
+            {groupedTicketRequirements.length ? (
               <div className="grid gap-3">
-                {deal.ticketRequirements.map((req, index) => (
+                {groupedTicketRequirements.map((requirement) => (
                   <div
-                    key={`${req.ticketType}-${req.subType ?? "base"}-${index}`}
+                    key={requirement.ticketType}
                     className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200"
                   >
-                    <p className="font-semibold text-white">
-                      {req.subType ? `${req.subType} · ${req.ticketType}` : req.ticketType}
-                    </p>
-                    <p className="text-xs text-slate-300">
-                      Requires <span className="font-semibold text-white">{req.quantity}</span>{" "}
-                      guest{req.quantity === 1 ? "" : "s"} following this ticket type.
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="font-semibold text-white">{requirement.ticketType}</p>
+                      <p className="text-[11px] uppercase tracking-[0.35em] text-slate-400">
+                        {requirement.totalQuantity} guest{requirement.totalQuantity === 1 ? "" : "s"}
+                      </p>
+                    </div>
+                    {requirement.subItems.length ? (
+                      <p className="mt-2 text-xs text-slate-300">
+                        Includes{" "}
+                        {requirement.subItems
+                          .map((sub) =>
+                            sub.subType
+                              ? `${sub.quantity} × ${sub.subType}`
+                              : `${sub.quantity} × ${requirement.ticketType}`
+                          )
+                          .join(" · ")}
+                      </p>
+                    ) : null}
                   </div>
                 ))}
               </div>
@@ -276,16 +300,25 @@ export default async function SpecialFlashDealDetailPage({ params }: PageProps) 
           </section>
         ) : null}
 
+        {deal.formId ? (
+          <div id="generate">
         <DealGenerateForm
           slug={slug}
           partnerId={deal.partnerId}
           minVisitors={deal.minVisitors}
-          isActive={deal.isActive}
-          qrValiditySeconds={deal.qrValiditySeconds}
-          partnerName={deal.partnerName ?? null}
-          title={deal.title}
+              isActive={deal.isActive}
+              qrValiditySeconds={deal.qrValiditySeconds}
+              partnerName={deal.partnerName ?? null}
+              title={deal.title}
           ticketRequirements={deal.ticketRequirements ?? []}
+          timeZoneLabel={deal.timeZoneLabel ?? ""}
         />
+          </div>
+        ) : (
+          <div className="rounded-3xl border border-amber-200/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+            QR generation is currently unavailable for this deal. Please contact support or check back later.
+          </div>
+        )}
       </section>
     </main>
   );

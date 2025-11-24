@@ -25,6 +25,7 @@ import { recordQrEvent } from "@/lib/data/qr-events";
 import { resolveAllowedOrigin } from "@/lib/http/allowed-origin";
 import { isEmailDeliveryConfigured, sendTemplatedEmail } from "@/lib/services/mailer";
 import { EMAIL_TEMPLATE_DEFAULTS } from "@/lib/email-template-constants";
+import { getWeekdayInTimeZone } from "@/lib/timezone";
 
 const markVisitedSchema = z.object({
   email: z.string().email(),
@@ -130,9 +131,10 @@ function isWithinValidityWindow(
   return true;
 }
 
-function isAllowedDay(validDays: number[] | null, now: Date) {
+function isAllowedDay(validDays: number[] | null, now: Date, timeZone?: string | null) {
   if (!validDays || validDays.length === 0) return true;
-  return validDays.includes(now.getDay());
+  const today = getWeekdayInTimeZone(now, timeZone);
+  return validDays.includes(today);
 }
 
 export async function POST(req: NextRequest) {
@@ -455,7 +457,8 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      if (!isAllowedDay(deal.valid_days, nowDate)) {
+      const localWeekday = getWeekdayInTimeZone(nowDate, deal.time_zone);
+      if (!isAllowedDay(deal.valid_days, nowDate, deal.time_zone)) {
         await markFlashRedemptionRejected({
           flashDealId,
           visitId: visit.id,
@@ -474,7 +477,7 @@ export async function POST(req: NextRequest) {
           metadata: {
             reason: "invalid_day",
             validDays: deal.valid_days ?? [],
-            checkedDay: nowDate.getDay(),
+            checkedDay: localWeekday,
           },
         });
         return cors(

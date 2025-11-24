@@ -6,6 +6,7 @@ import type {
 } from "./partners";
 import { getSupabaseAdmin } from "../supabase-admin";
 import { setRewardRedemptionForm } from "./rewards";
+import type { DealTicketRequirement } from "@/lib/deals/ticket-requirements";
 
 export const MAX_QR_EXPIRY_SECONDS = 60 * 60 * 24 * 7; // 7 days (Supabase signed URL limit)
 const FALLBACK_QR_EXPIRY_SECONDS = 60 * 60 * 24 * 3; // 3 days default if env missing
@@ -499,6 +500,47 @@ export function buildPricingStepFromTicketing(args: {
       bundles,
       addons,
       maxGuestsPerBooking: args.maxGuestsPerBooking ?? null,
+    },
+  };
+}
+
+export function buildPricingStepFromDealRequirements(args: {
+  ticketRequirements: DealTicketRequirement[];
+  currency?: string;
+  stepId?: string;
+  title?: string;
+  description?: string;
+  timeZoneLabel?: string;
+}) {
+  const bundles = args.ticketRequirements.map((requirement, index) => {
+    const label = requirement.subType
+      ? `${requirement.subType} · ${requirement.ticketType}`
+      : requirement.ticketType;
+    return {
+      id: `${args.stepId ?? generateFormId("bundle")}-deal-${index}`,
+      ticketType: requirement.ticketType,
+      label: label || `Requirement ${index + 1}`,
+      description: `Requires ${requirement.quantity} guest${
+        requirement.quantity === 1 ? "" : "s"
+      }.${args.timeZoneLabel ? ` (${args.timeZoneLabel})` : ""}`,
+      price: null,
+      discountedPrice: null,
+    };
+  });
+  return {
+    id: args.stepId ?? generateFormId("pricing"),
+    title: args.title ?? "Ticket requirements",
+    description:
+      args.description ??
+      "Confirm the ticket requirements for this flash deal before proceeding.",
+    fields: [],
+    variant: "pricing" as const,
+    pricing: {
+      currency: args.currency ?? "CZK",
+      allowCustomTotals: false,
+      bundles,
+      addons: [],
+      maxGuestsPerBooking: null,
     },
   };
 }

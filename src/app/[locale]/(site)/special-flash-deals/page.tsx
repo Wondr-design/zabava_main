@@ -295,6 +295,17 @@ function DealCard({ deal }: { deal: PublicDealSummary }) {
     ? "secondary"
     : "outline";
 
+  const requirementSummary =
+    deal.ticketRequirements && deal.ticketRequirements.length
+      ? deal.ticketRequirements
+          .map((req) => `${req.quantity} × ${req.subType ?? req.ticketType}`)
+          .join(" + ")
+      : null;
+  const maxRequirement =
+    deal.ticketRequirements && deal.ticketRequirements.length
+      ? Math.max(...deal.ticketRequirements.map((req) => req.quantity || 0))
+      : null;
+
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-white/20 bg-gradient-to-br from-white/10 via-white/5 to-white/5 shadow-lg shadow-black/30 backdrop-blur transition hover:-translate-y-1 hover:border-violet-400/60 hover:shadow-violet-500/20">
       {deal.heroImage ? (
@@ -326,7 +337,12 @@ function DealCard({ deal }: { deal: PublicDealSummary }) {
           ) : null}
         </div>
         <ul className="space-y-1.5 text-xs text-slate-200 leading-relaxed">
-          <li>{formatValidity(deal.validFrom, deal.validTo)}</li>
+          <li>
+            {formatValidity(deal.validFrom, deal.validTo)}
+            {deal.timeZoneLabel ? (
+              <span className="text-slate-400"> · {deal.timeZoneLabel}</span>
+            ) : null}
+          </li>
           {deal.city ? <li>City focus: <span className="font-semibold text-slate-100">{deal.city}</span></li> : null}
           {typeof deal.usageRemaining === "number" ? (
             <li>
@@ -344,6 +360,20 @@ function DealCard({ deal }: { deal: PublicDealSummary }) {
               </span>
             </li>
           ) : null}
+          {requirementSummary ? (
+            <li>
+              Minimum group:{" "}
+              <span className="font-semibold text-slate-100">
+                {requirementSummary}
+              </span>
+              {typeof maxRequirement === "number" && maxRequirement > 0 ? (
+                <span className="text-slate-300">
+                  {" "}
+                  (highest per type: {maxRequirement})
+                </span>
+              ) : null}
+            </li>
+          ) : null}
         </ul>
         <div className="flex flex-wrap gap-2">
           {deal.tags.map((tag) => (
@@ -359,6 +389,14 @@ function DealCard({ deal }: { deal: PublicDealSummary }) {
           >
             More info
           </LocalizedLink>
+          {deal.formId ? (
+            <LocalizedLink
+              href={`${detailHref}#generate`}
+              className="inline-flex items-center justify-center rounded-full border border-violet-300/60 bg-white/10 px-4 py-2.5 text-sm font-semibold text-violet-100 shadow-inner shadow-violet-500/20 transition hover:bg-white/20 min-h-[44px] touch-manipulation w-full sm:w-auto"
+            >
+              Generate QR
+            </LocalizedLink>
+          ) : null}
           {deal.isActive ? (
             <span className="text-xs font-bold text-emerald-400 text-center sm:text-right">Available now</span>
           ) : deal.isUpcoming ? (

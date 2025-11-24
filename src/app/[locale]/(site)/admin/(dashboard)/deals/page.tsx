@@ -22,6 +22,7 @@ function mapDeal(entry: DealWithMeta): AdminDealListItem {
     partnerId: deal.partner_id,
     partnerName: entry.partnerName ?? null,
     dealType: deal.deal_type,
+    formId: deal.form_id ?? null,
     isFeatured: deal.is_featured,
     bannerLeadHours: deal.banner_lead_hours,
     ticketRequirements: (deal.ticket_requirements as Array<{ ticketType: string; subType?: string; quantity: number }> | null) ?? [],

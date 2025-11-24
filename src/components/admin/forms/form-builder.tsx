@@ -15,11 +15,13 @@ import {
   DEFAULT_QR_EXPIRY_SECONDS,
   PartnerFormStepCondition,
   PartnerFormStepLogic,
+  buildPricingStepFromDealRequirements,
   buildPricingStepFromTicketing,
   type PartnerFormPricingBundle,
   type PartnerFormPricingAddon,
 } from "@/lib/data/partner-forms";
 import type { FlashDealStatus, DealType } from "@/lib/data/flash-deals";
+import type { DealTicketRequirement } from "@/lib/deals/ticket-requirements";
 import { adminApi } from "@/lib/web/api-client";
 import { getCsrfToken } from "@/lib/web/csrf";
 import { cn } from "@/lib/utils";
@@ -79,6 +81,8 @@ type DealOption = {
   partnerName: string | null;
   dealType: DealType;
   minVisitors: number | null;
+  ticketRequirements: DealTicketRequirement[];
+  timeZoneLabel: string;
 };
 
 interface AdminFormBuilderProps {
@@ -866,6 +870,44 @@ export function AdminFormBuilder({
     }
     return base;
   }, [deals, draft?.dealId]);
+
+  const dealLookup = useMemo(
+    () => new Map(deals.map((deal) => [deal.id, deal])),
+    [deals],
+  );
+
+  useEffect(() => {
+    if (!draft || draft.usageType !== "deal") return;
+    const dealId = draft.dealId;
+    if (!dealId) return;
+    const deal = dealLookup.get(dealId);
+    if (!deal || !deal.ticketRequirements.length) return;
+    updateConfig((config) => {
+      const steps = config.steps.map((step) => ({ ...step }));
+      const pricingIndex = steps.findIndex((step) => isPricingStep(step));
+      if (pricingIndex >= 0) {
+        const target = steps[pricingIndex];
+        steps[pricingIndex] = buildPricingStepFromDealRequirements({
+          stepId: target.id,
+          title: target.title,
+          description:
+            target.description ??
+            `Confirm the ticket requirements for ${deal.title}.`,
+          currency: target.pricing?.currency ?? "CZK",
+          ticketRequirements: deal.ticketRequirements,
+          timeZoneLabel: deal.timeZoneLabel,
+        });
+      } else {
+        const newStep = buildPricingStepFromDealRequirements({
+          ticketRequirements: deal.ticketRequirements,
+          description: `Confirm the ticket requirements for ${deal.title}.`,
+          timeZoneLabel: deal.timeZoneLabel,
+        });
+        steps.unshift(newStep);
+      }
+      return cleanupConfig({ ...config, steps });
+    });
+  }, [draft, draft?.dealId, draft?.usageType, dealLookup, updateConfig]);
 
   function applyDraft(mutator: (form: PartnerFormRecord) => void) {
     setDraft((prev) => {

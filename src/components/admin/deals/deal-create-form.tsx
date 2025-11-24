@@ -62,7 +62,9 @@ interface DealCreateFormState {
   sendReminders: boolean;
   heroImageUrl: string;
   heroImageAlt: string;
+  formId: string | null;
   ticketTypes: string[];
+  timeZone: string;
 }
 
 type TicketConditionRow = {
@@ -73,6 +75,7 @@ type TicketConditionRow = {
   label: string;
   inclusionKey?: string | null;
   isInclusion?: boolean;
+  isOrphan?: boolean;
 };
 
 type PartnerTicketDetailSummary = {
@@ -106,6 +109,7 @@ export interface DealFormInitialData {
   validDays: number[] | null;
   autoExpire: boolean;
   sendReminders: boolean;
+  formId?: string | null;
   ticketTypes: string[];
   ticketRequirements: Array<{
     ticketType: string;
@@ -114,6 +118,7 @@ export interface DealFormInitialData {
   }>;
   heroImageUrl?: string | null;
   heroImageAlt?: string | null;
+  timeZone?: string | null;
 }
 
 const INITIAL_FORM: DealCreateFormState = {
@@ -138,7 +143,9 @@ const INITIAL_FORM: DealCreateFormState = {
   sendReminders: false,
   heroImageUrl: "",
   heroImageAlt: "",
+  formId: null,
   ticketTypes: [],
+  timeZone: "",
 };
 
 const createRowId = () =>
@@ -202,37 +209,113 @@ export type PartnerOption = {
 
 interface DealCreateFormProps {
   partnerOptions: PartnerOption[];
+  formOptions?: Array<{ id: string; name: string }>;
   mode?: DealFormMode;
   existingDeal?: DealFormInitialData | null;
+  readOnly?: boolean;
+  showWarnings?: boolean;
 }
 
 export function DealCreateForm({
   partnerOptions,
+  formOptions = [],
   mode = "create",
   existingDeal,
+  readOnly = false,
+  showWarnings = false,
 }: DealCreateFormProps) {
-  const [form, setForm] = useState<DealCreateFormState>({ ...INITIAL_FORM });
-  const [validDays, setValidDays] = useState<number[]>([]);
+  const initialFormState: DealCreateFormState = useMemo(() => {
+    if (!existingDeal) return { ...INITIAL_FORM };
+    const qrDays = Math.max(
+      1,
+      Math.round(
+        (existingDeal.qrValiditySeconds ||
+          DEFAULT_QR_VALIDITY_DAYS * 24 * 60 * 60) /
+          (24 * 60 * 60),
+      ),
+    );
+    return {
+      partnerId: existingDeal.partnerId,
+      status: existingDeal.status,
+      title: existingDeal.title,
+      slug: existingDeal.slug ?? "",
+      description: existingDeal.description ?? "",
+      discountPercent: String(existingDeal.discountPercent),
+      minVisitors: String(existingDeal.minVisitors),
+      commissionPercent: String(existingDeal.commissionPercent),
+      priceOverrideCzk:
+        existingDeal.priceOverrideCzk !== null
+          ? String(existingDeal.priceOverrideCzk)
+          : "",
+      bonusPointsOverride:
+        existingDeal.bonusPointsOverride !== null
+          ? String(existingDeal.bonusPointsOverride)
+          : "",
+      isFeatured: existingDeal.isFeatured,
+      bannerLeadHours: String(existingDeal.bannerLeadHours ?? 0),
+      qrValidityDays: String(qrDays),
+      usageLimit:
+        existingDeal.usageLimit !== null ? String(existingDeal.usageLimit) : "",
+      usageLimitDaily:
+        existingDeal.usageLimitDaily !== null
+          ? String(existingDeal.usageLimitDaily)
+          : "",
+      validFrom: toInputDateTime(existingDeal.validFrom ?? null),
+      validTo: toInputDateTime(existingDeal.validTo ?? null),
+      autoExpire: existingDeal.autoExpire,
+      sendReminders: existingDeal.sendReminders,
+      formId: existingDeal.formId ?? "",
+      heroImageUrl: existingDeal.heroImageUrl ?? "",
+      heroImageAlt: existingDeal.heroImageAlt ?? "",
+      ticketTypes: existingDeal.ticketTypes ?? [],
+      timeZone: existingDeal.timeZone ?? "",
+    };
+  }, [existingDeal]);
+
+  const [form, setForm] = useState<DealCreateFormState>(initialFormState);
+  const [validDays, setValidDays] = useState<number[]>(
+    existingDeal?.validDays ?? [],
+  );
   const [useCustomCommission, setUseCustomCommission] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [ticketRequirements, setTicketRequirements] = useState<
     TicketConditionRow[]
-  >([]);
+  >(
+    (existingDeal?.ticketRequirements ?? []).map((condition) => ({
+      id: createRowId(),
+      ticketType: condition.ticketType,
+      subType: condition.subType,
+      quantity: condition.quantity,
+      label: formatRequirementLabel(condition.ticketType, condition.subType),
+      inclusionKey: undefined,
+      isInclusion: false,
+    })),
+  );
   const [validityMode, setValidityMode] = useState<
     "valid_days" | "date_range" | "always_on"
-  >("valid_days");
+  >(
+    existingDeal?.validFrom && existingDeal?.validTo
+      ? "date_range"
+      : existingDeal?.validDays?.length
+      ? "valid_days"
+      : "always_on",
+  );
   const router = useLocalizedRouter();
   const isEditMode = mode === "edit";
+  const isReadOnly = readOnly === true;
   const activeDealId = existingDeal?.id ?? null;
   const suppressValidityResetRef = useRef(false);
   const [ticketDetailCache, setTicketDetailCache] = useState<
     Record<string, PartnerTicketDetailSummary[]>
   >({});
   const [ticketDetailsLoading, setTicketDetailsLoading] = useState(false);
-  const [ticketDetailsError, setTicketDetailsError] = useState<string | null>(
-    null
-  );
-  const previousPartnerRef = useRef<string | null>(null);
+const [ticketDetailsError, setTicketDetailsError] = useState<string | null>(
+  null
+);
+const previousPartnerRef = useRef<string | null>(null);
+const [linkedFormId, setLinkedFormId] = useState<string | null>(
+  existingDeal?.formId ?? null,
+);
 
   useEffect(() => {
     if (!existingDeal) return;
@@ -274,9 +357,11 @@ export function DealCreateForm({
       validTo: toInputDateTime(existingDeal.validTo ?? null),
       autoExpire: existingDeal.autoExpire,
       sendReminders: existingDeal.sendReminders,
+      formId: existingDeal.formId ?? null,
       heroImageUrl: existingDeal.heroImageUrl ?? "",
       heroImageAlt: existingDeal.heroImageAlt ?? "",
       ticketTypes: existingDeal.ticketTypes ?? [],
+      timeZone: existingDeal.timeZone ?? "",
     });
     setValidDays(existingDeal.validDays ?? []);
     setTicketRequirements(
@@ -350,11 +435,11 @@ export function DealCreateForm({
         if (!a.isInclusion && b.isInclusion) return -1;
         return (a.label ?? "").localeCompare(b.label ?? "");
       });
-    return Array.from(groups.values()).map((group) => ({
-      ...group,
-      rows: sortRows(group.rows),
-    }));
-  }, [ticketRequirements]);
+  return Array.from(groups.values()).map((group) => ({
+    ...group,
+    rows: sortRows(group.rows),
+  }));
+}, [ticketRequirements]);
 
   const partnerDefaultCommission = useMemo(() => {
     const entry = partnerOptions.find((option) => option.id === form.partnerId);
@@ -405,12 +490,17 @@ export function DealCreateForm({
     }
   }, [useCustomCommission, partnerDefaultCommission]);
 
+  const hasSavedRequirements = Boolean(existingDeal?.ticketRequirements?.length);
+
   useEffect(() => {
     if (!form.partnerId) return;
     if (ticketDetailCache[form.partnerId]) return;
+    if (hasSavedRequirements) return;
     let cancelled = false;
     setTicketDetailsLoading(true);
     setTicketDetailsError(null);
+    // Clear any stale requirements while loading fresh partner ticket details.
+    setTicketRequirements([]);
     const params = new URLSearchParams({ partnerId: form.partnerId });
     void fetch(`/api/admin/partners?${params.toString()}`, {
       credentials: "include",
@@ -496,7 +586,7 @@ export function DealCreateForm({
         current.map((item) => [
           buildRequirementKey(item.ticketType, item.subType, item.inclusionKey),
           item,
-        ])
+        ]),
       );
       const next: TicketConditionRow[] = [];
 
@@ -506,14 +596,17 @@ export function DealCreateForm({
         subType,
         inclusionKey = null,
         isInclusion = false,
+        isOrphan = false,
       }: {
         ticketType: string;
         label: string;
         subType?: string;
         inclusionKey?: string | null;
         isInclusion?: boolean;
+        isOrphan?: boolean;
       }) => {
-        const key = buildRequirementKey(ticketType, subType, inclusionKey);
+        // Keyed only by ticketType + subType so saved requirements without inclusionKey still match.
+        const key = buildRequirementKey(ticketType, subType);
         const existing = existingMap.get(key);
         if (existing) {
           next.push({
@@ -522,6 +615,7 @@ export function DealCreateForm({
             subType,
             inclusionKey,
             isInclusion,
+            isOrphan,
           });
           existingMap.delete(key);
         } else {
@@ -533,6 +627,7 @@ export function DealCreateForm({
             label,
             inclusionKey,
             isInclusion,
+            isOrphan,
           });
         }
       };
@@ -545,30 +640,35 @@ export function DealCreateForm({
           ""
         ).trim();
         if (!baseType) continue;
-        const normalizedSubType = detail.label?.trim() || undefined;
-        upsertRequirement({
-          ticketType: baseType,
-          label: normalizedSubType ?? baseType,
-          subType: normalizedSubType,
-        });
+        const normalizedLabel = detail.label?.trim() || baseType;
 
         const inclusions = detail.inclusions ?? {};
-        Object.entries(inclusions).forEach(([inclusionKey, value]) => {
-          if (value === null || value === undefined) {
-            return;
-          }
-          const inclusionLabel = formatInclusionLabel(inclusionKey);
+        const inclusionEntries = Object.entries(inclusions).filter(
+          ([, value]) => value !== null && value !== undefined,
+        );
+
+        if (inclusionEntries.length > 0) {
+          // Composite ticket: expose sub-options only (e.g., adult/child counts), not the composite itself.
+          inclusionEntries.forEach(([inclusionKey]) => {
+            const inclusionLabel = formatInclusionLabel(inclusionKey);
+            upsertRequirement({
+              ticketType: baseType,
+              label: inclusionLabel,
+              subType: inclusionLabel,
+              inclusionKey,
+              isInclusion: true,
+            });
+          });
+        } else {
+          // Simple ticket: single requirement row.
           upsertRequirement({
             ticketType: baseType,
-            label: inclusionLabel,
-            subType: inclusionLabel,
-            inclusionKey,
-            isInclusion: true,
+            label: normalizedLabel,
+            subType: normalizedLabel,
           });
-        });
+        }
       }
 
-      next.push(...existingMap.values());
       return next;
     });
   }, [form.partnerId, currentPartnerTicketDetails]);
@@ -601,6 +701,21 @@ export function DealCreateForm({
       ticketTypes: nextTicketTypes,
     }));
   }, [ticketRequirements]);
+
+  const requirementPreview = useMemo(() => {
+    return groupedTicketRequirements.map((group) => {
+      const subItems = group.rows.map((row) => ({
+        subType: row.subType ?? null,
+        quantity: row.quantity,
+      }));
+      const totalQuantity = subItems.reduce((sum, item) => sum + item.quantity, 0);
+      return {
+        ticketType: group.ticketType,
+        subItems,
+        totalQuantity,
+      };
+    });
+  }, [groupedTicketRequirements]);
 
   useEffect(() => {
     if (suppressValidityResetRef.current) {
@@ -642,11 +757,13 @@ export function DealCreateForm({
     setUseCustomCommission(true);
     setTicketRequirements([]);
     setValidityMode("valid_days");
+    setLinkedFormId(null);
   }, []);
 
   const handleSubmit = useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
+      if (isReadOnly) return;
       if (!canSubmit || submitting) return;
       if (isEditMode && !activeDealId) {
         toast.error("Missing deal id");
@@ -669,7 +786,11 @@ export function DealCreateForm({
           sendReminders: form.sendReminders,
           isFeatured: form.isFeatured,
           bannerLeadHours: Math.max(0, Number(form.bannerLeadHours) || 0),
+          formId: linkedFormId ?? null,
         };
+        if (form.timeZone.trim()) {
+          payload.timeZone = form.timeZone.trim();
+        }
 
         if (!isEditMode) {
           payload.partnerId = form.partnerId.trim();
@@ -729,10 +850,11 @@ export function DealCreateForm({
           );
         if (requirements.length > 0) {
           payload.ticketRequirements = requirements;
-          payload.minVisitors = Math.max(
-            requirements.reduce((max, item) => Math.max(max, item.quantity), 0),
-            Number(form.minVisitors) || 1
+          const requiredHeadcount = requirements.reduce(
+            (max, item) => Math.max(max, item.quantity),
+            0
           );
+          payload.minVisitors = Math.max(requiredHeadcount, Number(form.minVisitors) || 1);
           payload.ticketTypes = Array.from(
             new Set(requirements.map((item) => item.ticketType))
           );
@@ -804,6 +926,7 @@ export function DealCreateForm({
           router.push("/admin/deals");
         }
       } catch (error) {
+        console.error("deal_create_form_submit_error", error);
         const message =
           error instanceof Error
             ? error.message
@@ -836,12 +959,16 @@ export function DealCreateForm({
       form.title,
       form.usageLimit,
       form.usageLimitDaily,
+      form.timeZone,
       form.validFrom,
       form.validTo,
       isEditMode,
+      isReadOnly,
       validityMode,
       resetForm,
       router,
+      linkedFormId,
+      showWarnings,
       submitting,
       validDays,
       ticketRequirements,
@@ -850,10 +977,11 @@ export function DealCreateForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      <SectionCard
-        title="Partner & activation"
-        description="Choose which partner owns this deal and how it should launch."
-      >
+      <fieldset disabled={isReadOnly} className="space-y-8">
+        <SectionCard
+          title="Partner & activation"
+          description="Choose which partner owns this deal and how it should launch."
+        >
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="partnerId">Partner</Label>
@@ -862,7 +990,7 @@ export function DealCreateForm({
               onValueChange={(value) =>
                 setForm((current) => ({ ...current, partnerId: value }))
               }
-              disabled={!partnerOptions.length}
+              disabled={!partnerOptions.length || isReadOnly}
             >
               <SelectTrigger id="partnerId">
                 <SelectValue
@@ -892,6 +1020,7 @@ export function DealCreateForm({
                   status: value as FlashDealStatus,
                 }))
               }
+              disabled={isReadOnly}
             >
               <SelectTrigger id="status">
                 <SelectValue />
@@ -918,6 +1047,42 @@ export function DealCreateForm({
               Toggle on to activate immediately. Scheduled deals respect their
               validity window.
             </p>
+          </div>
+          <div className="space-y-2">
+            <Label>Linked flash-deal form</Label>
+            <Select
+              value={linkedFormId ?? "__none"}
+              onValueChange={(value) =>
+                setLinkedFormId(value === "__none" ? null : value)
+              }
+              disabled={isReadOnly}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a form (usage: deal)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none">No linked form</SelectItem>
+                {formOptions.map((option) => (
+                  <SelectItem key={option.id} value={option.id}>
+                    {option.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Linked form:{" "}
+              <span className="font-semibold text-foreground">
+                {linkedFormId
+                  ? formOptions.find((form) => form.id === linkedFormId)?.name ??
+                    "Unknown form"
+                  : "Not linked"}
+              </span>
+            </p>
+            {!isReadOnly ? (
+              <p className="text-xs text-muted-foreground">
+                Only forms with usage type “deal” are eligible. Linked form drives the public “Generate QR” flow.
+              </p>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label htmlFor="slug">Slug (optional)</Label>
@@ -1304,16 +1469,18 @@ export function DealCreateForm({
 
       <SectionCard
         title="Ticketing & conditions"
-        description="Specify which ticket types count toward redemption requirements."
+        description="Set the required quantity per ticket type. Composite tickets (with inclusions like adult/child) expose their sub-options only."
       >
+        {requirementPreview.length ? (
+          <TicketRequirementPreview requirements={requirementPreview} />
+        ) : null}
         <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
           <div className="space-y-1">
             <p className="text-sm font-medium text-foreground">
               Ticket requirements
             </p>
             <p className="text-xs text-muted-foreground">
-              Set the required count for each ticket type defined on the
-              partner.
+              Set the required count for each ticket type defined on the partner (similar to per-ticket pricing). Parents with inclusions use their sub-options.
             </p>
           </div>
           {!form.partnerId ? (
@@ -1335,62 +1502,51 @@ export function DealCreateForm({
               the partner profile first.
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {groupedTicketRequirements.map((group) => (
                 <div
                   key={group.ticketType}
-                  className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4"
+                  className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        {group.label}
-                      </p>
-                      <p className="text-xs text-muted-foreground font-mono">
-                        {group.ticketType}
-                      </p>
-                    </div>
+                  <div className="flex flex-col gap-1">
+                    <p className="text-sm font-semibold text-foreground">
+                      {group.label}
+                    </p>
+                    <p className="text-[11px] font-mono text-muted-foreground">
+                      {group.ticketType}
+                    </p>
                   </div>
-                  <div className="space-y-2">
-                    {group.rows.map((condition) => (
-                      <div
-                        key={condition.id}
-                        className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/60 bg-slate-50 px-3 py-2"
-                      >
-                        <div className="min-w-[180px]">
-                          <p className="text-sm font-semibold text-foreground">
-                            {condition.label}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground">
-                            {condition.isInclusion
-                              ? `Inclusion of ${condition.ticketType}`
-                              : condition.subType
-                                ? `Subtype of ${condition.ticketType}`
+                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                    {group.rows.map((row) => (
+                      <div key={row.id} className="space-y-2">
+                        <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                          {row.label}
+                        </Label>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-muted-foreground">
+                            {row.isInclusion
+                              ? `Inclusion of ${group.label}`
+                              : row.subType
+                                ? `Subtype of ${group.label}`
                                 : "Base ticket"}
-                          </p>
+                          </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Label
-                            htmlFor={`ticket-qty-${condition.id}`}
-                            className="text-xs text-muted-foreground"
-                          >
-                            Required qty
-                          </Label>
                           <Input
-                            id={`ticket-qty-${condition.id}`}
                             type="number"
                             min={0}
                             inputMode="numeric"
                             className="w-24"
-                            value={String(condition.quantity)}
+                            value={String(row.quantity)}
                             onChange={(event) =>
-                              updateTicketCondition(condition.id, {
+                              updateTicketCondition(row.id, {
                                 quantity: Math.max(
                                   0,
                                   Number(event.target.value) || 0
                                 ),
                               })
                             }
+                            disabled={isReadOnly}
                           />
                         </div>
                       </div>
@@ -1398,36 +1554,34 @@ export function DealCreateForm({
                   </div>
                 </div>
               ))}
-              {ticketConditionSummary ? (
-                <p className="text-xs text-muted-foreground">
-                  Requires {ticketConditionSummary} ({form.minVisitors} total
-                  visitors).
-                </p>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  No minimum headcount enforced.
-                </p>
-              )}
+              <p className="text-xs text-muted-foreground">
+                {ticketConditionSummary
+                  ? `Requires ${ticketConditionSummary} (highest single-ticket requirement: ${form.minVisitors} visitor${form.minVisitors === "1" ? "" : "s"}).`
+                  : "No minimum headcount enforced."}
+              </p>
             </div>
           )}
         </div>
       </SectionCard>
+    </fieldset>
 
-      <div className="flex items-center justify-end gap-3">
-        <Button
-          type="submit"
-          className="rounded-xl"
-          disabled={!canSubmit || submitting}
-        >
-          {submitting
-            ? isEditMode
-              ? "Saving…"
-              : "Creating…"
-            : isEditMode
-              ? "Save changes"
-              : "Create deal"}
-        </Button>
-      </div>
+      {!isReadOnly ? (
+        <div className="flex items-center justify-end gap-3">
+          <Button
+            type="submit"
+            className="rounded-xl"
+            disabled={!canSubmit || submitting}
+          >
+            {submitting
+              ? isEditMode
+                ? "Saving…"
+                : "Creating…"
+              : isEditMode
+                ? "Save changes"
+                : "Create deal"}
+          </Button>
+        </div>
+      ) : null}
     </form>
   );
 }
@@ -1492,6 +1646,59 @@ function NumberField({
         <p className="text-xs text-muted-foreground">{helperText}</p>
       ) : null}
     </div>
+  );
+}
+
+function TicketRequirementPreview({
+  requirements,
+}: {
+  requirements: Array<{
+    ticketType: string;
+    subItems: Array<{ subType: string | null; quantity: number }>;
+    totalQuantity: number;
+  }>;
+}) {
+  return (
+    <section className="rounded-3xl border border-slate-200 bg-slate-950/40 p-4 text-sm text-slate-200">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+          Step 1 preview · Ticket confirmation
+        </p>
+        <p className="text-xs text-slate-400">
+          Select a ticket type and confirm your headcount.
+        </p>
+      </div>
+      <div className="space-y-3 pt-3">
+        {requirements.map((requirement) => (
+          <div
+            key={requirement.ticketType}
+            className="rounded-2xl border border-slate-700/70 bg-slate-900/50 px-4 py-3"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-white">
+                {requirement.ticketType}
+              </span>
+              <span className="text-[11px] uppercase tracking-[0.3em] text-slate-400">
+                {requirement.totalQuantity} guest
+                {requirement.totalQuantity === 1 ? "" : "s"}
+              </span>
+            </div>
+            {requirement.subItems.length ? (
+              <p className="mt-2 text-[11px] text-slate-400">
+                Includes{" "}
+                {requirement.subItems
+                  .map((sub) =>
+                    sub.subType
+                      ? `${sub.quantity} × ${sub.subType}`
+                      : `${sub.quantity} × ${requirement.ticketType}`
+                  )
+                  .join(" · ")}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

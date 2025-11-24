@@ -25,6 +25,7 @@ import { resolveLocale } from "@/i18n/config";
 import { log, getCorrelationId } from "@/lib/logging";
 import { notifyQrEmail } from "@/lib/services/notifications/qr-email";
 import { loadPartnerBranding } from "@/lib/services/partner-branding";
+import { getWeekdayInTimeZone } from "@/lib/timezone";
 
 const bodySchema = z.object({
   email: z.string().email(),
@@ -72,9 +73,9 @@ function isWithinValidityWindow(validFrom: string | null, validTo: string | null
   return true;
 }
 
-function isValidDay(validDays: number[] | null, now: Date) {
+function isValidDay(validDays: number[] | null, now: Date, timeZone?: string | null) {
   if (!validDays || validDays.length === 0) return true;
-  const today = now.getDay();
+  const today = getWeekdayInTimeZone(now, timeZone);
   return validDays.includes(today);
 }
 
@@ -160,7 +161,7 @@ function assertDealIsIssuable(
   if (!isWithinValidityWindow(deal.deal.valid_from, deal.deal.valid_to, now)) {
     throw Object.assign(new Error("Deal is not currently valid"), { code: "out_of_window" });
   }
-  if (!isValidDay(deal.deal.valid_days ?? null, now)) {
+  if (!isValidDay(deal.deal.valid_days ?? null, now, deal.deal.time_zone)) {
     throw Object.assign(new Error("Deal cannot be used today"), { code: "invalid_day" });
   }
   if (requestedVisitors < deal.deal.min_visitors) {

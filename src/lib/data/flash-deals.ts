@@ -7,6 +7,10 @@ import type { Database, Json } from "@/supabase/types";
 import { listQrEvents, type QrEventType, type QrType } from "./qr-events";
 import type { PostgrestError } from "@supabase/supabase-js";
 import { log } from "@/lib/logging";
+import { getPartnerById } from "@/lib/data/site-directory";
+import { getActiveTimezoneSetting } from "@/lib/data/timezone-settings";
+import { formatTimeZoneLabel } from "@/lib/timezone";
+import type { DealTicketRequirement } from "@/lib/deals/ticket-requirements";
 
 export const flashDealStatusSchema = z.enum([
   "draft",
@@ -35,6 +39,7 @@ const flashDealRowSchema = z.object({
   bonus_points_override: z.number().nullable(),
   is_featured: z.boolean(),
   banner_lead_hours: z.number(),
+  form_id: z.string().nullable().optional(),
   ticket_requirements: z
     .array(
       z.object({
@@ -54,6 +59,7 @@ const flashDealRowSchema = z.object({
   tags: z.array(z.string()),
   audience: z.array(z.string()),
   city: z.string().nullable(),
+  time_zone: z.string(),
   status: flashDealStatusSchema,
   created_by: z.string().nullable(),
   updated_by: z.string().nullable(),
@@ -73,6 +79,7 @@ const flashDealInsertSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   dealType: dealTypeSchema.optional(),
+  formId: z.string().min(1).optional().nullable(),
   slug: slugSchema.optional(),
   discountPercent: z.number().min(0).max(100),
   minVisitors: z.number().int().min(1).default(1),
@@ -102,6 +109,7 @@ const flashDealInsertSchema = z.object({
   audience: z.array(z.string()).optional(),
   ticketTypes: z.array(z.string()).optional(),
   city: z.string().optional(),
+  timeZone: z.string().optional(),
   status: flashDealStatusSchema.default("draft"),
   createdBy: z.string().optional(),
   media: z
@@ -127,30 +135,32 @@ const flashDealUpdateSchema = z
     validFrom: z.string().datetime({ offset: true }).nullable().optional(),
     validTo: z.string().datetime({ offset: true }).nullable().optional(),
     validDays: z.array(z.number().int().min(0).max(6)).nullable().optional(),
-  commissionPercent: z.number().min(0).max(100).optional(),
-  priceOverrideCzk: z.number().positive().nullable().optional(),
-  bonusPointsOverride: z.number().int().nonnegative().nullable().optional(),
-  isFeatured: z.boolean().optional(),
-  bannerLeadHours: z.number().int().nonnegative().optional(),
-  ticketRequirements: z
-    .array(
-      z.object({
-        ticketType: z.string().min(1),
-        subType: z.string().optional(),
-        quantity: z.number().int().min(1),
-      }),
-    )
-    .nullable()
-    .optional(),
-  qrValiditySeconds: z.number().int().positive().optional(),
-  usageLimit: z.number().int().positive().nullable().optional(),
-  usageLimitDaily: z.number().int().positive().nullable().optional(),
+    formId: z.string().min(1).nullable().optional(),
+    commissionPercent: z.number().min(0).max(100).optional(),
+    priceOverrideCzk: z.number().positive().nullable().optional(),
+    bonusPointsOverride: z.number().int().nonnegative().nullable().optional(),
+    isFeatured: z.boolean().optional(),
+    bannerLeadHours: z.number().int().nonnegative().optional(),
+    ticketRequirements: z
+      .array(
+        z.object({
+          ticketType: z.string().min(1),
+          subType: z.string().optional(),
+          quantity: z.number().int().min(1),
+        }),
+      )
+      .nullable()
+      .optional(),
+    qrValiditySeconds: z.number().int().positive().optional(),
+    usageLimit: z.number().int().positive().nullable().optional(),
+    usageLimitDaily: z.number().int().positive().nullable().optional(),
     autoExpire: z.boolean().optional(),
     sendReminders: z.boolean().optional(),
     tags: z.array(z.string()).optional(),
     audience: z.array(z.string()).optional(),
     ticketTypes: z.array(z.string()).optional(),
     city: z.string().nullable().optional(),
+    timeZone: z.string().nullable().optional(),
     status: flashDealStatusSchema.optional(),
     updatedBy: z.string().optional(),
   })
@@ -290,6 +300,29 @@ function coerceDateTime(value: unknown): string | null {
     return value.toISOString();
   }
   return null;
+}
+
+async function resolveDealTimezone(
+  partnerId: string,
+  override?: string | null,
+): Promise<string> {
+  const trimmedOverride = override?.trim();
+  if (trimmedOverride) {
+    return trimmedOverride;
+  }
+  const setting = await getActiveTimezoneSetting();
+  if (setting.source === "partner") {
+    const partnerResponse = await getPartnerById(partnerId);
+    const candidate =
+      partnerResponse?.partner?.info?.timeZone?.trim() ||
+      partnerResponse?.partner?.info?.businessAddress?.timeZone?.trim() ||
+      partnerResponse?.partner?.info?.companyAddress?.timeZone?.trim() ||
+      null;
+    if (candidate) {
+      return candidate;
+    }
+  }
+  return setting.adminTimeZone;
 }
 
 async function insertFlashDealWithFallback(
@@ -494,6 +527,10 @@ export interface PublicDealSummary {
   tags: string[];
   audience: string[];
   ticketTypes: string[];
+   formId: string | null;
+  ticketRequirements: Array<{ ticketType: string; subType?: string; quantity: number }>;
+  timeZone: string;
+  timeZoneLabel: string;
   city: string | null;
   priceOverrideCzk: number | null;
   usageLimit: number | null;
@@ -541,11 +578,12 @@ function mapFlashDeal(row: FlashDealRow | DealRowWithRelations): FlashDeal {
   } catch (error) {
     if (error instanceof z.ZodError) {
       const withDefaults = {
-        tags: [],
+      tags: [],
       audience: [],
       ticket_types: null,
       ticket_requirements: null,
       is_featured: false,
+      form_id: null,
       banner_lead_hours: 0,
       city: null,
       auto_expire: true,
@@ -673,11 +711,16 @@ export async function createFlashDeal(
   const baseSlug = providedSlug && providedSlug.length > 0 ? providedSlug : fallbackSlug;
   const autoGeneratedSlug = !providedSlug;
 
+  const resolvedTimeZone = await resolveDealTimezone(
+    rest.partnerId,
+    rest.timeZone ?? null,
+  );
   const insertBasePayload: Record<string, unknown> = {
     partner_id: normalizePartnerId(rest.partnerId),
     title: rest.title,
     description: rest.description ?? null,
     deal_type: rest.dealType ?? "flash",
+    form_id: rest.formId ?? null,
     discount_percent: rest.discountPercent,
     min_visitors: requiredVisitors,
     valid_from: rest.validFrom ?? null,
@@ -699,6 +742,7 @@ export async function createFlashDeal(
     tags: rest.tags ?? [],
     audience: rest.audience ?? [],
     city: rest.city ?? null,
+    time_zone: resolvedTimeZone,
     status: rest.status ?? "draft",
     created_by: rest.createdBy ?? null,
     updated_by: rest.createdBy ?? null,
@@ -813,6 +857,7 @@ export async function updateFlashDeal(
     updatePayload.valid_days = payload.validDays ?? null;
   if (payload.commissionPercent !== undefined)
     updatePayload.commission_percent = payload.commissionPercent;
+  if (payload.formId !== undefined) updatePayload.form_id = payload.formId ?? null;
   if (payload.priceOverrideCzk !== undefined)
     updatePayload.price_override_czk = payload.priceOverrideCzk ?? null;
   if (payload.bonusPointsOverride !== undefined)
@@ -856,6 +901,16 @@ export async function updateFlashDeal(
   if (payload.tags !== undefined) updatePayload.tags = payload.tags;
   if (payload.audience !== undefined) updatePayload.audience = payload.audience;
   if (payload.city !== undefined) updatePayload.city = payload.city ?? null;
+  if (payload.timeZone !== undefined) {
+    const existingDeal = await ensureExistingDeal();
+    const normalized =
+      payload.timeZone === null ? "" : (payload.timeZone?.trim() ?? "");
+    if (normalized.length > 0) {
+      updatePayload.time_zone = normalized;
+    } else {
+      updatePayload.time_zone = await resolveDealTimezone(existingDeal.partner_id, null);
+    }
+  }
   if (payload.status !== undefined) updatePayload.status = payload.status;
   if (payload.updatedBy !== undefined)
     updatePayload.updated_by = payload.updatedBy ?? null;
@@ -926,6 +981,7 @@ export async function duplicateFlashDeal(
     audience: overrides.audience ?? existing.audience,
     city: overrides.city ?? existing.city ?? undefined,
     ticketTypes: overrides.ticketTypes ?? existing.ticket_types ?? undefined,
+    timeZone: overrides.timeZone ?? existing.time_zone ?? undefined,
     status: overrides.status ?? "draft",
     createdBy: overrides.createdBy,
   };
@@ -1093,6 +1149,7 @@ interface PublicDealDetailExtras {
     altText: string | null;
     sortOrder: number;
   }>;
+  timeZoneLabel: string;
 }
 
 interface PublicDealTransform {
@@ -1101,6 +1158,13 @@ interface PublicDealTransform {
 }
 
 function transformDealToPublic(entry: DealWithMeta): PublicDealTransform | null {
+  return transformDealToPublicWithForm(entry, null);
+}
+
+function transformDealToPublicWithForm(
+  entry: DealWithMeta,
+  formIdMap: Map<string, string> | null,
+): PublicDealTransform | null {
   const { deal, media, partnerName } = entry;
   const status = deal.status;
   if (status === "draft" || status === "paused" || status === "expired") {
@@ -1145,6 +1209,8 @@ function transformDealToPublic(entry: DealWithMeta): PublicDealTransform | null 
       : undefined;
   const hero = pickHeroImage(sortedMedia);
 
+  const timezone = deal.time_zone;
+  const timeZoneLabel = formatTimeZoneLabel(timezone);
   const summary: PublicDealSummary = {
     id: deal.id,
     slug: deal.slug ?? null,
@@ -1161,6 +1227,15 @@ function transformDealToPublic(entry: DealWithMeta): PublicDealTransform | null 
     tags: deal.tags ?? [],
     audience: deal.audience ?? [],
     ticketTypes: deal.ticket_types ?? [],
+    formId: formIdMap?.get(deal.id) ?? null,
+    ticketRequirements:
+      (deal.ticket_requirements as Array<{
+        ticketType: string;
+        subType?: string;
+        quantity: number;
+      }> | null) ?? [],
+    timeZone: timezone,
+    timeZoneLabel,
     city: deal.city ?? null,
     priceOverrideCzk: deal.price_override_czk,
     usageLimit: deal.usage_limit,
@@ -1197,6 +1272,7 @@ function transformDealToPublic(entry: DealWithMeta): PublicDealTransform | null 
         altText: item.alt_text ?? null,
         sortOrder: item.sort_order,
       })) ?? [],
+    timeZoneLabel,
   };
 
   return { summary, detail };
@@ -1206,6 +1282,7 @@ export async function listPublicDeals(
   filters: PublicDealFilters = {},
 ): Promise<PublicDealListResult> {
   const supabase = getSupabaseAdminTyped();
+  const formMap = await fetchPublishedDealFormMap();
   const selectColumns = [
     "*",
   ].join(", ");
@@ -1354,7 +1431,10 @@ export async function listPublicDeals(
   const items = filteredItems.slice(0, limit);
 
   return {
-    items,
+    items: items.map((item) => ({
+      ...item,
+      formId: formMap.get(item.id) ?? null,
+    })),
     facets,
     generatedAt: new Date().toISOString(),
   };
@@ -1370,6 +1450,9 @@ export interface DealSummaryForForms {
   dealType: DealType;
   minVisitors: number;
   validTo: string | null;
+  ticketRequirements: DealTicketRequirement[];
+  timeZone: string | null;
+  timeZoneLabel: string;
 }
 
 export async function listDealSummariesForForms(
@@ -1391,6 +1474,10 @@ export async function listDealSummariesForForms(
       dealType: entry.deal.deal_type,
       minVisitors: entry.deal.min_visitors,
       validTo: entry.deal.valid_to ?? null,
+      ticketRequirements:
+        (entry.deal.ticket_requirements as DealTicketRequirement[] | null) ?? [],
+      timeZone: entry.deal.time_zone ?? null,
+      timeZoneLabel: formatTimeZoneLabel(entry.deal.time_zone ?? null),
     }))
     .sort((a, b) => a.title.localeCompare(b.title));
 }
@@ -1441,14 +1528,41 @@ export interface PublicDealDetail
 export async function getPublicDealBySlug(
   slug: string,
 ): Promise<PublicDealDetail | null> {
+  const formMap = await fetchPublishedDealFormMap();
   const entry = await getDealWithMetaBySlug(slug);
   if (!entry) return null;
-  const transformed = transformDealToPublic(entry);
+  const transformed = transformDealToPublicWithForm(entry, formMap);
   if (!transformed) return null;
   return {
     ...transformed.summary,
     ...transformed.detail,
   };
+}
+
+async function fetchPublishedDealFormMap(): Promise<Map<string, string>> {
+  const supabase = getSupabaseAdminTyped();
+  const { data, error } = await supabase
+    .from("partner_forms")
+    .select("id, deal_id, usage_type, status")
+    .eq("usage_type", "deal")
+    .eq("status", "published");
+
+  if (error) {
+    console.error("list_public_deal_forms_error", error);
+    return new Map();
+  }
+
+  const map = new Map<string, string>();
+  (data ?? []).forEach((row) => {
+    const dealId = (row as { deal_id?: string | null }).deal_id;
+    const id = (row as { id?: string | null }).id;
+    if (dealId && id) {
+      if (!map.has(dealId)) {
+        map.set(dealId, id);
+      }
+    }
+  });
+  return map;
 }
 
 export async function setFlashDealStatus(

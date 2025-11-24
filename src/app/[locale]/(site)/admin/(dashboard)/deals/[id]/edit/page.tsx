@@ -4,6 +4,7 @@ import { DealCreateForm, type PartnerOption, type DealFormInitialData } from "@/
 import { PageHeader } from "@/components/design-system/page-header";
 import { getDealWithMeta } from "@/lib/data/flash-deals";
 import { listPartnerMetas } from "@/lib/data/partners";
+import { listPartnerForms } from "@/lib/data/partner-forms";
 
 export const metadata: Metadata = {
   title: "Edit deal · Zabava admin",
@@ -17,15 +18,18 @@ export default async function AdminDealEditPage({
   const { id } = await params;
   let deal: Awaited<ReturnType<typeof getDealWithMeta>> | null = null;
   let partners: Awaited<ReturnType<typeof listPartnerMetas>> = [];
+  let forms: Awaited<ReturnType<typeof listPartnerForms>> = [];
   let loadError: string | null = null;
 
   try {
-    const [entry, partnerList] = await Promise.all([
+    const [entry, partnerList, formList] = await Promise.all([
       getDealWithMeta(id),
       listPartnerMetas(),
+      listPartnerForms({ usageType: "deal", status: "published", limit: 100 }),
     ]);
     deal = entry;
     partners = partnerList;
+    forms = formList;
   } catch (error) {
     console.error("admin_deal_edit_page_load_error", error);
     loadError =
@@ -44,6 +48,13 @@ export default async function AdminDealEditPage({
         console.error("admin_deal_edit_page_partner_retry_error", partnerRetryError);
       }
     }
+    if (!forms.length) {
+      try {
+        forms = await listPartnerForms({ usageType: "deal", status: "published", limit: 100 });
+      } catch (formRetryError) {
+        console.error("admin_deal_edit_page_form_retry_error", formRetryError);
+      }
+    }
   }
 
   if (!deal) {
@@ -54,7 +65,7 @@ export default async function AdminDealEditPage({
     );
   }
 
-  const partnerOptions: PartnerOption[] = partners.map((partner) => ({
+  const basePartnerOptions: PartnerOption[] = partners.map((partner) => ({
     id: partner.partnerId,
     label: partner.displayName ?? partner.partnerId,
     status: partner.status,
@@ -62,13 +73,41 @@ export default async function AdminDealEditPage({
     ticketTypes: partner.ticketing.ticketTypes ?? [],
   }));
 
+  const selectedPartnerId =
+    deal.deal.partner_id || deal.partnerName || "unassigned-partner";
+  const hasSelectedPartner = basePartnerOptions.some(
+    (partner) => partner.id === selectedPartnerId,
+  );
+
+  const partnerOptions: PartnerOption[] = hasSelectedPartner
+    ? basePartnerOptions
+    : [
+        ...basePartnerOptions,
+        {
+          id: selectedPartnerId,
+          label: deal.partnerName ?? selectedPartnerId,
+          status: deal.deal.status,
+          defaultCommission: deal.deal.commission_percent ?? null,
+          ticketTypes: deal.deal.ticket_types ?? [],
+        },
+      ];
+
+  const partnerLabel =
+    partnerOptions.find((partner) => partner.id === selectedPartnerId)?.label ??
+    deal.partnerName ??
+    selectedPartnerId;
+
   const heroMedia = (deal.media ?? []).find((item) =>
     (item.media_type ?? "").includes("hero"),
   ) ?? (deal.media?.[0] ?? null);
+  const formOptions = forms.map((form) => ({
+    id: form.id,
+    name: form.name,
+  }));
 
   const existingDeal: DealFormInitialData = {
     id: deal.deal.id,
-    partnerId: deal.deal.partner_id,
+    partnerId: selectedPartnerId,
     status: deal.deal.status,
     title: deal.deal.title,
     slug: deal.deal.slug,
@@ -81,6 +120,7 @@ export default async function AdminDealEditPage({
     isFeatured: deal.deal.is_featured,
     bannerLeadHours: deal.deal.banner_lead_hours,
     qrValiditySeconds: deal.deal.qr_validity_seconds,
+    formId: deal.deal.form_id ?? null,
     usageLimit: deal.deal.usage_limit,
     usageLimitDaily: deal.deal.usage_limit_daily,
     validFrom: deal.deal.valid_from,
@@ -97,13 +137,22 @@ export default async function AdminDealEditPage({
       }> | null) ?? [],
     heroImageUrl: heroMedia?.url ?? null,
     heroImageAlt: heroMedia?.alt_text ?? null,
+    timeZone: deal.deal.time_zone,
   };
 
   return (
     <div className="px-6 py-8 space-y-6">
       <PageHeader
         title="Edit deal"
-        description="Update deal configuration, visibility, and conditions."
+        description={
+          <div className="space-y-1">
+            <p>Update deal configuration, visibility, and conditions.</p>
+            <p className="text-xs text-[color:var(--ds-text-muted)]">
+              Partner: <span className="font-semibold text-[color:var(--ds-text-strong)]">{partnerLabel}</span>{" "}
+              <span className="font-mono text-[11px] text-[color:var(--ds-text-subtle)]">({deal.deal.partner_id})</span>
+            </p>
+          </div>
+        }
       />
 
       {loadError ? (
@@ -116,6 +165,7 @@ export default async function AdminDealEditPage({
         mode="edit"
         existingDeal={existingDeal}
         partnerOptions={partnerOptions}
+        formOptions={formOptions}
       />
     </div>
   );

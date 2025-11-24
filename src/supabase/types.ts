@@ -43,6 +43,7 @@ type FlashDealsTable = {
     ticket_types: string[] | null;
     city: string | null;
     status: "draft" | "scheduled" | "live" | "paused" | "expired";
+    time_zone: string;
     created_by: string | null;
     updated_by: string | null;
     created_at: string;
@@ -77,6 +78,7 @@ type FlashDealsTable = {
     ticket_types?: string[] | null;
     city?: string | null;
     status?: "draft" | "scheduled" | "live" | "paused" | "expired";
+    time_zone?: string;
     created_by?: string | null;
     updated_by?: string | null;
     created_at?: string;
@@ -111,6 +113,7 @@ type FlashDealsTable = {
     ticket_types?: string[] | null;
     city?: string | null;
     status?: "draft" | "scheduled" | "live" | "paused" | "expired";
+    time_zone?: string;
     created_by?: string | null;
     updated_by?: string | null;
     created_at?: string;
@@ -620,6 +623,30 @@ type AdminInvitesTable = {
   Relationships: [];
 };
 
+type TimezoneSettingsTable = {
+  Row: {
+    id: number;
+    admin_time_zone: string;
+    source: "admin" | "partner";
+    created_by: string | null;
+    created_at: string;
+  };
+  Insert: {
+    admin_time_zone: string;
+    source: "admin" | "partner";
+    created_by?: string | null;
+    created_at?: string;
+  };
+  Update: {
+    id?: number;
+    admin_time_zone?: string;
+    source?: "admin" | "partner";
+    created_by?: string | null;
+    created_at?: string;
+  };
+  Relationships: [];
+};
+
 type TypedTables = {
   flash_deals: FlashDealsTable;
   flash_deal_redemptions: FlashDealRedemptionsTable;
@@ -635,6 +662,7 @@ type TypedTables = {
   cms_blocks: CmsBlocksTable;
   partner_users: PartnerUsersTable;
   admin_invites: AdminInvitesTable;
+  timezone_settings: TimezoneSettingsTable;
 };
 
 type ExtendedTables = TypedTables & {

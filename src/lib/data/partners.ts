@@ -34,6 +34,7 @@ const DEFAULT_ADDRESS = {
   city: "",
   addressLine: "",
   sameAsCompany: false,
+  timeZone: "",
 };
 
 const DEFAULT_INFO = {
@@ -184,6 +185,7 @@ const addressSchema = z
     city: z.string().optional(),
     addressLine: z.string().optional(),
     sameAsCompany: z.boolean().optional(),
+    timeZone: z.string().optional(),
   })
   .partial();
 
@@ -286,6 +288,7 @@ export interface PartnerAddress {
   city: string;
   addressLine: string;
   sameAsCompany?: boolean;
+  timeZone?: string | null;
 }
 
 export interface PartnerMetaInfo {
@@ -312,6 +315,7 @@ export interface PartnerMetaInfo {
   cashCurrencies: string[];
   hasToilet: boolean;
   wheelchairAccessible: boolean;
+  timeZone?: string | null;
 }
 
 export interface PartnerMetaMedia {
@@ -374,6 +378,7 @@ function cloneAddress(
     city: address?.city ?? "",
     addressLine: address?.addressLine ?? "",
     sameAsCompany: address?.sameAsCompany ?? false,
+    timeZone: address?.timeZone ?? "",
   };
 }
 
@@ -383,7 +388,7 @@ function normalizeAddress(
 ): PartnerAddress {
   const base = fallback
     ? cloneAddress(fallback)
-    : { city: "", addressLine: "", sameAsCompany: false };
+    : { city: "", addressLine: "", sameAsCompany: false, timeZone: "" };
   if (!address) {
     return base;
   }
@@ -397,6 +402,10 @@ function normalizeAddress(
       typeof address.sameAsCompany === "boolean"
         ? address.sameAsCompany
         : base.sameAsCompany ?? false,
+    timeZone:
+      typeof address.timeZone === "string"
+        ? address.timeZone
+        : (base.timeZone ?? ""),
   };
 }
 

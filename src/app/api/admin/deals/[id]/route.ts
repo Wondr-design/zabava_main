@@ -27,6 +27,7 @@ const updatePayloadSchema = z
     title: z.string().min(1).optional(),
     description: z.string().optional(),
     dealType: dealTypeSchema.optional(),
+    formId: z.string().min(1).nullable().optional(),
     slug: z
       .string()
       .min(1)
@@ -58,6 +59,7 @@ const updatePayloadSchema = z
     audience: z.array(z.string()).optional(),
     ticketTypes: z.array(z.string()).optional(),
     city: z.string().nullable().optional(),
+    timeZone: z.string().nullable().optional(),
     status: flashDealStatusSchema.optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
@@ -109,6 +111,7 @@ function presentDeal(entry: Awaited<ReturnType<typeof getDealWithMeta>>) {
     ticketRequirements:
       (deal.ticket_requirements as Array<{ ticketType: string; subType?: string; quantity: number }> | null) ?? [],
     ticketTypes: deal.ticket_types ?? [],
+    timeZone: deal.time_zone,
     dealType: deal.deal_type,
     slug: deal.slug,
     title: deal.title,
@@ -122,6 +125,7 @@ function presentDeal(entry: Awaited<ReturnType<typeof getDealWithMeta>>) {
     commissionPercent: deal.commission_percent,
     priceOverrideCzk: deal.price_override_czk,
     bonusPointsOverride: deal.bonus_points_override,
+    formId: deal.form_id ?? null,
     qrValiditySeconds: deal.qr_validity_seconds,
     usageLimit: deal.usage_limit,
     usageLimitDaily: deal.usage_limit_daily,

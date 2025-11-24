@@ -41,7 +41,11 @@ const DEAL_STATUS_TONE: Record<FlashDealStatus, StatusTone> = {
   draft: "neutral",
 };
 
-type AutomationBadgeVariant = "default" | "secondary" | "destructive" | "outline";
+type AutomationBadgeVariant =
+  | "default"
+  | "secondary"
+  | "destructive"
+  | "outline";
 
 const BADGE_VARIANT_TO_TONE: Record<AutomationBadgeVariant, StatusTone> = {
   default: "primary",
@@ -76,6 +80,7 @@ export interface AdminDealListItem {
   partnerId: string;
   partnerName: string | null;
   dealType: DealType;
+  formId?: string | null;
   title: string;
   description: string | null;
   status: FlashDealStatus;
@@ -90,7 +95,11 @@ export interface AdminDealListItem {
   qrValiditySeconds: number;
   isFeatured: boolean;
   bannerLeadHours: number;
-  ticketRequirements: Array<{ ticketType: string; subType?: string; quantity: number }>;
+  ticketRequirements: Array<{
+    ticketType: string;
+    subType?: string;
+    quantity: number;
+  }>;
   usageLimit: number | null;
   usageLimitDaily: number | null;
   usageCount: number;
@@ -129,6 +138,9 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<FlashDealStatus | "all">("all");
   const [dealType, setDealType] = useState<DealType | "all">("all");
+  const [formFilter, setFormFilter] = useState<"all" | "linked" | "unlinked">(
+    "all"
+  );
   const [actionState, setActionState] = useState<{
     id: string;
     type: "clone" | "disable";
@@ -144,6 +156,8 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
         if (search.trim()) params.set("search", search.trim());
         if (status !== "all") params.set("status", status);
         if (dealType !== "all") params.set("type", dealType);
+        if (formFilter === "linked") params.set("form", "linked");
+        if (formFilter === "unlinked") params.set("form", "unlinked");
 
         const response = await fetch(`/api/admin/deals?${params.toString()}`, {
           credentials: "include",
@@ -157,6 +171,7 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
           toast.success("Deals refreshed");
         }
       } catch (error) {
+        console.error("admin_deals_refetch_error", error);
         const message =
           error instanceof Error ? error.message : "Failed to load deals";
         toast.error(message);
@@ -164,7 +179,7 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
         setLoading(false);
       }
     },
-    [dealType, search, status],
+    [dealType, formFilter, search, status]
   );
 
   useEffect(() => {
@@ -174,12 +189,13 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
   const summaries = useMemo(() => {
     const total = items.length;
     const active = items.filter((deal) => deal.status === "live").length;
-    const scheduled = items.filter((deal) => deal.status === "scheduled").length;
+    const scheduled = items.filter(
+      (deal) => deal.status === "scheduled"
+    ).length;
     const paused = items.filter((deal) => deal.status === "paused").length;
     const expiringSoon = items.filter((deal) => {
       if (!deal.validTo) return false;
-      const diff =
-        new Date(deal.validTo).getTime() - new Date().getTime();
+      const diff = new Date(deal.validTo).getTime() - new Date().getTime();
       const twoDays = 48 * 60 * 60 * 1000;
       return diff > 0 && diff <= twoDays;
     }).length;
@@ -220,6 +236,7 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
         toast.success("Deal duplicated");
         await refetch();
       } catch (error) {
+        console.error("admin_deals_clone_error", error);
         const message =
           error instanceof Error ? error.message : "Failed to duplicate deal.";
         toast.error(message);
@@ -227,7 +244,7 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
         setActionState(null);
       }
     },
-    [actionState, refetch],
+    [actionState, refetch]
   );
 
   const handleDisable = useCallback(
@@ -237,7 +254,9 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
       if (!target || target.status === "paused") return;
       setActionState({ id: dealId, type: "disable" });
       setItems((current) =>
-        current.map((item) => (item.id === dealId ? { ...item, status: "paused" } : item)),
+        current.map((item) =>
+          item.id === dealId ? { ...item, status: "paused" } : item
+        )
       );
       try {
         const response = await fetch(`/api/admin/deals/${dealId}/disable`, {
@@ -258,6 +277,7 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
         }
         toast.success("Deal disabled");
       } catch (error) {
+        console.error("admin_deals_disable_error", error);
         const message =
           error instanceof Error ? error.message : "Failed to disable deal.";
         toast.error(message);
@@ -265,41 +285,44 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
           current.map((item) =>
             item.id === dealId && item.status === "paused"
               ? { ...item, status: target.status }
-              : item,
-          ),
+              : item
+          )
         );
       } finally {
         setActionState(null);
       }
     },
-    [actionState, items],
+    [actionState, items]
   );
 
   const formattedItems = useMemo<FormattedDealItem[]>(() => {
-    return items.map((item) => {
-      const validRange =
-        item.validFrom && item.validTo
-          ? `${formatDate(item.validFrom)} → ${formatDate(item.validTo)}`
-          : item.validTo
-          ? `Until ${formatDate(item.validTo)}`
-          : item.validFrom
-          ? `From ${formatDate(item.validFrom)}`
+    return items
+      .map((item) => {
+        const validRange =
+          item.validFrom && item.validTo
+            ? `${formatDate(item.validFrom)} → ${formatDate(item.validTo)}`
+            : item.validTo
+              ? `Until ${formatDate(item.validTo)}`
+              : item.validFrom
+                ? `From ${formatDate(item.validFrom)}`
+                : "—";
+
+        const qrStats = item.usageStats
+          ? `${item.usageStats.qrScanned}/${item.usageStats.qrGenerated}`
           : "—";
 
-      const qrStats = item.usageStats
-        ? `${item.usageStats.qrScanned}/${item.usageStats.qrGenerated}`
-        : "—";
+        const qrScanRate =
+          item.usageStats && item.usageStats.qrGenerated > 0
+            ? Math.round(
+                (item.usageStats.qrScanned / item.usageStats.qrGenerated) * 100
+              )
+            : null;
 
-      const qrScanRate =
-        item.usageStats && item.usageStats.qrGenerated > 0
-          ? Math.round((item.usageStats.qrScanned / item.usageStats.qrGenerated) * 100)
-          : null;
-
-      const automationBadges: Array<{
-        label: string;
-        variant: AutomationBadgeVariant;
-        tone: StatusTone;
-      }> = [];
+        const automationBadges: Array<{
+          label: string;
+          variant: AutomationBadgeVariant;
+          tone: StatusTone;
+        }> = [];
 
       if (item.autoExpire) {
         automationBadges.push({
@@ -315,60 +338,75 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
           tone: BADGE_VARIANT_TO_TONE.default,
         });
       }
+      if (!item.formId) {
+        automationBadges.push({
+          label: "No form",
+          variant: "destructive",
+          tone: BADGE_VARIANT_TO_TONE.destructive,
+        });
+      }
 
-      let usageCapSummary: string | null = null;
-      let usageCapState: "none" | "ok" | "warning" | "exhausted" = "none";
+        let usageCapSummary: string | null = null;
+        let usageCapState: "none" | "ok" | "warning" | "exhausted" = "none";
 
-      if (typeof item.usageLimit === "number" && item.usageLimit > 0) {
-        const used = item.usageCount;
-        const remaining = item.usageLimit - used;
-        let variant: Exclude<AutomationBadgeVariant, "outline"> = "secondary";
-        let label = `${Math.min(used, item.usageLimit)}/${item.usageLimit} used`;
+        if (typeof item.usageLimit === "number" && item.usageLimit > 0) {
+          const used = item.usageCount;
+          const remaining = item.usageLimit - used;
+          let variant: Exclude<AutomationBadgeVariant, "outline"> = "secondary";
+          let label = `${Math.min(used, item.usageLimit)}/${item.usageLimit} used`;
 
-        if (remaining <= 0) {
-          variant = "destructive";
-          label = `Cap reached (${item.usageLimit})`;
-          usageCapState = "exhausted";
-        } else if (used / item.usageLimit >= 0.75) {
-          variant = "default";
-          usageCapState = "warning";
-        } else {
-          usageCapState = "ok";
+          if (remaining <= 0) {
+            variant = "destructive";
+            label = `Cap reached (${item.usageLimit})`;
+            usageCapState = "exhausted";
+          } else if (used / item.usageLimit >= 0.75) {
+            variant = "default";
+            usageCapState = "warning";
+          } else {
+            usageCapState = "ok";
+          }
+
+          automationBadges.push({
+            label,
+            variant,
+            tone: BADGE_VARIANT_TO_TONE[variant],
+          });
+          usageCapSummary = `${Math.min(used, item.usageLimit)}/${item.usageLimit} redemptions`;
         }
 
-        automationBadges.push({
-          label,
-          variant,
-          tone: BADGE_VARIANT_TO_TONE[variant],
-        });
-        usageCapSummary = `${Math.min(used, item.usageLimit)}/${item.usageLimit} redemptions`;
-      }
+        if (
+          typeof item.usageLimitDaily === "number" &&
+          item.usageLimitDaily > 0
+        ) {
+          automationBadges.push({
+            label: `Daily cap ${item.usageLimitDaily}`,
+            variant: "outline",
+            tone: BADGE_VARIANT_TO_TONE.outline,
+          });
+        }
 
-      if (typeof item.usageLimitDaily === "number" && item.usageLimitDaily > 0) {
-        automationBadges.push({
-          label: `Daily cap ${item.usageLimitDaily}`,
-          variant: "outline",
-          tone: BADGE_VARIANT_TO_TONE.outline,
-        });
-      }
-
-      return {
-        ...item,
-        validRange,
-        qrStats,
-        qrScanRate,
-        automationBadges,
-        usageCapSummary,
-        usageCapState,
-      };
-    });
-  }, [items]);
+        return {
+          ...item,
+          validRange,
+          qrStats,
+          qrScanRate,
+          automationBadges,
+          usageCapSummary,
+          usageCapState,
+        };
+      })
+      .filter((item) => {
+        if (formFilter === "linked") return Boolean(item.formId);
+        if (formFilter === "unlinked") return !item.formId;
+        return true;
+      });
+  }, [formFilter, items]);
 
   const handleView = useCallback(
     (item: AdminDealListItem) => {
       router.push(`/admin/deals/${item.id}`);
     },
-    [router],
+    [router]
   );
 
   const dealColumns = useMemo<DashboardTableColumn<FormattedDealItem>[]>(
@@ -413,7 +451,11 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
         id: "status",
         header: "Status",
         accessor: (deal) => (
-          <StatusPill tone={DEAL_STATUS_TONE[deal.status]} size="sm" className="capitalize">
+          <StatusPill
+            tone={DEAL_STATUS_TONE[deal.status]}
+            size="sm"
+            className="capitalize"
+          >
             {deal.status.replace("_", " ")}
           </StatusPill>
         ),
@@ -423,7 +465,9 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
         id: "validity",
         header: "Validity",
         accessor: (deal) => (
-          <span className="text-xs text-[color:var(--ds-text-muted)]">{deal.validRange}</span>
+          <span className="text-xs text-[color:var(--ds-text-muted)]">
+            {deal.validRange}
+          </span>
         ),
         width: "12%",
       },
@@ -435,8 +479,8 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
             deal.usageCapState === "exhausted"
               ? "danger"
               : deal.usageCapState === "warning"
-              ? "warning"
-              : "neutral";
+                ? "warning"
+                : "neutral";
           return (
             <div className="space-y-1 text-xs text-[color:var(--ds-text-muted)]">
               <span>{deal.qrStats}</span>
@@ -446,7 +490,11 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
                 </StatusPill>
               ) : null}
               {deal.usageCapSummary ? (
-                <StatusPill tone={usageTone} size="sm" className="w-max uppercase">
+                <StatusPill
+                  tone={usageTone}
+                  size="sm"
+                  className="w-max uppercase"
+                >
                   {deal.usageCapSummary}
                 </StatusPill>
               ) : null}
@@ -528,7 +576,9 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
                 disabled={disabled && actionState?.type === "clone"}
               >
                 <Copy className="size-4" />
-                {disabled && actionState?.type === "clone" ? "Cloning…" : "Clone"}
+                {disabled && actionState?.type === "clone"
+                  ? "Cloning…"
+                  : "Clone"}
               </DesignButton>
               <DesignButton
                 variant="outline"
@@ -543,8 +593,8 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
                 {deal.status === "paused"
                   ? "Paused"
                   : disabled && actionState?.type === "disable"
-                  ? "Disabling…"
-                  : "Disable"}
+                    ? "Disabling…"
+                    : "Disable"}
               </DesignButton>
             </div>
           );
@@ -553,7 +603,7 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
         width: "20%",
       },
     ],
-    [actionState, handleClone, handleDisable, handleView, loading],
+    [actionState, handleClone, handleDisable, loading]
   );
 
   const refreshAction = useDesignSystem ? (
@@ -585,9 +635,7 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
     </>
   );
 
-  const detailDrawer = (
-    null
-  );
+  const detailDrawer = null;
 
   const filterToolbar = (
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -627,8 +675,26 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
           <DesignSelectContent>
             <DesignSelectItem value="all">All types</DesignSelectItem>
             <DesignSelectItem value="flash">Flash</DesignSelectItem>
-            <DesignSelectItem value="weekly_promo">Weekly promo</DesignSelectItem>
+            <DesignSelectItem value="weekly_promo">
+              Weekly promo
+            </DesignSelectItem>
             <DesignSelectItem value="group">Group deal</DesignSelectItem>
+          </DesignSelectContent>
+        </DesignSelect>
+        <DesignSelect
+          value={formFilter}
+          onValueChange={(value) =>
+            setFormFilter(value as "all" | "linked" | "unlinked")
+          }
+          disabled={loading}
+        >
+          <DesignSelectTrigger className="min-w-[200px]">
+            <DesignSelectValue placeholder="Form link" />
+          </DesignSelectTrigger>
+          <DesignSelectContent>
+            <DesignSelectItem value="all">All form states</DesignSelectItem>
+            <DesignSelectItem value="linked">Linked to form</DesignSelectItem>
+            <DesignSelectItem value="unlinked">No linked form</DesignSelectItem>
           </DesignSelectContent>
         </DesignSelect>
       </div>
@@ -652,7 +718,9 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
       columns={dealColumns}
       loading={loading}
       emptyMessage={
-        loading ? "Loading deals…" : "No deals found. Adjust filters or create a new deal."
+        loading
+          ? "Loading deals…"
+          : "No deals found. Adjust filters or create a new deal."
       }
       selectable
       onRowClick={(deal) => handleView(deal)}
@@ -667,14 +735,30 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
           <PageHeader
             title="Deals control centre"
             description="Manage flash deals, weekly promos, and group offers in one place."
-            actions={<div className="flex flex-wrap items-center gap-2">{headerActions}</div>}
+            actions={
+              <div className="flex flex-wrap items-center gap-2">
+                {headerActions}
+              </div>
+            }
           />
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <DesignSummaryTile label="Total deals" value={summaries.total} />
-            <DesignSummaryTile label="Live" value={summaries.active} tone="success" />
-            <DesignSummaryTile label="Scheduled" value={summaries.scheduled} tone="primary" />
-            <DesignSummaryTile label="Paused" value={summaries.paused} tone="warning" />
+            <DesignSummaryTile
+              label="Live"
+              value={summaries.active}
+              tone="success"
+            />
+            <DesignSummaryTile
+              label="Scheduled"
+              value={summaries.scheduled}
+              tone="primary"
+            />
+            <DesignSummaryTile
+              label="Paused"
+              value={summaries.paused}
+              tone="warning"
+            />
             <DesignSummaryTile
               label="Expiring ≤48h"
               value={summaries.expiringSoon}
@@ -683,7 +767,6 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
           </div>
 
           {dealsTable}
-
         </div>
         {detailDrawer}
       </>
@@ -702,14 +785,28 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
               Manage flash deals, weekly promos, and group offers in one place.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3">{headerActions}</div>
+          <div className="flex flex-wrap items-center gap-3">
+            {headerActions}
+          </div>
         </header>
 
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <SummaryTile label="Total deals" value={summaries.total} />
-          <SummaryTile label="Live" value={summaries.active} tone="text-emerald-600" />
-          <SummaryTile label="Scheduled" value={summaries.scheduled} tone="text-sky-600" />
-          <SummaryTile label="Paused" value={summaries.paused} tone="text-amber-600" />
+          <SummaryTile
+            label="Live"
+            value={summaries.active}
+            tone="text-emerald-600"
+          />
+          <SummaryTile
+            label="Scheduled"
+            value={summaries.scheduled}
+            tone="text-sky-600"
+          />
+          <SummaryTile
+            label="Paused"
+            value={summaries.paused}
+            tone="text-amber-600"
+          />
           <SummaryTile
             label="Expiring ≤48h"
             value={summaries.expiringSoon}
@@ -718,7 +815,6 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
         </section>
 
         {dealsTable}
-
       </div>
       {detailDrawer}
     </>
@@ -756,8 +852,12 @@ function SummaryTile({
 }) {
   return (
     <div className="rounded-xl border border-border bg-card/70 px-4 py-3">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className={`text-2xl font-semibold ${tone ?? "text-foreground"}`}>{value}</p>
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <p className={`text-2xl font-semibold ${tone ?? "text-foreground"}`}>
+        {value}
+      </p>
     </div>
   );
 }

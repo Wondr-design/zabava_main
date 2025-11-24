@@ -35,6 +35,7 @@ const createPayloadSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   dealType: dealTypeSchema.default("flash"),
+  formId: z.string().min(1).optional().nullable(),
   slug: z
     .string()
     .min(1)
@@ -63,6 +64,7 @@ const createPayloadSchema = z.object({
   audience: z.array(z.string()).optional(),
   ticketTypes: z.array(z.string()).optional(),
   city: z.string().optional(),
+  timeZone: z.string().optional(),
   status: flashDealStatusSchema.default("draft"),
   media: z
     .array(
@@ -143,6 +145,7 @@ function presentDeal(entry: DealWithMeta) {
     commissionPercent: deal.commission_percent,
     priceOverrideCzk: deal.price_override_czk,
     bonusPointsOverride: deal.bonus_points_override,
+    formId: deal.form_id ?? null,
     qrValiditySeconds: deal.qr_validity_seconds,
     usageLimit: deal.usage_limit,
     usageLimitDaily: deal.usage_limit_daily,
@@ -152,6 +155,7 @@ function presentDeal(entry: DealWithMeta) {
     tags: deal.tags,
     audience: deal.audience,
     ticketTypes: deal.ticket_types ?? [],
+    timeZone: deal.time_zone,
     city: deal.city,
     createdAt: deal.created_at,
     updatedAt: deal.updated_at,
@@ -196,18 +200,26 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const params = Object.fromEntries(req.nextUrl.searchParams.entries());
-    const filters = listQuerySchema.parse(params);
-    const items = await listDealsWithMeta({
-      partnerId: filters.partnerId,
-      status: filters.status,
-      search: filters.search,
-      dealType: filters.type,
-    });
+  const params = Object.fromEntries(req.nextUrl.searchParams.entries());
+  const filters = listQuerySchema.parse(params);
+  const formFilter = params.form;
+  const items = await listDealsWithMeta({
+    partnerId: filters.partnerId,
+    status: filters.status,
+    search: filters.search,
+    dealType: filters.type,
+  });
 
-    const response = NextResponse.json({
-      items: items.map(presentDeal),
-    });
+  const filteredItems =
+    formFilter === "linked"
+      ? items.filter((entry) => entry.deal.form_id)
+      : formFilter === "unlinked"
+      ? items.filter((entry) => !entry.deal.form_id)
+      : items;
+
+  const response = NextResponse.json({
+    items: filteredItems.map(presentDeal),
+  });
     response.headers.set("x-csrf-token", generateCsrfToken());
     return withCors(response, CORS_CONFIG);
   } catch (error) {
@@ -349,6 +361,7 @@ export async function POST(req: NextRequest) {
       tags: parsed.tags,
       audience: parsed.audience,
       ticketTypes,
+      formId: parsed.formId ?? null,
       city: parsed.city,
       status: parsed.status,
       validDays: validityMode === "valid_days" ? parsed.validDays : undefined,
