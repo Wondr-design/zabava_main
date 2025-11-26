@@ -604,7 +604,7 @@ export async function POST(req: NextRequest) {
           },
         });
         await recordQrEvent({
-          eventType: "rejected",
+          eventType: "expired", // DB enum does not include "rejected"; use expired to denote invalidated QR
           qrType: "flash",
           flashDealId,
           visitId: visit.id,
@@ -612,6 +612,7 @@ export async function POST(req: NextRequest) {
           metadata: {
             reason: "staff_reject",
             note: trimmedRejectReason,
+            status: "rejected",
           },
         });
       }

@@ -708,7 +708,6 @@ export async function POST(req: NextRequest) {
             badgeLabel: partnerBranding.initial,
             badgeColor: partnerBranding.accentColor,
             matrixColor: partnerBranding.accentColor,
-            footerLabel: "Reward",
             badgeIconUrl: partnerBranding.logoUrl ?? undefined,
             qrVariant: "reward",
           }

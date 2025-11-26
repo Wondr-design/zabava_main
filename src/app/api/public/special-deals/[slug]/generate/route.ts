@@ -151,8 +151,9 @@ async function ensureDailyLimitNotExceeded(
 function determineValidityMode(deal: Awaited<ReturnType<typeof getDealWithMetaBySlug>>) {
   const hasValidDays = Array.isArray(deal?.deal.valid_days) && deal.deal.valid_days.length > 0;
   const hasDateRange = Boolean(deal?.deal.valid_from || deal?.deal.valid_to);
-  if (hasValidDays) return "valid_days";
+  // Prefer explicit date range when both are present, otherwise fall back to valid days.
   if (hasDateRange) return "date_range";
+  if (hasValidDays) return "valid_days";
   return "always_on";
 }
 

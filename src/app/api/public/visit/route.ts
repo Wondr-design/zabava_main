@@ -509,28 +509,9 @@ async function handleDealFormSubmission(params: {
     );
   }
 
-  const integration = partnerFormRecord.config.deal;
-  if (!integration || !integration.visitorsFieldId) {
-    return withCors(
-      NextResponse.json(
-        { error: "Deal form has no visitors field configured" },
-        { status: 400 },
-      ),
-    );
-  }
+  const integration = partnerFormRecord.config.deal ?? null;
 
-  const rawVisitors = dynamicForm.values[integration.visitorsFieldId];
-  const visitors = Number(rawVisitors);
-  if (!Number.isFinite(visitors) || visitors < 1) {
-    return withCors(
-      NextResponse.json(
-        { error: "Invalid visitor count" },
-        { status: 400 },
-      ),
-    );
-  }
-
-  const consentValue = integration.consentFieldId
+  const consentValue = integration?.consentFieldId
     ? dynamicForm.values[integration.consentFieldId]
     : undefined;
   const consentMarketing = Boolean(consentValue);
@@ -556,6 +537,7 @@ async function handleDealFormSubmission(params: {
       ? parseDealRequirementSelection(selectedRequirementMetadata)
       : null;
   let normalizedTicketBreakdown: DealTicketRequirement[] | null = null;
+  let visitors = 0;
 
   if (ticketRequirements.length > 0) {
     if (!selectedRequirementEntries || selectedRequirementEntries.length === 0) {
@@ -624,6 +606,7 @@ async function handleDealFormSubmission(params: {
         subType,
         quantity: expectedQuantity,
       });
+      visitors += expectedQuantity;
       const lowered = ticketType.toLowerCase();
       selectedTicketKey = selectedTicketKey ?? lowered;
       if (selectedTicketKey !== lowered) {
@@ -673,11 +656,25 @@ async function handleDealFormSubmission(params: {
     assertDealIsIssuable(dealMeta, new Date(), selectionVisitorTotal);
   }
 
-  const resolvedVisitors = Math.max(
-    1,
-    Math.floor(normalizedTicketBreakdown?.reduce((sum, entry) => sum + entry.quantity, 0) ??
-      visitors),
-  );
+  // Fallback: if no ticket-based visitors were derived, allow a legacy visitors field.
+  if (visitors <= 0 && integration?.visitorsFieldId) {
+    const rawVisitors = dynamicForm.values[integration.visitorsFieldId];
+    const parsedVisitors = Number(rawVisitors);
+    if (Number.isFinite(parsedVisitors) && parsedVisitors > 0) {
+      visitors = parsedVisitors;
+    }
+  }
+
+  if (visitors <= 0) {
+    return withCors(
+      NextResponse.json(
+        { error: "Invalid visitor count" },
+        { status: 400 },
+      ),
+    );
+  }
+
+  const resolvedVisitors = Math.max(1, Math.floor(visitors));
   const requestBody = {
     email: normalizedEmail,
     visitors: resolvedVisitors,

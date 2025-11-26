@@ -733,6 +733,41 @@ export function AdminFormBuilder({
     });
   }, [draft, applyDraft, partnerLookup, partnerTicketing, partnerDiscountRate]);
 
+  // Ensure deal forms always have a visitors field wired
+  useEffect(() => {
+    if (!draft || draft.usageType !== "deal") return;
+    applyDraft((form) => {
+      const integration = ensureDeal(form.config);
+      const fieldMap = collectFieldMap(form.config);
+      // If existing visitor field still exists, keep it
+      if (integration.visitorsFieldId && fieldMap.has(integration.visitorsFieldId)) {
+        return;
+      }
+      // Find first counter or number input
+      const fallbackField =
+        Array.from(fieldMap.values()).find(
+          (field) =>
+            field.kind === "counter" ||
+            (field.kind === "input" && field.type === "number")
+        ) ?? null;
+      if (fallbackField) {
+        integration.visitorsFieldId = fallbackField.id;
+        return;
+      }
+      // If none exist, create a hidden counter at the top of the first step
+      const firstStep = form.config.steps[0];
+      const visitorField = createFieldTemplate("counter", {
+        id: `visitors-${generateOptionId()}`,
+        label: "Visitors",
+        name: "visitors",
+        min: 1,
+        defaultValue: 1,
+      });
+      firstStep.fields = [visitorField, ...firstStep.fields];
+      integration.visitorsFieldId = visitorField.id;
+    });
+  }, [draft, applyDraft]);
+
   const isLockedPricingStep = useCallback(
     (index: number) => {
       if (!draft) return false;
