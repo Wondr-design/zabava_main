@@ -677,10 +677,25 @@ export function AdminFormBuilder({
     [applyDraft],
   );
 
-  // Ensure ALL forms always have a pricing step as the first step (locked)
+  // Ensure pricing step behavior matches form usage.
   useEffect(() => {
     if (!draft) return;
     if (!draft.partnerId || !draft.usageType) return; // Must have partner and form type
+
+    if (draft.usageType === "deal") {
+      const hasPricingSteps = draft.config.steps.some((step) =>
+        isPricingStep(step),
+      );
+      if (hasPricingSteps) {
+        applyDraft((form) => {
+          const nextSteps = form.config.steps.filter(
+            (step) => !isPricingStep(step),
+          );
+          form.config.steps = nextSteps;
+        });
+      }
+      return;
+    }
 
     const firstStep = draft.config.steps[0];
     const firstIsPricing = firstStep && isPricingStep(firstStep);

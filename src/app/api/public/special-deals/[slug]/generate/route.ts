@@ -34,6 +34,7 @@ const bodySchema = z.object({
     .array(
       z.object({
         ticketType: z.string().min(1),
+        subType: z.string().optional(),
         quantity: z.number().int().min(1),
       }),
     )
@@ -147,7 +148,15 @@ async function ensureDailyLimitNotExceeded(
   }
 }
 
-function assertDealIsIssuable(
+function determineValidityMode(deal: Awaited<ReturnType<typeof getDealWithMetaBySlug>>) {
+  const hasValidDays = Array.isArray(deal?.deal.valid_days) && deal.deal.valid_days.length > 0;
+  const hasDateRange = Boolean(deal?.deal.valid_from || deal?.deal.valid_to);
+  if (hasValidDays) return "valid_days";
+  if (hasDateRange) return "date_range";
+  return "always_on";
+}
+
+export function assertDealIsIssuable(
   deal: Awaited<ReturnType<typeof getDealWithMetaBySlug>>,
   now: Date,
   requestedVisitors: number,
@@ -158,11 +167,17 @@ function assertDealIsIssuable(
   if (deal.deal.status !== "live") {
     throw Object.assign(new Error("Deal is not active"), { code: "inactive" });
   }
-  if (!isWithinValidityWindow(deal.deal.valid_from, deal.deal.valid_to, now)) {
+  const validityMode = determineValidityMode(deal);
+  if (
+    (validityMode === "date_range" || validityMode === "always_on") &&
+    !isWithinValidityWindow(deal.deal.valid_from, deal.deal.valid_to, now)
+  ) {
     throw Object.assign(new Error("Deal is not currently valid"), { code: "out_of_window" });
   }
-  if (!isValidDay(deal.deal.valid_days ?? null, now, deal.deal.time_zone)) {
-    throw Object.assign(new Error("Deal cannot be used today"), { code: "invalid_day" });
+  if (validityMode === "valid_days") {
+    if (!isValidDay(deal.deal.valid_days ?? null, now, deal.deal.time_zone)) {
+      throw Object.assign(new Error("Deal cannot be used today"), { code: "invalid_day" });
+    }
   }
   if (requestedVisitors < deal.deal.min_visitors) {
     throw Object.assign(
@@ -219,6 +234,7 @@ export async function POST(
         { status: 400 },
       );
     }
+    const requiredFormId = dealMeta.deal.form_id ?? null;
 
     const ticketRequirements = (dealMeta.deal.ticket_requirements ??
       []) as Array<{ ticketType: string; subType?: string; quantity: number }>;
@@ -227,9 +243,9 @@ export async function POST(
 
     if (ticketRequirements.length > 0) {
       const breakdown = parsed.data.ticketBreakdown ?? [];
-      if (breakdown.length !== 1) {
+      if (breakdown.length === 0) {
         return NextResponse.json(
-          { error: "ValidationError", message: "Select a single ticket type to continue." },
+          { error: "ValidationError", message: "Select a ticket type to continue." },
           { status: 400 },
         );
       }
@@ -241,30 +257,67 @@ export async function POST(
       const reqMap = new Map(
         normalizedReq.map((item) => [`${item.ticketType}::${item.subType}`, item.quantity]),
       );
-      const selection = breakdown[0];
-      const selectionKey = `${selection.ticketType.trim().toLowerCase()}::${(
-        (selection as { subType?: string }).subType ?? ""
-      )
-        .trim()
-        .toLowerCase()}`;
-      const expectedQuantity = reqMap.get(selectionKey);
-      if (!expectedQuantity || selection.quantity !== expectedQuantity) {
+
+      const sanitizedEntries: Array<{
+        ticketType: string;
+        subType?: string;
+        quantity: number;
+      }> = [];
+      const ticketTypeSet = new Set<string>();
+      let visitorsTotal = 0;
+
+      for (const selection of breakdown) {
+        const safeTicketType = selection.ticketType.trim();
+        const safeTicketTypeLower = safeTicketType.toLowerCase();
+        const safeSubTypeRaw = selection.subType?.trim() ?? "";
+        const safeSubTypeLower = safeSubTypeRaw.toLowerCase();
+        const selectionKey = `${safeTicketTypeLower}::${safeSubTypeLower}`;
+        const expectedQuantity = reqMap.get(selectionKey);
+        if (!expectedQuantity || selection.quantity !== expectedQuantity) {
+          return NextResponse.json(
+            {
+              error: "ValidationError",
+              message: "Selected ticket type does not match the requirement.",
+            },
+            { status: 400 },
+          );
+        }
+        sanitizedEntries.push({
+          ticketType: safeTicketType,
+          subType: safeSubTypeRaw || undefined,
+          quantity: expectedQuantity,
+        });
+        ticketTypeSet.add(safeTicketTypeLower);
+        visitorsTotal += expectedQuantity;
+      }
+
+      if (ticketTypeSet.size !== 1) {
         return NextResponse.json(
-          { error: "ValidationError", message: "Selected ticket type does not match the requirement." },
+          {
+            error: "ValidationError",
+            message: "Select a single ticket type to continue.",
+          },
           { status: 400 },
         );
       }
-      const safeTicketType = selection.ticketType.trim();
-      const safeSubType = (selection as { subType?: string }).subType?.trim() || undefined;
-      normalizedTicketBreakdown = [
-        {
-          ticketType: safeTicketType,
-          subType: safeSubType,
-          quantity: expectedQuantity,
-        },
-      ];
-      parsed.data.visitors = expectedQuantity;
-      assertDealIsIssuable(dealMeta, new Date(), expectedQuantity);
+
+      const selectedTicketType = ticketTypeSet.values().next().value as string;
+      const expectedSetLength = normalizedReq.filter(
+        (item) => item.ticketType === selectedTicketType,
+      ).length;
+      if (expectedSetLength > 0 && sanitizedEntries.length !== expectedSetLength) {
+        return NextResponse.json(
+          {
+            error: "ValidationError",
+            message: "Incomplete ticket requirement selection.",
+          },
+          { status: 400 },
+        );
+      }
+
+      normalizedTicketBreakdown = sanitizedEntries;
+      parsed.data.visitors = visitorsTotal;
+      assertDealIsIssuable(dealMeta, new Date(), visitorsTotal);
     } else {
       assertDealIsIssuable(dealMeta, new Date(), parsed.data.visitors);
     }
@@ -285,6 +338,30 @@ export async function POST(
     );
 
     const normalizedEmail = normalizeEmail(parsed.data.email);
+    const metadata = parsed.data.metadata ?? {};
+    if (requiredFormId) {
+      const submittedFormId =
+        typeof metadata.formId === "string" && metadata.formId.trim().length > 0
+          ? metadata.formId.trim()
+          : null;
+      if (submittedFormId !== requiredFormId) {
+        return NextResponse.json(
+          {
+            error: "DealFormRequired",
+            message: "Submit the flash-deal booking form to generate this QR.",
+          },
+          { status: 409 },
+        );
+      }
+    } else {
+      return NextResponse.json(
+        {
+          error: "DealFormMissing",
+          message: "This flash deal is not linked to a booking form yet.",
+        },
+        { status: 409 },
+      );
+    }
     await ensureNoDuplicateRedemption(publicDeal.id, normalizedEmail);
 
     const purpose = buildVerificationPurpose({
@@ -321,7 +398,7 @@ export async function POST(
           ? normalizedTicketBreakdown ?? null
           : parsed.data.ticketBreakdown ?? null,
       consentMarketing: parsed.data.consentMarketing ?? false,
-      extraMetadata: parsed.data.metadata ?? {},
+      extraMetadata: metadata,
     });
 
     const normalizedPartnerIdValue = normalizePartnerId(
@@ -413,6 +490,8 @@ export async function POST(
         dealSlug: publicDeal.slug,
         qrCodeUrl: qrInfo.url,
         qrStoragePath: qrInfo.path,
+        formId: metadata.formId ?? null,
+        formName: metadata.formName ?? null,
       },
     });
 

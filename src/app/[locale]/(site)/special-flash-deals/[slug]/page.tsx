@@ -6,7 +6,8 @@ import { LocalizedLink } from "@/components/ui/localized-link";
 import { getPublicDealBySlug } from "@/lib/data/flash-deals";
 import { getPartnerById } from "@/lib/data/site-directory";
 import { SiteNav } from "@/site/components/site-nav";
-import { DealGenerateForm } from "@/site/special-deals/deal-generate-form";
+import { getPartnerFormById } from "@/lib/data/partner-forms";
+import { PartnerFormRunner } from "@/site/forms/partner-form-runner";
 
 const WEEKDAY_LABELS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -78,6 +79,36 @@ export default async function SpecialFlashDealDetailPage({ params }: PageProps) 
     });
     return Array.from(entries.values());
   })();
+
+  const connectedForm = deal.formId ? await getPartnerFormById(deal.formId) : null;
+  const formIsPublished =
+    connectedForm?.status === "published" && connectedForm.usageType === "deal";
+  const formMatchesDeal =
+    !connectedForm?.dealId || connectedForm.dealId === deal.id;
+  const dealForm = formIsPublished && formMatchesDeal ? connectedForm : null;
+  let formError: string | null = null;
+  if (!deal.formId) {
+    formError = "This flash deal is not linked to a booking form yet.";
+  } else if (!connectedForm) {
+    formError = "We couldn’t load the booking form for this flash deal.";
+  } else if (connectedForm.status !== "published") {
+    formError = "The booking form for this flash deal hasn’t been published.";
+  } else if (connectedForm.usageType !== "deal") {
+    formError = "The linked form isn’t configured for flash deals.";
+  } else if (!formMatchesDeal) {
+    formError = "The linked form references a different deal.";
+  }
+
+  const dealSnapshot = {
+    id: deal.id,
+    slug: deal.slug,
+    title: deal.title,
+    minVisitors: deal.minVisitors,
+    validFrom: deal.validFrom,
+    validTo: deal.validTo,
+    validDays: deal.validDays ?? null,
+    ticketRequirements: deal.ticketRequirements ?? [],
+  };
 
   return (
     <main className="flex min-h-screen flex-col bg-slate-950 text-white">
@@ -300,25 +331,24 @@ export default async function SpecialFlashDealDetailPage({ params }: PageProps) 
           </section>
         ) : null}
 
-        {deal.formId ? (
-          <div id="generate">
-        <DealGenerateForm
-          slug={slug}
-          partnerId={deal.partnerId}
-          minVisitors={deal.minVisitors}
-              isActive={deal.isActive}
-              qrValiditySeconds={deal.qrValiditySeconds}
-              partnerName={deal.partnerName ?? null}
-              title={deal.title}
-          ticketRequirements={deal.ticketRequirements ?? []}
-          timeZoneLabel={deal.timeZoneLabel ?? ""}
-        />
-          </div>
-        ) : (
-          <div className="rounded-3xl border border-amber-200/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-            QR generation is currently unavailable for this deal. Please contact support or check back later.
-          </div>
-        )}
+        <div id="generate">
+          {dealForm ? (
+            <PartnerFormRunner
+              partnerId={deal.partnerId}
+              partnerName={deal.partnerName ?? partner?.name ?? deal.partnerId}
+              form={dealForm}
+              categories={(partner?.categories ?? []).map((category) => category.name)}
+              ticketCatalog={partner?.ticketDetails ?? []}
+              ticketAddons={partner?.ticketAddons ?? []}
+              dealSnapshot={dealSnapshot}
+            />
+          ) : (
+            <div className="rounded-3xl border border-amber-200/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+              {formError ??
+                "QR generation is currently unavailable for this deal. Please contact support or check back later."}
+            </div>
+          )}
+        </div>
       </section>
     </main>
   );

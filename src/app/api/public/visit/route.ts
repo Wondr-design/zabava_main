@@ -8,6 +8,7 @@ import {
 } from "@/lib/data/visits";
 import { getPartnerFormById } from "@/lib/data/partner-forms";
 import { getDealWithMeta } from "@/lib/data/flash-deals";
+import { assertDealIsIssuable } from "@/app/api/public/special-deals/[slug]/generate/route";
 import {
   buildVerificationPurpose,
   isEmailVerified,
@@ -60,6 +61,25 @@ const requestSchema = z.object({
 
 type LegacyFormPayload = z.infer<typeof legacyFormSchema>;
 type DynamicFormPayload = z.infer<typeof dynamicFormSchema>;
+
+function parseDealRequirementSelection(value: unknown) {
+  if (!value) return null;
+  if (Array.isArray(value)) {
+    const entries = value
+      .map((item) => parseDealTicketRequirement(item))
+      .filter((item): item is DealTicketRequirement => Boolean(item));
+    return entries.length ? entries : null;
+  }
+  if (
+    value &&
+    typeof value === "object" &&
+    Array.isArray((value as { entries?: unknown[] }).entries)
+  ) {
+    return parseDealRequirementSelection((value as { entries: unknown[] }).entries);
+  }
+  const single = parseDealTicketRequirement(value);
+  return single ? [single] : null;
+}
 
 function resolveBaseUrl(fallback: string) {
   let base = process.env.NEXT_PUBLIC_BASE_URL || process.env.BASE_URL || "";
@@ -531,14 +551,14 @@ async function handleDealFormSubmission(params: {
     (dealMeta?.deal.ticket_requirements as DealTicketRequirement[] | null) ?? [];
   const selectedRequirementMetadata =
     metadata?.[DEAL_TICKET_REQUIREMENT_METADATA_KEY];
-  const selectedRequirement =
+  const selectedRequirementEntries =
     ticketRequirements.length > 0
-      ? parseDealTicketRequirement(selectedRequirementMetadata)
+      ? parseDealRequirementSelection(selectedRequirementMetadata)
       : null;
   let normalizedTicketBreakdown: DealTicketRequirement[] | null = null;
 
   if (ticketRequirements.length > 0) {
-    if (!selectedRequirement) {
+    if (!selectedRequirementEntries || selectedRequirementEntries.length === 0) {
       return withCors(
         NextResponse.json(
           {
@@ -549,51 +569,115 @@ async function handleDealFormSubmission(params: {
         ),
       );
     }
+
+    const normalizedRequirements = ticketRequirements.map((entry) => ({
+      ticketType: entry.ticketType.trim(),
+      subType: entry.subType?.trim() || undefined,
+      quantity: entry.quantity,
+    }));
     const requirementMap = new Map(
-      ticketRequirements.map((entry) => [
-        buildDealRequirementKey(entry.ticketType, entry.subType),
+      normalizedRequirements.map((entry) => [
+        buildDealRequirementKey(entry.ticketType, entry.subType ?? null),
         entry.quantity,
       ]),
     );
-    const selectedKey = buildDealRequirementKey(
-      selectedRequirement.ticketType,
-      selectedRequirement.subType ?? null,
+    const requirementCounts = normalizedRequirements.reduce(
+      (map, entry) => {
+        const key = entry.ticketType.trim().toLowerCase();
+        map.set(key, (map.get(key) ?? 0) + 1);
+        return map;
+      },
+      new Map<string, number>(),
     );
-    const expectedQuantity = requirementMap.get(selectedKey);
-    if (!expectedQuantity) {
+
+    const sanitized: DealTicketRequirement[] = [];
+    let selectedTicketKey: string | null = null;
+    for (const rawEntry of selectedRequirementEntries) {
+      const ticketType = rawEntry.ticketType.trim();
+      const subType = rawEntry.subType?.trim() || undefined;
+      const mapKey = buildDealRequirementKey(ticketType, subType ?? null);
+      const expectedQuantity = requirementMap.get(mapKey);
+      if (!expectedQuantity) {
+        return withCors(
+          NextResponse.json(
+            {
+              error: "TicketSelectionInvalid",
+              message: "The selected ticket type is not available for this deal.",
+            },
+            { status: 409 },
+          ),
+        );
+      }
+      if (expectedQuantity !== rawEntry.quantity) {
+        return withCors(
+          NextResponse.json(
+            {
+              error: "TicketSelectionMismatch",
+              message: "Selected ticket quantity does not match the requirement.",
+            },
+            { status: 409 },
+          ),
+        );
+      }
+      sanitized.push({
+        ticketType,
+        subType,
+        quantity: expectedQuantity,
+      });
+      const lowered = ticketType.toLowerCase();
+      selectedTicketKey = selectedTicketKey ?? lowered;
+      if (selectedTicketKey !== lowered) {
+        return withCors(
+          NextResponse.json(
+            {
+              error: "TicketSelectionInvalid",
+              message: "Select only one ticket type for this deal.",
+            },
+            { status: 409 },
+          ),
+        );
+      }
+    }
+
+    if (!sanitized.length) {
       return withCors(
         NextResponse.json(
           {
-            error: "TicketSelectionInvalid",
-            message: "The selected ticket type is not available for this deal.",
+            error: "TicketSelectionRequired",
+            message: "Select a ticket type before continuing.",
           },
-          { status: 409 },
+          { status: 400 },
         ),
       );
     }
-    if (selectedRequirement.quantity !== expectedQuantity) {
+
+    const expectedEntries =
+      (selectedTicketKey && requirementCounts.get(selectedTicketKey)) ?? sanitized.length;
+    if (expectedEntries !== sanitized.length) {
       return withCors(
         NextResponse.json(
           {
             error: "TicketSelectionMismatch",
-            message: "Selected ticket quantity does not match the requirement.",
+            message: "Complete all sub-options for the selected ticket type.",
           },
           { status: 409 },
         ),
       );
     }
-    normalizedTicketBreakdown = [
-      {
-        ticketType: selectedRequirement.ticketType,
-        subType: selectedRequirement.subType ?? undefined,
-        quantity: expectedQuantity,
-      },
-    ];
+
+    normalizedTicketBreakdown = sanitized;
+    const selectionVisitorTotal = sanitized.reduce(
+      (sum, entry) => sum + entry.quantity,
+      0,
+    );
+    assertDealIsIssuable(dealMeta, new Date(), selectionVisitorTotal);
   }
 
-  const resolvedVisitors =
-    normalizedTicketBreakdown?.[0]?.quantity ??
-    Math.max(1, Math.floor(visitors));
+  const resolvedVisitors = Math.max(
+    1,
+    Math.floor(normalizedTicketBreakdown?.reduce((sum, entry) => sum + entry.quantity, 0) ??
+      visitors),
+  );
   const requestBody = {
     email: normalizedEmail,
     visitors: resolvedVisitors,

@@ -89,8 +89,17 @@ interface TicketSelectionEntry extends TicketCatalogItem {
   subtotal: number;
 }
 
+const STABLE_NUMBER_FORMATTER = new Intl.NumberFormat("en-US", {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+});
+
 function roundCurrencyValue(value: number) {
   return Math.round(value * 100) / 100;
+}
+
+function formatStableNumber(value: number) {
+  return STABLE_NUMBER_FORMATTER.format(value);
 }
 
 function initializeValues(form: PartnerFormRecord) {
@@ -180,28 +189,51 @@ export function PartnerFormRunner({
   ticketAddons = [],
   dealSnapshot,
 }: PartnerFormRunnerProps) {
-  const steps = form.config.steps;
-  const transportConfig = form.config.transport ?? null;
   const isDealForm = form.usageType === "deal";
+  const steps = useMemo(
+    () =>
+      isDealForm
+        ? form.config.steps.filter((step) => step.variant !== "pricing")
+        : form.config.steps,
+    [form.config.steps, isDealForm],
+  );
+  const transportConfig = form.config.transport ?? null;
   const dealIntegration = isDealForm ? form.config.deal ?? null : null;
   const dealVisitorsFieldId = dealIntegration?.visitorsFieldId ?? null;
-  type NormalizedDealRequirement = DealTicketRequirement & { key: string; label: string };
-  const normalizedDealRequirements = useMemo<NormalizedDealRequirement[]>(() => {
-    if (!isDealForm || !dealSnapshot?.ticketRequirements?.length) {
-      return [];
-    }
-    return dealSnapshot.ticketRequirements.map((requirement, index) => {
-      const label = requirement.subType
-        ? `${requirement.subType} · ${requirement.ticketType}`
-        : requirement.ticketType;
-      return {
-        ...requirement,
-        subType: requirement.subType ?? undefined,
-        key: `${requirement.ticketType.toLowerCase()}::${(requirement.subType ?? "").toLowerCase()}::${index}`,
-        label,
+type NormalizedDealRequirement = {
+  key: string;
+  ticketType: string;
+  label: string;
+  subItems: Array<{ subType: string | null; quantity: number }>;
+  totalQuantity: number;
+};
+const normalizedDealRequirements = useMemo<NormalizedDealRequirement[]>(() => {
+  if (!isDealForm || !dealSnapshot?.ticketRequirements?.length) {
+    return [];
+  }
+  const entries = new Map<string, NormalizedDealRequirement>();
+  dealSnapshot.ticketRequirements.forEach((requirement) => {
+    const ticketType = requirement.ticketType?.trim();
+    if (!ticketType) return;
+    const key = ticketType.toLowerCase();
+    const entry =
+      entries.get(key) ??
+      {
+        key,
+        ticketType,
+        label: ticketType,
+        subItems: [],
+        totalQuantity: 0,
       };
+    entry.subItems.push({
+      subType: requirement.subType?.trim() || null,
+      quantity: requirement.quantity,
     });
-  }, [dealSnapshot?.ticketRequirements, isDealForm]);
+    entry.totalQuantity += requirement.quantity;
+    entries.set(key, entry);
+  });
+  return Array.from(entries.values());
+}, [dealSnapshot?.ticketRequirements, isDealForm]);
   const hasDealRequirementStep = normalizedDealRequirements.length > 0;
   const [dealGateComplete, setDealGateComplete] = useState(!hasDealRequirementStep);
   const [dealRequirementConfirmed, setDealRequirementConfirmed] = useState(false);
@@ -275,18 +307,23 @@ export function PartnerFormRunner({
     const toNumberOrNull = (value: unknown): number | null =>
       typeof value === "number" ? value : null;
 
+    const allowCatalogFallback = !isDealForm;
     const bundlesSource: Array<
       PartnerFormPricingBundle | PartnerTicketDetail
     > =
       pricingStep?.pricing?.bundles?.length
         ? pricingStep.pricing.bundles
-        : ticketCatalog ?? [];
+        : allowCatalogFallback && ticketCatalog?.length
+        ? ticketCatalog
+        : [];
     const addonsSource: Array<
       PartnerFormPricingAddon | PartnerTicketAddon
     > =
       pricingStep?.pricing?.addons?.length
         ? pricingStep.pricing.addons
-        : ticketAddons ?? [];
+        : allowCatalogFallback && ticketAddons?.length
+        ? ticketAddons
+        : [];
 
     const normalizeBundle = (
       item: PartnerFormPricingBundle | PartnerTicketDetail,
@@ -405,7 +442,7 @@ export function PartnerFormRunner({
         .filter((entry): entry is TicketCatalogAddon => Boolean(entry)) ?? [];
 
     return { bundleCatalog: bundles, addonCatalog: addons };
-  }, [pricingStep, ticketCatalog, ticketAddons]);
+  }, [isDealForm, pricingStep, ticketCatalog, ticketAddons]);
 
   const catalogSignature = useMemo(() => {
     const bundleKey = bundleCatalog.map((item) => `b:${item.id}`).join("|");
@@ -559,7 +596,7 @@ export function PartnerFormRunner({
                       {bundle.price !== null ? (
                         <>
                           <div className="text-sm text-indigo-200/80">
-                            {bundle.price.toLocaleString()} {currencyLabel}
+                            {formatStableNumber(bundle.price)} {currencyLabel}
                           </div>
                           <div className="flex items-center gap-2">
                             <Button
@@ -604,7 +641,7 @@ export function PartnerFormRunner({
               <span className="text-indigo-200/80">Bundle total</span>
               <span className="text-lg font-semibold text-white">
                 {bundleSelectionsTotal !== null
-                  ? `${bundleSelectionsTotal.toLocaleString()} ${currencyLabel}`
+                  ? `${formatStableNumber(bundleSelectionsTotal)} ${currencyLabel}`
                   : `0 ${currencyLabel}`}
               </span>
             </div>
@@ -647,7 +684,7 @@ export function PartnerFormRunner({
                       {addon.price !== null ? (
                         <>
                           <div className="text-sm text-indigo-200/80">
-                            {addon.price.toLocaleString()} {currencyLabel}
+                            {formatStableNumber(addon.price)} {currencyLabel}
                           </div>
                           <div className="flex items-center gap-2">
                             <Button
@@ -688,7 +725,7 @@ export function PartnerFormRunner({
               <span className="text-indigo-200/80">Add-on total</span>
               <span className="text-lg font-semibold text-white">
                 {addonSelectionsTotal !== null
-                  ? `${addonSelectionsTotal.toLocaleString()} ${currencyLabel}`
+                  ? `${formatStableNumber(addonSelectionsTotal)} ${currencyLabel}`
                   : `0 ${currencyLabel}`}
               </span>
             </div>
@@ -702,7 +739,7 @@ export function PartnerFormRunner({
               </span>
               <span className="text-sm font-semibold text-white">
                 {bundleSelectionsTotal !== null
-                  ? `${bundleSelectionsTotal.toLocaleString()} ${currencyLabel}`
+                  ? `${formatStableNumber(bundleSelectionsTotal)} ${currencyLabel}`
                   : `0 ${currencyLabel}`}
               </span>
             </div>
@@ -716,7 +753,7 @@ export function PartnerFormRunner({
                     {selection.label} × {selection.quantity}
                   </span>
                   <span className="text-indigo-200/80">
-                    {selection.subtotal.toLocaleString()} {currencyLabel}
+                    {formatStableNumber(selection.subtotal)} {currencyLabel}
                   </span>
                 </div>
               ))}
@@ -729,7 +766,7 @@ export function PartnerFormRunner({
                     {selection.label} × {selection.quantity}
                   </span>
                   <span className="text-indigo-200/80">
-                    {selection.subtotal.toLocaleString()} {currencyLabel}
+                    {formatStableNumber(selection.subtotal)} {currencyLabel}
                   </span>
                 </div>
               ))}
@@ -738,7 +775,7 @@ export function PartnerFormRunner({
               <span className="text-indigo-200/80">Current total</span>
               <span className="text-lg font-semibold text-white">
                 {combinedTotal !== null
-                  ? `${combinedTotal.toLocaleString()} ${currencyLabel}`
+                  ? `${formatStableNumber(combinedTotal)} ${currencyLabel}`
                   : `0 ${currencyLabel}`}
               </span>
             </div>
@@ -787,7 +824,7 @@ export function PartnerFormRunner({
       return;
     }
     const lockedValue =
-      selectedDealRequirement?.quantity ??
+      selectedDealRequirement?.totalQuantity ??
       (typeof dealSnapshot?.minVisitors === "number" ? dealSnapshot.minVisitors : null);
     if (lockedValue === null || lockedValue === undefined) {
       return;
@@ -798,7 +835,13 @@ export function PartnerFormRunner({
       }
       return { ...prev, [dealVisitorsFieldId]: lockedValue };
     });
-  }, [dealVisitorsFieldId, dealSnapshot?.minVisitors, isDealForm, selectedDealRequirement?.quantity, setValues]);
+  }, [
+    dealVisitorsFieldId,
+    dealSnapshot?.minVisitors,
+    isDealForm,
+    selectedDealRequirement?.totalQuantity,
+    setValues,
+  ]);
 
   const fieldDefinitions = useMemo(() => {
     const map = new Map<string, PartnerFormField>();
@@ -1166,8 +1209,11 @@ export function PartnerFormRunner({
         ? {
             [DEAL_TICKET_REQUIREMENT_METADATA_KEY]: {
               ticketType: selectedDealRequirement.ticketType,
-              subType: selectedDealRequirement.subType ?? null,
-              quantity: selectedDealRequirement.quantity,
+              entries: selectedDealRequirement.subItems.map((sub) => ({
+                ticketType: selectedDealRequirement.ticketType,
+                subType: sub.subType ?? undefined,
+                quantity: sub.quantity,
+              })),
             },
           }
         : {}),
@@ -1330,7 +1376,7 @@ export function PartnerFormRunner({
                     ) : null}
                     {option.price !== undefined ? (
                       <div className="pt-1 text-xs text-indigo-200/70">
-                        {option.price.toLocaleString()} {currencyLabel}
+                        {formatStableNumber(option.price)} {currencyLabel}
                       </div>
                     ) : null}
                   </button>
@@ -1672,7 +1718,7 @@ export function PartnerFormRunner({
                   </span>
                 </div>
                 <span className="text-sm text-white">
-                  {selection.subtotal.toLocaleString()} {currencyLabel}
+                  {formatStableNumber(selection.subtotal)} {currencyLabel}
                 </span>
               </div>
             ))}
@@ -1696,7 +1742,7 @@ export function PartnerFormRunner({
                   </span>
                 </div>
                 <span className="text-sm text-white">
-                  {selection.subtotal.toLocaleString()} {currencyLabel}
+                  {formatStableNumber(selection.subtotal)} {currencyLabel}
                 </span>
               </div>
             ))}
@@ -1710,7 +1756,7 @@ export function PartnerFormRunner({
             </span>
             <span className="font-semibold text-white">
               {combinedTotal !== null
-                ? `${combinedTotal.toLocaleString()} ${currencyLabel}`
+                ? `${formatStableNumber(combinedTotal)} ${currencyLabel}`
                 : "—"}
             </span>
           </div>
@@ -1719,7 +1765,7 @@ export function PartnerFormRunner({
               {form.config.summary?.pointsLabel ?? "Estimated points"}
             </span>
             <span className="font-semibold text-white">
-              {estimatedPoints !== null ? estimatedPoints.toLocaleString() : "—"}
+              {estimatedPoints !== null ? formatStableNumber(estimatedPoints) : "—"}
             </span>
           </div>
           <div className="rounded-xl border border-white/5 bg-slate-950/40 px-3 py-2 text-xs text-indigo-200/80">
@@ -1731,7 +1777,7 @@ export function PartnerFormRunner({
                 <p className="mt-2 text-sm text-white">
                   You’ll receive{" "}
                   <span className="font-semibold">
-                    {estimatedPoints.toLocaleString()} pts
+                    {formatStableNumber(estimatedPoints)} pts
                   </span>{" "}
                   once the staff marks your visit as completed.
                 </p>
@@ -1845,9 +1891,21 @@ export function PartnerFormRunner({
               <p className="text-lg font-semibold text-white">{selectedDealRequirement.label}</p>
               <p className="text-xs text-indigo-200/80">
                 Requires{" "}
-                <span className="font-semibold text-white">{selectedDealRequirement.quantity}</span>{" "}
-                guest{selectedDealRequirement.quantity === 1 ? "" : "s"} for this reservation.
+                <span className="font-semibold text-white">{selectedDealRequirement.totalQuantity}</span>{" "}
+                guest{selectedDealRequirement.totalQuantity === 1 ? "" : "s"} for this reservation.
               </p>
+              {selectedDealRequirement.subItems.length ? (
+                <p className="text-xs text-indigo-200/70">
+                  Includes{" "}
+                  {selectedDealRequirement.subItems
+                    .map((sub) =>
+                      sub.subType
+                        ? `${sub.quantity} × ${sub.subType}`
+                        : `${sub.quantity} × ${selectedDealRequirement.ticketType}`
+                    )
+                    .join(" · ")}
+                </p>
+              ) : null}
             </div>
             <Button
               type="button"
@@ -1898,9 +1956,21 @@ export function PartnerFormRunner({
                       <span className="text-sm font-semibold">{requirement.label}</span>
                       <span className="text-xs text-indigo-200/80">
                         Requires{" "}
-                        <span className="font-semibold text-white">{requirement.quantity}</span>{" "}
-                        guest{requirement.quantity === 1 ? "" : "s"}
+                        <span className="font-semibold text-white">{requirement.totalQuantity}</span>{" "}
+                        guest{requirement.totalQuantity === 1 ? "" : "s"}
                       </span>
+                      {requirement.subItems.length ? (
+                        <span className="text-[11px] text-indigo-200/70">
+                          Includes{" "}
+                          {requirement.subItems
+                            .map((sub) =>
+                              sub.subType
+                                ? `${sub.quantity} × ${sub.subType}`
+                                : `${sub.quantity} × ${requirement.ticketType}`
+                            )
+                            .join(" · ")}
+                        </span>
+                      ) : null}
                     </button>
                   );
                 })}
@@ -1916,9 +1986,9 @@ export function PartnerFormRunner({
                 <span>
                   I confirm my group has{" "}
                   <span className="font-semibold text-white">
-                    {selectedDealRequirement?.quantity ?? "—"}
+                    {selectedDealRequirement?.totalQuantity ?? "—"}
                   </span>{" "}
-                  guest{(selectedDealRequirement?.quantity ?? 0) === 1 ? "" : "s"} for this ticket type.
+                  guest{(selectedDealRequirement?.totalQuantity ?? 0) === 1 ? "" : "s"} for this ticket type.
                 </span>
               </label>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

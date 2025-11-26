@@ -37,6 +37,12 @@ export default async function AdminDealDetailPage({
     deal = entry;
     partners = partnerList;
     forms = formList;
+    console.info("admin_deal_detail_page_loaded", {
+      dealId: id,
+      hasDeal: Boolean(entry),
+      partnerCount: partnerList.length,
+      formCount: formList.length,
+    });
   } catch (error) {
     console.error("admin_deal_detail_page_load_error", error);
     loadError =
@@ -65,6 +71,10 @@ export default async function AdminDealDetailPage({
   }
 
   if (!deal) {
+    console.error("admin_deal_detail_page_missing_deal", {
+      dealId: id,
+      loadError,
+    });
     return (
       <div className="px-6 py-8 text-sm text-red-600">
         Unable to load the selected deal.
@@ -115,11 +125,6 @@ export default async function AdminDealDetailPage({
     title: deal.deal.title,
     slug: deal.deal.slug,
     description: deal.deal.description,
-    discountPercent: deal.deal.discount_percent,
-    minVisitors: deal.deal.min_visitors,
-    commissionPercent: deal.deal.commission_percent,
-    priceOverrideCzk: deal.deal.price_override_czk,
-    bonusPointsOverride: deal.deal.bonus_points_override,
     isFeatured: deal.deal.is_featured,
     bannerLeadHours: deal.deal.banner_lead_hours,
     qrValiditySeconds: deal.deal.qr_validity_seconds,
@@ -147,6 +152,21 @@ export default async function AdminDealDetailPage({
     id: form.id,
     name: form.name,
   }));
+
+  if (!forms.length) {
+    console.warn("admin_deal_detail_page_no_forms", {
+      dealId: id,
+      loadError,
+    });
+  }
+
+  console.info("admin_deal_detail_render_payload", {
+    dealId: id,
+    partnerOptionCount: partnerOptions.length,
+    formOptionCount: formOptions.length,
+    ticketTypeCount: existingDeal.ticketTypes.length,
+    ticketRequirementCount: existingDeal.ticketRequirements.length,
+  });
 
   return (
     <div className="px-6 py-8 space-y-6">

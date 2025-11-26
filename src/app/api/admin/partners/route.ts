@@ -138,8 +138,22 @@ export async function GET(req: NextRequest) {
     if (partnerId) {
       const [item, relationships, children] = await Promise.all([
         loadPartnerMeta(partnerId),
-        getPartnerRelationshipsForChild(partnerId),
-        getPartnerRelationshipsForParent(partnerId),
+        getPartnerRelationshipsForChild(partnerId).catch((error) => {
+          log.error(
+            "admin_partner_relationships_child_error",
+            error instanceof Error ? error : new Error(String(error)),
+            { partnerId, route: "admin/partners", correlationId: getCorrelationId(req) },
+          );
+          return [];
+        }),
+        getPartnerRelationshipsForParent(partnerId).catch((error) => {
+          log.error(
+            "admin_partner_relationships_parent_error",
+            error instanceof Error ? error : new Error(String(error)),
+            { partnerId, route: "admin/partners", correlationId: getCorrelationId(req) },
+          );
+          return [];
+        }),
       ]);
       return withCors(
         NextResponse.json({ item, relationships, children }),

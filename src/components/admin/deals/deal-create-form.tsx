@@ -46,11 +46,6 @@ interface DealCreateFormState {
   title: string;
   slug: string;
   description: string;
-  discountPercent: string;
-  minVisitors: string;
-  commissionPercent: string;
-  priceOverrideCzk: string;
-  bonusPointsOverride: string;
   isFeatured: boolean;
   bannerLeadHours: string;
   qrValidityDays: string;
@@ -94,11 +89,6 @@ export interface DealFormInitialData {
   title: string;
   slug: string | null;
   description: string | null;
-  discountPercent: number;
-  minVisitors: number;
-  commissionPercent: number;
-  priceOverrideCzk: number | null;
-  bonusPointsOverride: number | null;
   isFeatured: boolean;
   bannerLeadHours: number;
   qrValiditySeconds: number;
@@ -127,11 +117,6 @@ const INITIAL_FORM: DealCreateFormState = {
   title: "",
   slug: "",
   description: "",
-  discountPercent: "10",
-  minVisitors: "1",
-  commissionPercent: "20",
-  priceOverrideCzk: "",
-  bonusPointsOverride: "",
   isFeatured: false,
   bannerLeadHours: "0",
   qrValidityDays: String(DEFAULT_QR_VALIDITY_DAYS),
@@ -238,17 +223,6 @@ export function DealCreateForm({
       title: existingDeal.title,
       slug: existingDeal.slug ?? "",
       description: existingDeal.description ?? "",
-      discountPercent: String(existingDeal.discountPercent),
-      minVisitors: String(existingDeal.minVisitors),
-      commissionPercent: String(existingDeal.commissionPercent),
-      priceOverrideCzk:
-        existingDeal.priceOverrideCzk !== null
-          ? String(existingDeal.priceOverrideCzk)
-          : "",
-      bonusPointsOverride:
-        existingDeal.bonusPointsOverride !== null
-          ? String(existingDeal.bonusPointsOverride)
-          : "",
       isFeatured: existingDeal.isFeatured,
       bannerLeadHours: String(existingDeal.bannerLeadHours ?? 0),
       qrValidityDays: String(qrDays),
@@ -274,7 +248,6 @@ export function DealCreateForm({
   const [validDays, setValidDays] = useState<number[]>(
     existingDeal?.validDays ?? [],
   );
-  const [useCustomCommission, setUseCustomCommission] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [ticketRequirements, setTicketRequirements] = useState<
     TicketConditionRow[]
@@ -331,17 +304,6 @@ const [linkedFormId, setLinkedFormId] = useState<string | null>(
       title: existingDeal.title,
       slug: existingDeal.slug ?? "",
       description: existingDeal.description ?? "",
-      discountPercent: String(existingDeal.discountPercent),
-      minVisitors: String(existingDeal.minVisitors),
-      commissionPercent: String(existingDeal.commissionPercent),
-      priceOverrideCzk:
-        existingDeal.priceOverrideCzk !== null
-          ? String(existingDeal.priceOverrideCzk)
-          : "",
-      bonusPointsOverride:
-        existingDeal.bonusPointsOverride !== null
-          ? String(existingDeal.bonusPointsOverride)
-          : "",
       isFeatured: existingDeal.isFeatured,
       bannerLeadHours: String(existingDeal.bannerLeadHours ?? 0),
       qrValidityDays: String(qrDays),
@@ -435,13 +397,6 @@ const [linkedFormId, setLinkedFormId] = useState<string | null>(
   }));
 }, [ticketRequirements]);
 
-  const partnerDefaultCommission = useMemo(() => {
-    const entry = partnerOptions.find((option) => option.id === form.partnerId);
-    return typeof entry?.defaultCommission === "number"
-      ? entry.defaultCommission
-      : null;
-  }, [partnerOptions, form.partnerId]);
-
   const isActivationOn = form.status === "live";
 
   const handleActivationToggle = useCallback((checked: boolean) => {
@@ -474,15 +429,6 @@ const [linkedFormId, setLinkedFormId] = useState<string | null>(
     }
     previousPartnerRef.current = form.partnerId;
   }, [form.partnerId, isEditMode]);
-
-  useEffect(() => {
-    if (!useCustomCommission && typeof partnerDefaultCommission === "number") {
-      setForm((current) => ({
-        ...current,
-        commissionPercent: String(partnerDefaultCommission),
-      }));
-    }
-  }, [useCustomCommission, partnerDefaultCommission]);
 
   const hasSavedRequirements = Boolean(existingDeal?.ticketRequirements?.length);
 
@@ -678,10 +624,6 @@ const [linkedFormId, setLinkedFormId] = useState<string | null>(
     const activeConditions = ticketRequirements.filter(
       (condition) => condition.quantity > 0
     );
-    const maxRequired = activeConditions.reduce(
-      (max, condition) => Math.max(max, condition.quantity),
-      0
-    );
     const nextTicketTypes = Array.from(
       new Set(
         activeConditions
@@ -691,7 +633,6 @@ const [linkedFormId, setLinkedFormId] = useState<string | null>(
     );
     setForm((current) => ({
       ...current,
-      minVisitors: maxRequired > 0 ? String(maxRequired) : current.minVisitors,
       ticketTypes: nextTicketTypes,
     }));
   }, [ticketRequirements]);
@@ -710,6 +651,15 @@ const [linkedFormId, setLinkedFormId] = useState<string | null>(
       };
     });
   }, [groupedTicketRequirements]);
+
+  const highestRequirement = useMemo(
+    () =>
+      requirementPreview.reduce(
+        (max, group) => Math.max(max, group.totalQuantity),
+        0,
+      ),
+    [requirementPreview],
+  );
 
   useEffect(() => {
     if (suppressValidityResetRef.current) {
@@ -748,7 +698,6 @@ const [linkedFormId, setLinkedFormId] = useState<string | null>(
   const resetForm = useCallback(() => {
     setForm({ ...INITIAL_FORM });
     setValidDays([]);
-    setUseCustomCommission(true);
     setTicketRequirements([]);
     setValidityMode("valid_days");
     setLinkedFormId(null);
@@ -773,8 +722,6 @@ const [linkedFormId, setLinkedFormId] = useState<string | null>(
         const payload: Record<string, unknown> = {
           title: form.title.trim(),
           status: form.status,
-          discountPercent: Number(form.discountPercent) || 0,
-          commissionPercent: Number(form.commissionPercent) || 0,
           qrValiditySeconds: qrValidityDays * 24 * 60 * 60,
           autoExpire: form.autoExpire,
           sendReminders: form.sendReminders,
@@ -793,12 +740,6 @@ const [linkedFormId, setLinkedFormId] = useState<string | null>(
         if (form.slug.trim()) payload.slug = form.slug.trim();
         if (form.description.trim())
           payload.description = form.description.trim();
-        if (form.priceOverrideCzk.trim()) {
-          payload.priceOverrideCzk = Number(form.priceOverrideCzk);
-        }
-        if (form.bonusPointsOverride.trim()) {
-          payload.bonusPointsOverride = Number(form.bonusPointsOverride);
-        }
         if (form.usageLimit.trim()) {
           payload.usageLimit = Number(form.usageLimit);
         }
@@ -844,11 +785,6 @@ const [linkedFormId, setLinkedFormId] = useState<string | null>(
           );
         if (requirements.length > 0) {
           payload.ticketRequirements = requirements;
-          const requiredHeadcount = requirements.reduce(
-            (max, item) => Math.max(max, item.quantity),
-            0
-          );
-          payload.minVisitors = Math.max(requiredHeadcount, Number(form.minVisitors) || 1);
           payload.ticketTypes = Array.from(
             new Set(requirements.map((item) => item.ticketType))
           );
@@ -861,7 +797,6 @@ const [linkedFormId, setLinkedFormId] = useState<string | null>(
             )
           );
           if (ticketTypes.length) payload.ticketTypes = ticketTypes;
-          payload.minVisitors = Math.max(Number(form.minVisitors) || 1, 1);
         }
 
         if (!isEditMode) {
@@ -934,16 +869,11 @@ const [linkedFormId, setLinkedFormId] = useState<string | null>(
       activeDealId,
       canSubmit,
       form.autoExpire,
-      form.bonusPointsOverride,
-      form.commissionPercent,
       form.description,
-      form.discountPercent,
       form.heroImageAlt,
       form.heroImageUrl,
       form.isFeatured,
-      form.minVisitors,
       form.partnerId,
-      form.priceOverrideCzk,
       form.qrValidityDays,
       form.bannerLeadHours,
       form.sendReminders,
@@ -1193,104 +1123,6 @@ const [linkedFormId, setLinkedFormId] = useState<string | null>(
             min={0}
             step="1"
             helperText="When featured, start showing the banner this many hours before expiry."
-          />
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Value & incentives"
-        description="Configure pricing, required visitors, and commission."
-      >
-        <div className="grid gap-4 md:grid-cols-2">
-          <NumberField
-            label="Discount %"
-            value={form.discountPercent}
-            onChange={(value) =>
-              setForm((current) => ({ ...current, discountPercent: value }))
-            }
-            min={0}
-            max={100}
-            step="0.1"
-            required
-            disabled
-            helperText="Discount is managed automatically."
-          />
-          <NumberField
-            label="Min visitors"
-            value={form.minVisitors}
-            onChange={(value) =>
-              setForm((current) => ({ ...current, minVisitors: value }))
-            }
-            min={1}
-            step="1"
-            required
-            disabled
-            helperText="Calculated automatically from the ticket mix."
-          />
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="commissionPercent">Commission %</Label>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span>Custom</span>
-                <Switch
-                  checked={useCustomCommission}
-                  disabled
-                  onCheckedChange={(checked) => {
-                    setUseCustomCommission(checked);
-                    if (
-                      !checked &&
-                      typeof partnerDefaultCommission === "number"
-                    ) {
-                      setForm((current) => ({
-                        ...current,
-                        commissionPercent: String(partnerDefaultCommission),
-                      }));
-                    }
-                  }}
-                />
-              </div>
-            </div>
-            <Input
-              id="commissionPercent"
-              type="number"
-              value={form.commissionPercent}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  commissionPercent: event.target.value,
-                }))
-              }
-              min={0}
-              max={100}
-              step="0.1"
-              required
-              disabled
-            />
-            <p className="text-xs text-muted-foreground">
-              Commission is controlled by partner defaults.
-            </p>
-          </div>
-          <NumberField
-            label="Flat price override (CZK)"
-            value={form.priceOverrideCzk}
-            onChange={(value) =>
-              setForm((current) => ({ ...current, priceOverrideCzk: value }))
-            }
-            min={0}
-            step="0.5"
-            disabled
-            helperText="Price overrides are disabled for deals."
-          />
-          <NumberField
-            label="Bonus points override"
-            value={form.bonusPointsOverride}
-            onChange={(value) =>
-              setForm((current) => ({ ...current, bonusPointsOverride: value }))
-            }
-            min={0}
-            step="1"
-            disabled
-            helperText="Bonus overrides are disabled for deals."
           />
         </div>
       </SectionCard>
@@ -1549,7 +1381,13 @@ const [linkedFormId, setLinkedFormId] = useState<string | null>(
               ))}
               <p className="text-xs text-muted-foreground">
                 {ticketConditionSummary
-                  ? `Requires ${ticketConditionSummary} (highest single-ticket requirement: ${form.minVisitors} visitor${form.minVisitors === "1" ? "" : "s"}).`
+                  ? `Requires ${ticketConditionSummary}${
+                      highestRequirement > 0
+                        ? ` (highest single-ticket requirement: ${highestRequirement} visitor${
+                            highestRequirement === 1 ? "" : "s"
+                          }).`
+                        : "."
+                    }`
                   : "No minimum headcount enforced."}
               </p>
             </div>
