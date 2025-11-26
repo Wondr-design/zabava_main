@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { generatePartnerBillingReport } from "@/lib/services/reporting/billing-export";
 import { EMAIL_TEMPLATE_DEFAULTS } from "@/lib/email-template-constants";
+import type { Database } from "@/supabase/types";
 
 export type CommissionBasis = "discounted" | "original";
 
@@ -40,6 +41,10 @@ const settingsSchema = z.object({
   commissionBasis: z.enum(["discounted", "original"]).optional(),
 });
 
+type PartnerWithBillingRow = Database["public"]["Tables"]["partners"]["Row"] & {
+  billing?: Database["public"]["Tables"]["partner_billing_settings"]["Row"] | null;
+};
+
 export async function getPartnerBillingSettings(partnerId: string): Promise<PartnerBillingSettings> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
@@ -50,11 +55,12 @@ export async function getPartnerBillingSettings(partnerId: string): Promise<Part
   if (error) {
     throw new Error(`Failed to load billing settings: ${error.message}`);
   }
-  const contract = (data?.contract as Record<string, unknown>) ?? {};
+const partner = data as PartnerWithBillingRow | null;
+  const contract = (partner?.contract as Record<string, unknown>) ?? {};
   const listingFeeAmount = Number(contract.monthlyFee ?? 0);
   const listingOnly = Boolean(contract.listingOnly);
   const listingFeeCurrency = "CZK";
-  const billing = (data as any)?.billing ?? {};
+  const billing = partner?.billing ?? null;
   return {
     partnerId,
     billingEmail: (billing?.billing_email as string | null) ?? null,
@@ -106,7 +112,8 @@ export async function listPartnerBillingSummaries(): Promise<PartnerBillingSumma
   if (error) {
     throw new Error(`Failed to load partners for billing: ${error.message}`);
   }
-  return (data ?? []).map((row: any) => ({
+const rows = ((data ?? []) as unknown[]) as PartnerWithBillingRow[];
+  return rows.map((row) => ({
     partnerId: row.id as string,
     partnerName: (row.display_name as string | null) ?? null,
     billingEmail: (row.billing?.billing_email as string | null) ?? null,
@@ -114,12 +121,12 @@ export async function listPartnerBillingSummaries(): Promise<PartnerBillingSumma
     autoSendEnabled: Boolean(row.billing?.auto_send_enabled),
     autoSendDay: Number(row.billing?.auto_send_day ?? 1),
     commissionBasis:
-      (row.billing?.commission_basis as CommissionBasis) ||
-      (row.contract?.commissionBasis as CommissionBasis) ||
-      "discounted",
-    listingFeeAmount: Number(row.contract?.monthlyFee ?? 0),
+        (row.billing?.commission_basis as CommissionBasis) ||
+        ((row.contract as Record<string, unknown>)?.commissionBasis as CommissionBasis) ||
+        "discounted",
+      listingFeeAmount: Number((row.contract as Record<string, unknown>)?.monthlyFee ?? 0),
     listingFeeCurrency: "CZK",
-    listingOnly: Boolean(row.contract?.listingOnly),
+    listingOnly: Boolean((row.contract as Record<string, unknown>)?.listingOnly),
     lastSentAt: (row.billing?.last_sent_at as string | null) ?? null,
   }));
 }

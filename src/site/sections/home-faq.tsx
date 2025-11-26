@@ -30,7 +30,7 @@ export const defaultHomeFaqContent: HomeFaqContent = {
   ],
 };
 
-interface HomeFaqProps extends HomeFaqContent {}
+type HomeFaqProps = HomeFaqContent;
 
 export function HomeFaq({
   title,
@@ -72,4 +72,3 @@ export function HomeFaq({
     </section>
   );
 }
-

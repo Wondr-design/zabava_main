@@ -8,6 +8,7 @@ export const cmsBlockTypes = [
   "cta_banner",
   "reviews",
   "faq",
+  "link_collection",
 ] as const;
 
 export type CmsBlockType = (typeof cmsBlockTypes)[number];
@@ -81,6 +82,21 @@ const faqBlockSchema = z.object({
     .min(1),
 });
 
+const linkCollectionSchema = z.object({
+  title: z.string().max(160).optional(),
+  layout: z.enum(["grid", "stack"]).default("grid"),
+  items: z
+    .array(
+      z.object({
+        label: z.string().min(1).max(120),
+        href: z.string().min(1),
+        description: z.string().max(240).optional(),
+        variant: z.enum(["primary", "secondary", "ghost"]).default("primary"),
+      }),
+    )
+    .min(1),
+});
+
 export type CmsBlockDataMap = {
   hero: z.infer<typeof heroBlockSchema>;
   rich_text: z.infer<typeof richTextBlockSchema>;
@@ -89,6 +105,7 @@ export type CmsBlockDataMap = {
   cta_banner: z.infer<typeof ctaBannerSchema>;
   reviews: z.infer<typeof reviewsBlockSchema>;
   faq: z.infer<typeof faqBlockSchema>;
+  link_collection: z.infer<typeof linkCollectionSchema>;
 };
 
 export interface CmsBlockDefinition<
@@ -217,6 +234,30 @@ export const cmsBlockRegistry: Record<
       ],
     }),
   },
+  link_collection: {
+    type: "link_collection",
+    label: "Links & buttons",
+    description: "Add multiple CTAs or resource links with descriptions.",
+    schema: linkCollectionSchema,
+    defaults: () => ({
+      title: "Quick actions",
+      layout: "grid",
+      items: [
+        {
+          label: "Browse partners",
+          href: "/en/partners",
+          description: "See the latest deals and ticket bundles.",
+          variant: "primary",
+        },
+        {
+          label: "Contact sales",
+          href: "mailto:hello@zabava.com",
+          description: "Request a guided onboarding for your staff.",
+          variant: "secondary",
+        },
+      ],
+    }),
+  },
 };
 
 export function getBlockDefinition<TType extends CmsBlockType>(
@@ -237,4 +278,3 @@ export function validateBlockData<TType extends CmsBlockType>(
 ) {
   return cmsBlockRegistry[type].schema.parse(data);
 }
-

@@ -37,7 +37,7 @@ export const defaultHomeReviewsContent: HomeReviewsContent = {
   ],
 };
 
-interface HomeReviewsProps extends HomeReviewsContent {}
+type HomeReviewsProps = HomeReviewsContent;
 
 export function HomeReviews({
   title,
@@ -85,4 +85,3 @@ export function HomeReviews({
     </section>
   );
 }
-

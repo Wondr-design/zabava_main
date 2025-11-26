@@ -16,6 +16,8 @@ import {
   type RewardRecord,
   type RewardPartnerConfig,
   type RewardPartnerTicket,
+  type CreateRewardInput,
+  type UpdateRewardInput,
 } from "@/lib/data/rewards";
 import { useGlobalValues } from "@/hooks/use-global-values";
 import { adminApi } from "@/lib/web/api-client";
@@ -66,6 +68,25 @@ type RewardPreview = {
   category: string;
   tags: string[];
 };
+
+type RewardPartnerConfigLike =
+  | RewardPartnerConfig
+  | {
+      formId?: string | null;
+      tickets?: RewardPartnerTicket[] | null;
+    };
+
+function normalizePartnerConfigValue(
+  value: RewardPartnerConfigLike | null | undefined,
+): RewardPartnerConfig {
+  const ticketsSource = Array.isArray(value?.tickets)
+    ? (value?.tickets as RewardPartnerTicket[] | undefined)
+    : undefined;
+  return {
+    formId: value?.formId ?? null,
+    tickets: ticketsSource ?? [],
+  };
+}
 
 function formatExpiry(seconds?: number | null) {
   const fallbackSeconds = DEFAULT_QR_EXPIRY_SECONDS;
@@ -131,6 +152,9 @@ export function RewardEditor({
   const [rewardAvailable, setRewardAvailable] = useState<boolean>(
     reward?.isAvailable ?? true
   );
+  const [showAvailabilityDate, setShowAvailabilityDate] = useState<boolean>(
+    reward?.showAvailabilityDate ?? false,
+  );
   const [selectedPartners, setSelectedPartners] = useState<string[]>(
     reward?.availableFor ? reward.availableFor.slice(0, 1) : []
   );
@@ -147,27 +171,13 @@ export function RewardEditor({
       reward.partnerConfigs instanceof Map
         ? Array.from(reward.partnerConfigs.entries())
         : Object.entries(
-            reward.partnerConfigs as Record<
-              string,
-              | RewardPartnerConfig
-              | { formId?: string | null; pointsCost?: number | null }
-            >
+            reward.partnerConfigs as Record<string, RewardPartnerConfigLike>,
           );
     return new Map(
-      entries.map(([partnerId, value]) => {
-        const cfg = value as RewardPartnerConfig & {
-          pointsCost?: number | null;
-        };
-        return [
-          partnerId,
-          {
-            formId: cfg.formId ?? null,
-            tickets: Array.isArray((cfg as any).tickets)
-              ? (cfg as any).tickets
-              : [],
-          } as RewardPartnerConfig,
-        ];
-      })
+      entries.map(([partnerId, value]) => [
+        partnerId,
+        normalizePartnerConfigValue(value),
+      ]),
     );
   });
   const [tags, setTags] = useState<string[]>(reward?.tags ?? []);
@@ -293,6 +303,7 @@ export function RewardEditor({
       setCategory("");
       setTransportIncluded(false);
       setRewardAvailable(true);
+      setShowAvailabilityDate(false);
       setStatus("active");
       setSelectedPartners([]);
       setPartnerConfigs(new Map<string, RewardPartnerConfig>());
@@ -317,6 +328,7 @@ export function RewardEditor({
     setCategory(reward.category ?? "");
     setTransportIncluded(reward.transportIncluded ?? false);
     setRewardAvailable(reward.isAvailable ?? true);
+    setShowAvailabilityDate(reward.showAvailabilityDate ?? false);
     setStatus(reward.status ?? "active");
     setSelectedPartners(reward.availableFor ?? []);
     // Convert plain object to Map if it's not already a Map (comes from JSON as plain object)
@@ -325,29 +337,15 @@ export function RewardEditor({
         reward.partnerConfigs instanceof Map
           ? Array.from(reward.partnerConfigs.entries())
           : Object.entries(
-              reward.partnerConfigs as Record<
-                string,
-                | RewardPartnerConfig
-                | { formId?: string | null; pointsCost?: number | null }
-              >
+              reward.partnerConfigs as Record<string, RewardPartnerConfigLike>,
             );
       setPartnerConfigs(
         new Map(
-          entries.map(([partnerId, value]) => {
-            const cfg = value as RewardPartnerConfig & {
-              pointsCost?: number | null;
-            };
-            return [
-              partnerId,
-              {
-                formId: cfg.formId ?? null,
-                tickets: Array.isArray((cfg as any).tickets)
-                  ? (cfg as any).tickets
-                  : [],
-              },
-            ];
-          })
-        )
+          entries.map(([partnerId, value]) => [
+            partnerId,
+            normalizePartnerConfigValue(value),
+          ]),
+        ),
       );
       const firstPartnerId = entries[0]?.[0];
       setSelectedPartners(firstPartnerId ? [firstPartnerId] : []);
@@ -380,7 +378,7 @@ export function RewardEditor({
       typeof reward.stock === "number" && reward.stock > 0;
     setStockLimitValue(hasStockLimit ? String(reward.stock ?? "") : "");
     setSaveError(null);
-  }, [reward?.id]); // Only reset when reward ID changes
+  }, [reward]); // reset when reward changes
 
   useEffect(() => {
     const points: number[] = [];
@@ -679,7 +677,7 @@ export function RewardEditor({
         normalizedStockLimit = parsedStock;
       }
 
-      const payload = {
+      const payload: CreateRewardInput = {
         name: name.trim(),
         description: description.trim(),
         pointsCost,
@@ -694,6 +692,7 @@ export function RewardEditor({
         redemptionFormId: "", // Not used anymore - each partner must have their own form
         transportIncluded,
         isAvailable: rewardAvailable,
+        showAvailabilityDate,
         validFrom: validFrom ?? undefined,
         validUntil: validUntil ?? undefined,
         monthlyRedemptionLimit:
@@ -713,23 +712,35 @@ export function RewardEditor({
               partnerIds.includes(partnerId)
             )
           : [];
-      const partnerConfigsPayload =
+      const partnerConfigsPayload: Record<string, RewardPartnerConfig> | undefined =
         partnerConfigsEntries.length > 0
           ? Object.fromEntries(partnerConfigsEntries)
           : undefined;
 
+      const partnerPayload = partnerConfigsPayload
+        ? { ...payload, partnerConfigs: partnerConfigsPayload }
+        : payload;
+
       if (isEdit && reward?.id) {
+        const updateBody =
+          partnerPayload as UpdateRewardInput & {
+            partnerConfigs?: Record<string, RewardPartnerConfig>;
+          };
         const updated = await adminApi.rewardUpdate(
           reward.id,
-          { ...payload, partnerConfigs: partnerConfigsPayload } as any,
-          {}
+          updateBody,
+          {},
         );
         toast.success("Reward updated");
         onSaved(updated?.id ?? reward.id);
       } else {
+        const createBody =
+          partnerPayload as CreateRewardInput & {
+            partnerConfigs?: Record<string, RewardPartnerConfig>;
+          };
         const created = await adminApi.rewardCreate(
-          { ...payload, partnerConfigs: partnerConfigsPayload } as any,
-          {}
+          createBody,
+          {},
         );
         toast.success("Reward created");
         onSaved(created?.id ?? "");

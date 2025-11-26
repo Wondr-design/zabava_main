@@ -92,7 +92,6 @@ function readUrl(value: unknown) {
   const trimmed = value.trim();
   if (!trimmed) return undefined;
   try {
-    // eslint-disable-next-line no-new
     new URL(trimmed);
     return trimmed;
   } catch {

@@ -23,7 +23,10 @@ export type VerificationPurpose =
   | "staff_signup"
   | "admin_password_reset"
   | "partner_password_reset"
-  | "staff_password_reset";
+  | "staff_password_reset"
+  | "admin_login"
+  | "partner_login"
+  | "staff_login";
 
 interface VerificationRecord {
   id: string;
@@ -303,13 +306,22 @@ export function buildVerificationPurpose({
     | "staff_signup"
     | "admin_password_reset"
     | "partner_password_reset"
-    | "staff_password_reset";
+    | "staff_password_reset"
+    | "admin_login"
+    | "partner_login"
+    | "staff_login";
 }) {
   switch (type) {
     case "visit":
       return partnerId ? `visit_${partnerId}` : "visit_registration";
     case "bonus":
       return "bonus_portal";
+    case "admin_login":
+      return "admin_login";
+    case "partner_login":
+      return "partner_login";
+    case "staff_login":
+      return "staff_login";
     case "admin_signup":
       return "admin_signup";
     case "partner_signup":

@@ -18,6 +18,12 @@ export interface RenderEmailTemplateInput {
   body: string;
   details?: EmailDetailsEntry[];
   imageSrc?: string | null;
+  ctaHref?: string | null;
+  ctaLabel?: string | null;
+  highlightedCode?: { label?: string; value?: string | null };
+  attachmentsNote?: string | null;
+  partnerLabel?: string | null;
+  expiresInLabel?: string | null;
 }
 
 export async function renderEmailTemplate(input: RenderEmailTemplateInput) {
@@ -41,6 +47,8 @@ export async function renderEmailTemplate(input: RenderEmailTemplateInput) {
     previewText,
     details: normalizedDetails,
     imageSrc: input.imageSrc,
+    ctaHref: input.ctaHref ?? undefined,
+    ctaLabel: input.ctaLabel ?? undefined,
     highlightedCode,
     attachmentsNote,
     partnerLabel: verificationPartnerLabel,
@@ -166,22 +174,6 @@ function buildPreviewText(body: string, fallback?: string) {
       .find((line) => line.length > 0) ?? fallback;
   if (!firstLine) return undefined;
   return firstLine.length > 140 ? `${firstLine.slice(0, 137)}…` : firstLine;
-}
-
-function extractFirstUrl(details?: EmailDetailsEntry[]) {
-  if (!details) return null;
-  for (const entry of details) {
-    const value = entry.value?.toString() ?? "";
-    if (/^https?:\/\//i.test(value)) {
-      const labelText =
-        entry.label?.toLowerCase().includes("invite") ||
-        entry.label?.toLowerCase().includes("verify")
-          ? entry.label
-          : "Open link";
-      return { href: value, label: labelText };
-    }
-  }
-  return null;
 }
 
 function extractHighlightedCode(

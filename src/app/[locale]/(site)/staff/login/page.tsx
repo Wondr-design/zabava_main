@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocalizedRouter } from "@/i18n/use-localized-router";
 import {
   DesignButton,
@@ -10,21 +10,79 @@ import {
   StatusPill,
 } from "@/components/design-system";
 import { ResetPasswordPanel } from "@/components/auth/reset-password-panel";
+import { useEmailVerification } from "@/hooks/use-email-verification";
 
 export default function StaffLoginPage() {
   const router = useLocalizedRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [codeInput, setCodeInput] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [showReset, setShowReset] = useState(false);
+  const {
+    email: verifiedEmail,
+    requestCode,
+    requesting: codeRequesting,
+    verifyCode,
+    verifying: codeVerifying,
+    verifiedAt,
+    expiresAt,
+    error: verificationError,
+    reset: resetVerification,
+  } = useEmailVerification({ type: "staff_login" });
+
+  const normalizedEmail = useMemo(
+    () => email.trim().toLowerCase(),
+    [email],
+  );
+  const isEmailVerified =
+    Boolean(verifiedAt) &&
+    verifiedEmail?.toLowerCase() === normalizedEmail &&
+    normalizedEmail.length > 0;
+
+  useEffect(() => {
+    if (
+      verifiedEmail &&
+      verifiedEmail.toLowerCase() !== normalizedEmail
+    ) {
+      resetVerification();
+      setCodeInput("");
+    }
+  }, [normalizedEmail, verifiedEmail, resetVerification]);
+
+  async function handleRequestCode() {
+    if (!normalizedEmail) {
+      setError("Enter your email before requesting a code.");
+      return;
+    }
+    setError("");
+    await requestCode(normalizedEmail);
+    setNotice("Verification code sent. Check your inbox.");
+  }
+
+  async function handleVerifyCode() {
+    if (!codeInput.trim()) {
+      setError("Enter the verification code we emailed you.");
+      return;
+    }
+    setError("");
+    const ok = await verifyCode(codeInput.trim());
+    if (ok) {
+      setNotice("Email verified. Continue signing in.");
+    }
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (submitting) return;
     if (!email || !password) {
       setError("Enter both email and password");
+      return;
+    }
+    if (!isEmailVerified) {
+      setError("Verify the code we emailed you before signing in.");
       return;
     }
     setSubmitting(true);
@@ -81,13 +139,65 @@ export default function StaffLoginPage() {
           </StatusPill>
         ) : null}
         <DesignFormField label="Email" required>
-          <DesignInput
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-            placeholder="name@example.com"
-          />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <DesignInput
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              placeholder="name@example.com"
+              disabled={codeRequesting}
+            />
+            <DesignButton
+              type="button"
+              variant="secondary"
+              onClick={handleRequestCode}
+              disabled={codeRequesting || !normalizedEmail.length}
+            >
+              {codeRequesting ? "Sending…" : "Send code"}
+            </DesignButton>
+          </div>
+          {verificationError ? (
+            <p className="text-xs text-[color:var(--ds-danger)] mt-2">
+              {verificationError}
+            </p>
+          ) : null}
+          {expiresAt && !isEmailVerified ? (
+            <p className="text-xs text-[color:var(--ds-text-muted)] mt-1">
+              Code expires at {new Date(expiresAt).toLocaleTimeString()}
+            </p>
+          ) : null}
+          {isEmailVerified ? (
+            <p className="text-xs text-[color:var(--ds-success)] mt-1">
+              Email verified.
+            </p>
+          ) : null}
+        </DesignFormField>
+        <DesignFormField label="Verification code" required>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <DesignInput
+              type="text"
+              inputMode="numeric"
+              value={codeInput}
+              onChange={(e) => setCodeInput(e.target.value)}
+              placeholder="Enter the code"
+              maxLength={8}
+              disabled={isEmailVerified}
+            />
+            <DesignButton
+              type="button"
+              variant="secondary"
+              onClick={handleVerifyCode}
+              disabled={
+                isEmailVerified ||
+                codeVerifying ||
+                !codeInput.trim() ||
+                !normalizedEmail.length
+              }
+            >
+              {codeVerifying ? "Verifying…" : isEmailVerified ? "Verified" : "Verify"}
+            </DesignButton>
+          </div>
         </DesignFormField>
         <DesignFormField label="Password" required>
           <DesignInput

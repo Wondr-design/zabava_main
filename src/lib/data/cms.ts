@@ -113,10 +113,11 @@ function mapBlockRow(
 
 export async function listCmsPagesWithVersions() {
   const supabase = getSupabaseAdminTyped();
-  let { data, error } = await supabase
+  const { data: initialData, error } = await supabase
     .from("cms_pages")
     .select("*, cms_page_versions(*)")
     .order("display_name", { ascending: true });
+  let data = initialData;
 
   if (error) {
     throw new Error(`Failed to load CMS pages: ${error.message}`);

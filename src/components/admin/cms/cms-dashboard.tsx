@@ -38,6 +38,7 @@ import {
   getBlockDefaults,
   type CmsBlockType,
 } from "@/lib/cms/block-registry";
+import { CMS_SECTIONS } from "@/lib/cms-defaults";
 import { CmsRenderer } from "@/components/cms/cms-renderer";
 import { locales, resolveLocale, type Locale } from "@/i18n/config";
 
@@ -73,6 +74,7 @@ export function CmsDashboard({ initialPages, locale }: CmsDashboardProps) {
   const [creatingPage, setCreatingPage] = useState(false);
   const [newPageName, setNewPageName] = useState("");
   const [newPageSlug, setNewPageSlug] = useState("");
+  const [templateCreatingSlug, setTemplateCreatingSlug] = useState<string | null>(null);
 
   const selectedPage = useMemo(
     () => pages.find((page) => page.id === selectedPageId) ?? null,
@@ -99,6 +101,39 @@ export function CmsDashboard({ initialPages, locale }: CmsDashboardProps) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPageId, selectedLocale]);
+
+  function normalizeSlugValue(value: string) {
+    return value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, "-")
+      .replace(/--+/g, "-")
+      .replace(/^-|-$/g, "");
+  }
+
+  async function createCmsPageRecord({
+    name,
+    slug,
+    seedLocale = selectedLocale,
+  }: {
+    name: string;
+    slug: string;
+    seedLocale?: Locale;
+  }) {
+    const trimmedName = name.trim();
+    const normalizedSlug = normalizeSlugValue(slug);
+    if (!trimmedName || !normalizedSlug) {
+      throw new Error("Provide both a name and slug.");
+    }
+    const payload = await adminApi.cmsPageCreate({
+      slug: normalizedSlug,
+      displayName: trimmedName,
+      seedLocale,
+    });
+    setPages((prev) => [...prev, payload.page]);
+    setSelectedPageId(payload.page.id);
+    return payload.page;
+  }
 
   async function loadVersion(page: CmsPageRecord, localeToLoad: Locale) {
     setLoadingVersion(true);
@@ -174,13 +209,10 @@ export function CmsDashboard({ initialPages, locale }: CmsDashboardProps) {
     }
     setCreatingPage(true);
     try {
-      const payload = await adminApi.cmsPageCreate({
-        slug: newPageSlug.trim(),
-        displayName: newPageName.trim(),
-        seedLocale: selectedLocale,
+      await createCmsPageRecord({
+        name: newPageName,
+        slug: newPageSlug,
       });
-      setPages((prev) => [...prev, payload.page]);
-      setSelectedPageId(payload.page.id);
       setNewPageName("");
       setNewPageSlug("");
       toast.success("Page created");
@@ -190,6 +222,20 @@ export function CmsDashboard({ initialPages, locale }: CmsDashboardProps) {
       toast.error(message);
     } finally {
       setCreatingPage(false);
+    }
+  }
+
+  async function handleTemplateCreate(slug: string, label: string) {
+    setTemplateCreatingSlug(slug);
+    try {
+      await createCmsPageRecord({ name: label, slug });
+      toast.success(`${label} page created`);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to create page.";
+      toast.error(message);
+    } finally {
+      setTemplateCreatingSlug(null);
     }
   }
 
@@ -429,6 +475,7 @@ export function CmsDashboard({ initialPages, locale }: CmsDashboardProps) {
                     placeholder="Slug (privacy, about, ...)"
                     value={newPageSlug}
                     onChange={(event) => setNewPageSlug(event.target.value)}
+                    onBlur={() => setNewPageSlug((value) => normalizeSlugValue(value))}
                   />
                   <Button
                     type="button"
@@ -441,6 +488,57 @@ export function CmsDashboard({ initialPages, locale }: CmsDashboardProps) {
                 </div>
               </div>
             ) : null}
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+              Templates
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Use presets for popular sections (legal, FAQ, reviews).
+            </p>
+            <div className="mt-3 space-y-2">
+              {CMS_SECTIONS.map((section) => {
+                const exists = pages.some((page) => page.slug === section.slug);
+                return (
+                  <div
+                    key={section.slug}
+                    className="rounded-2xl border border-border/80 px-4 py-3"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">
+                          {section.label}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          /{section.slug}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={exists ? "outline" : "default"}
+                        disabled={exists || templateCreatingSlug === section.slug}
+                        onClick={() =>
+                          handleTemplateCreate(section.slug, section.label)
+                        }
+                        className="inline-flex items-center gap-1"
+                      >
+                        {templateCreatingSlug === section.slug ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Plus className="h-3.5 w-3.5" />
+                        )}
+                        {exists ? "Ready" : "Create"}
+                      </Button>
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {section.description}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           <div>
@@ -995,6 +1093,134 @@ function BlockFields({
               }
             >
               Add question
+            </Button>
+          </div>
+        </div>
+      );
+    }
+    case "link_collection": {
+      const items = (
+        Array.isArray(block.data.items) ? block.data.items : []
+      ) as Array<{
+        label?: string;
+        href?: string;
+        description?: string;
+        variant?: "primary" | "secondary" | "ghost";
+      }>;
+      return (
+        <div className="space-y-4">
+          <InputField
+            label="Section title"
+            value={(block.data.title as string) ?? ""}
+            onChange={(value) => onChange(index, { title: value })}
+          />
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">
+              Layout
+            </label>
+            <select
+              className="rounded-xl border border-border bg-background px-3 py-2 text-sm"
+              value={(block.data.layout as string) ?? "grid"}
+              onChange={(event) =>
+                onChange(index, { layout: event.target.value })
+              }
+            >
+              <option value="grid">Grid of cards</option>
+              <option value="stack">Stacked list</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+              Links & buttons
+            </p>
+            {items.map((item, itemIndex) => (
+              <div
+                key={`${item.label}-${itemIndex}`}
+                className="rounded-2xl border border-border/60 p-4"
+              >
+                <InputField
+                  label="Label"
+                  required
+                  value={item.label ?? ""}
+                  onChange={(value) => {
+                    const next = [...items];
+                    next[itemIndex] = { ...next[itemIndex], label: value };
+                    onItemChange(next);
+                  }}
+                />
+                <InputField
+                  label="Href"
+                  required
+                  value={item.href ?? ""}
+                  onChange={(value) => {
+                    const next = [...items];
+                    next[itemIndex] = { ...next[itemIndex], href: value };
+                    onItemChange(next);
+                  }}
+                />
+                <TextareaField
+                  label="Description"
+                  value={item.description ?? ""}
+                  onChange={(value) => {
+                    const next = [...items];
+                    next[itemIndex] = {
+                      ...next[itemIndex],
+                      description: value,
+                    };
+                    onItemChange(next);
+                  }}
+                />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    Variant
+                  </label>
+                  <select
+                    className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+                    value={item.variant ?? "primary"}
+                    onChange={(event) => {
+                      const next = [...items];
+                      next[itemIndex] = {
+                        ...next[itemIndex],
+                        variant: event.target.value as
+                          | "primary"
+                          | "secondary"
+                          | "ghost",
+                      };
+                      onItemChange(next);
+                    }}
+                  >
+                    <option value="primary">Primary button</option>
+                    <option value="secondary">Secondary button</option>
+                    <option value="ghost">Link card</option>
+                  </select>
+                </div>
+                <div className="mt-3 flex justify-end">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const next = items.filter((_, idx) => idx !== itemIndex);
+                      onItemChange(next);
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                onItemChange([
+                  ...items,
+                  { label: "", href: "", description: "", variant: "primary" },
+                ])
+              }
+            >
+              Add link
             </Button>
           </div>
         </div>

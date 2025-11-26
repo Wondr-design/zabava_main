@@ -8,6 +8,11 @@ import { signJwt } from "@/lib/auth/jwt";
 import { generateCsrfToken } from "@/lib/http/csrf";
 import { preflightResponse, withCors } from "@/lib/http/cors";
 import { getCorrelationId, log } from "@/lib/logging";
+import {
+  buildVerificationPurpose,
+  clearVerification,
+  isEmailVerified,
+} from "@/lib/data/email-verifications";
 
 const JWT_SECRET = process.env.JWT_SECRET || "";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "12h";
@@ -127,6 +132,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const verificationPurpose = buildVerificationPurpose({ type: "admin_signup" });
+    const emailVerified = await isEmailVerified({
+      email,
+      purpose: verificationPurpose,
+    });
+    if (!emailVerified) {
+      log.warn("admin_invite_accept_unverified", {
+        email,
+        inviteId: invite.id,
+        correlationId: getCorrelationId(req),
+      });
+      return withCors(
+        NextResponse.json(
+          {
+            error: "Email verification required",
+            message: "Verify the invite email with the code we sent before accepting.",
+          },
+          { status: 400 },
+        ),
+        { methods: "GET,POST,OPTIONS", headers: "Content-Type" },
+      );
+    }
+
     const passwordHash = await hashPassword(payload.password);
     const metadata = invite.metadata && typeof invite.metadata === "object" ? invite.metadata : {};
 
@@ -202,6 +230,7 @@ export async function POST(req: NextRequest) {
       path: "/",
       maxAge,
     });
+    await clearVerification({ email, purpose: verificationPurpose });
 
     return withCors(response, { methods: "GET,POST,OPTIONS", headers: "Content-Type" });
   } catch (error) {

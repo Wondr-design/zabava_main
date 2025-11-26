@@ -209,7 +209,7 @@ export function BonusShareClient({ token }: { token: string }) {
         if (!silent) setLoading(false);
       }
     },
-    [verifiedEmail, tBonus, data]
+    [verifiedEmail, tBonus]
   );
 
   useEffect(() => {
@@ -264,10 +264,15 @@ export function BonusShareClient({ token }: { token: string }) {
     };
   }, [token, tBonus]);
 
+  const rewards = useMemo(
+    () => (Array.isArray(data?.availableRewards) ? data.availableRewards : []),
+    [data?.availableRewards]
+  );
+
   const openRedeem = useCallback(
     async (rewardId: string) => {
       if (!verifiedEmail) return;
-      const rewardFromList = data?.availableRewards?.find((item) => item.id === rewardId);
+      const rewardFromList = rewards.find((item) => item.id === rewardId);
       if (rewardFromList?.limitStatus && rewardFromList.limitStatus !== "available") {
         toast.error(tBonus("errors.rewardUnavailable"));
         return;
@@ -300,7 +305,7 @@ export function BonusShareClient({ token }: { token: string }) {
         }));
       }
     },
-    [verifiedEmail, tBonus]
+    [verifiedEmail, tBonus, rewards]
   );
 
   const closeRedeem = useCallback(() => {
@@ -449,22 +454,15 @@ export function BonusShareClient({ token }: { token: string }) {
 
   const availablePoints = data?.user?.availablePoints ?? 0;
   const totalPoints = data?.user?.totalPoints ?? 0;
-  const rewards = useMemo(
-    () => (Array.isArray(data?.availableRewards) ? data.availableRewards : []),
-    [data?.availableRewards]
-  );
 
   // Fetch all available ticket types from the server
   const [allTicketTypes, setAllTicketTypes] = useState<
     Array<{ value: string; label: string }>
   >([]);
-  const [ticketTypesLoading, setTicketTypesLoading] = useState(true);
-
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        setTicketTypesLoading(true);
         const response = await fetch("/api/public/ticket-types");
         if (!response.ok) throw new Error("Failed to fetch ticket types");
         const data = await response.json();
@@ -489,15 +487,13 @@ export function BonusShareClient({ token }: { token: string }) {
           );
         }
       } finally {
-        if (!cancelled) {
-          setTicketTypesLoading(false);
-        }
+        // no-op
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []); // Only fetch once on mount
+  }, [rewards]);
 
   // Use all ticket types from the API, but also include any from rewards that might not be in the list
   const ticketTypeOptions = useMemo(() => {
@@ -1077,8 +1073,6 @@ export function BonusShareClient({ token }: { token: string }) {
                       .join("")
                       .slice(0, 2)
                       .toUpperCase();
-                    const ticketLabel =
-                      reward.ticketType ?? tBonus("filters.allTicketTypes");
 
                     const formattedNextAvailable =
                       reward.nextRedeemAt && !Number.isNaN(Date.parse(reward.nextRedeemAt))

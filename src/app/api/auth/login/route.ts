@@ -11,6 +11,11 @@ import {
   getPartnerStaffByEmail,
   touchPartnerStaffLogin,
 } from "@/lib/data/staff";
+import {
+  buildVerificationPurpose,
+  clearVerification,
+  isEmailVerified,
+} from "@/lib/data/email-verifications";
 import { preflightResponse, withCors } from "@/lib/http/cors";
 import { generateCsrfToken } from "@/lib/http/csrf";
 import { log, getCorrelationId } from "@/lib/logging";
@@ -69,6 +74,45 @@ function unauthorizedResponse(message = "Invalid credentials") {
   );
 }
 
+const LOGIN_VERIFICATION_MESSAGE =
+  "Verify the code we emailed you before signing in.";
+
+async function confirmLoginVerification({
+  email,
+  role,
+  partnerId,
+  correlationId,
+}: {
+  email: string;
+  role: "admin" | "partner" | "staff";
+  partnerId?: string | null;
+  correlationId?: string;
+}) {
+  const type =
+    role === "admin"
+      ? "admin_login"
+      : role === "partner"
+      ? "partner_login"
+      : "staff_login";
+  const purpose = buildVerificationPurpose({
+    partnerId,
+    type,
+  });
+  const verified = await isEmailVerified({ email, purpose });
+  if (!verified) {
+    log.warn("auth_login_verification_missing", {
+      email,
+      role,
+      partnerId: partnerId ?? null,
+      purpose,
+      correlationId,
+    });
+    return false;
+  }
+  await clearVerification({ email, purpose });
+  return true;
+}
+
 function attachSupabaseSessionCookies(
   response: NextResponse,
   session: Session | null,
@@ -120,6 +164,15 @@ export async function POST(req: NextRequest) {
     );
 
     if (adminSecretMatched) {
+      const verified = await confirmLoginVerification({
+        email,
+        role: "admin",
+        partnerId: null,
+        correlationId: cid,
+      });
+      if (!verified) {
+        return unauthorizedResponse(LOGIN_VERIFICATION_MESSAGE);
+      }
       const token = signJwt({ email, role: "admin" }, { expiresIn: JWT_EXPIRES_IN });
       const response = NextResponse.json(
         {
@@ -396,6 +449,16 @@ export async function POST(req: NextRequest) {
         return unauthorizedResponse();
       }
 
+      const verified = await confirmLoginVerification({
+        email,
+        role: record.role,
+        partnerId: record.partner_id,
+        correlationId: cid,
+      });
+      if (!verified) {
+        return unauthorizedResponse(LOGIN_VERIFICATION_MESSAGE);
+      }
+
       await touchPartnerUserLogin(email);
 
       const tokenPayload: Record<string, unknown> = {
@@ -482,6 +545,16 @@ export async function POST(req: NextRequest) {
           correlationId: cid,
         });
         return unauthorizedResponse("Account inactive");
+      }
+
+      const verified = await confirmLoginVerification({
+        email,
+        role: "staff",
+        partnerId: record.partner_id,
+        correlationId: cid,
+      });
+      if (!verified) {
+        return unauthorizedResponse(LOGIN_VERIFICATION_MESSAGE);
       }
 
       await touchPartnerStaffLogin(record.id);

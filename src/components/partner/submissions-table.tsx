@@ -981,17 +981,6 @@ function InfoField({
   );
 }
 
-function Detail({
-  label,
-  value,
-}: {
-  label: string;
-  value?: string | number | null;
-}) {
-  if (value === undefined || value === null || value === "") return null;
-  return <InfoField label={label} value={value} />;
-}
-
 function describeHandledBy(
   submission: SubmissionItem,
   viewerRole?: "partner" | "staff" | "admin",

@@ -132,8 +132,6 @@ interface VisitResponse {
   visit: VisitRegistrationRecord;
 }
 
-const SELECT_UNSET_VALUE = "__unset__";
-
 function formatDateTime(value?: string | null) {
   if (!value) return null;
   const parsed = new Date(value);
@@ -173,7 +171,10 @@ export function StaffVisitEditor({
   }, []);
 
   const visitId = visit.id;
-  const payload = (visit.payload ?? {}) as Record<string, unknown>;
+  const payload = useMemo<Record<string, unknown>>(
+    () => (visit.payload ?? {}) as Record<string, unknown>,
+    [visit.payload],
+  );
   const isFlashDeal =
     (visit as { qr_type?: string }).qr_type === "flash" ||
     payload.source === "special_flash_deal";
@@ -235,7 +236,7 @@ export function StaffVisitEditor({
     Boolean(ticketMismatch);
 
   const payloadSummary = useMemo(() => {
-    const payloadData = visit.payload ?? {};
+    const payloadData = payload ?? {};
     return Object.entries(payloadData)
       .filter(([key]) =>
         [
@@ -261,7 +262,7 @@ export function StaffVisitEditor({
             ? JSON.stringify(value, null, 2)
             : String(value),
       }));
-  }, [visit.payload]);
+  }, [payload]);
 
   const payloadMetadata =
     typeof payload.metadata === "object" && payload.metadata !== null
@@ -450,9 +451,14 @@ export function StaffVisitEditor({
       ? formatDateTime(visit.payload.qrCodeExpiresAt)
       : null;
 
-  const fallbackTicketTypeOptions =
-    formOptions?.fallbackTicketTypeOptions ?? [];
-  const ticketCatalog = formOptions?.ticketCatalog ?? [];
+  const fallbackTicketTypeOptions = useMemo(
+    () => formOptions?.fallbackTicketTypeOptions ?? [],
+    [formOptions?.fallbackTicketTypeOptions],
+  );
+  const ticketCatalog = useMemo(
+    () => formOptions?.ticketCatalog ?? [],
+    [formOptions?.ticketCatalog],
+  );
   const currencyCode = formOptions?.currency ?? "CZK";
 
   const ticketCatalogIndex = useMemo(() => {

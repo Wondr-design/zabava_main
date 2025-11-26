@@ -52,10 +52,8 @@ type BillingDetailState = {
 
 export function AdminBillingsClient({
   initialItems,
-  locale,
 }: {
   initialItems: BillingItem[];
-  locale: string;
 }) {
   const [items, setItems] = useState<BillingItem[]>(initialItems);
   const [sending, setSending] = useState<string | null>(null);

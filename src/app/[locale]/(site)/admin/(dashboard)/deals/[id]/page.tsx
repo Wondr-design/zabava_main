@@ -181,7 +181,6 @@ export default async function AdminDealDetailPage({
         partnerOptions={partnerOptions}
         formOptions={formOptions}
         readOnly
-        showWarnings
       />
     </div>
   );

@@ -364,10 +364,6 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
                   ) : (
                     <>
                       {form.subOptions.map((subOptionKey, index) => {
-                        const selectedOption =
-                          availableTicketTypesForSubOptions.find(
-                            (opt) => opt.key === subOptionKey
-                          );
                         const availableOptions =
                           availableTicketTypesForSubOptions.filter(
                             (opt) =>

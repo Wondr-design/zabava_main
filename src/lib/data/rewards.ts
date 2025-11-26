@@ -564,7 +564,6 @@ async function overwritePartnerFormPricing(
   partnerId: string,
   formId: string,
   tickets: RewardPartnerTicket[],
-  basePoints: number
 ) {
   if (!tickets || tickets.length === 0) {
     return;
@@ -828,7 +827,6 @@ export async function createReward(
           partnerId,
           config.formId,
           config.tickets ?? [],
-          computedPointsCost || 0
         );
       }
     }
@@ -1007,7 +1005,6 @@ export async function updateReward(
           partnerId,
           config.formId,
           config.tickets ?? [],
-          computedPointsCost ?? payload.pointsCost ?? 0
         );
       }
     }

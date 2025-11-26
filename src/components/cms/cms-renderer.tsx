@@ -62,6 +62,12 @@ function renderBlock(block: CmsRenderableBlock) {
       return (
         <FaqBlock {...(block.data as CmsRenderableBlock<"faq">["data"])} />
       );
+    case "link_collection":
+      return (
+        <LinkCollectionBlock
+          {...(block.data as CmsRenderableBlock<"link_collection">["data"])}
+        />
+      );
     default:
       return null;
   }
@@ -291,6 +297,73 @@ function FaqBlock({
             </p>
           </details>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function LinkCollectionBlock({
+  title,
+  layout = "grid",
+  items,
+}: {
+  title?: string;
+  layout?: "grid" | "stack";
+  items: Array<{
+    label: string;
+    href: string;
+    description?: string | null;
+    variant?: "primary" | "secondary" | "ghost";
+  }>;
+}) {
+  const wrapperClass =
+    layout === "stack"
+      ? "space-y-3"
+      : "grid gap-3 md:grid-cols-2 lg:grid-cols-3";
+  return (
+    <section className="space-y-3 rounded-3xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-6">
+      {title ? <h3 className="text-xl font-semibold">{title}</h3> : null}
+      <div className={wrapperClass}>
+        {items.map((item, index) => {
+          const isButton = item.variant !== "ghost";
+          if (isButton) {
+            const variantClass =
+              item.variant === "secondary"
+                ? "bg-white text-[color:var(--ds-primary)] border border-[color:var(--ds-border-muted)]"
+                : "bg-[color:var(--ds-primary)] text-white";
+            return (
+              <a
+                key={`${item.label}-${index}`}
+                href={item.href}
+                className={cn(
+                  "flex flex-col rounded-2xl px-4 py-3 text-sm font-semibold shadow-sm transition hover:opacity-90",
+                  variantClass,
+                )}
+              >
+                <span>{item.label}</span>
+                {item.description ? (
+                  <span className="mt-1 text-xs font-normal text-white/80">
+                    {item.description}
+                  </span>
+                ) : null}
+              </a>
+            );
+          }
+          return (
+            <a
+              key={`${item.label}-${index}`}
+              href={item.href}
+              className="rounded-2xl border border-[color:var(--ds-border-muted)] px-4 py-3 text-sm font-semibold text-[color:var(--ds-primary)] underline-offset-4 hover:underline"
+            >
+              <span>{item.label}</span>
+              {item.description ? (
+                <p className="mt-1 text-xs font-normal text-[color:var(--ds-text-muted)]">
+                  {item.description}
+                </p>
+              ) : null}
+            </a>
+          );
+        })}
       </div>
     </section>
   );

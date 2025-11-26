@@ -213,7 +213,6 @@ interface DealCreateFormProps {
   mode?: DealFormMode;
   existingDeal?: DealFormInitialData | null;
   readOnly?: boolean;
-  showWarnings?: boolean;
 }
 
 export function DealCreateForm({
@@ -222,7 +221,6 @@ export function DealCreateForm({
   mode = "create",
   existingDeal,
   readOnly = false,
-  showWarnings = false,
 }: DealCreateFormProps) {
   const initialFormState: DealCreateFormState = useMemo(() => {
     if (!existingDeal) return { ...INITIAL_FORM };
@@ -385,10 +383,6 @@ const [linkedFormId, setLinkedFormId] = useState<string | null>(
     }
   }, [existingDeal]);
 
-  const selectedPartner = useMemo(
-    () => partnerOptions.find((option) => option.id === form.partnerId) ?? null,
-    [form.partnerId, partnerOptions]
-  );
   const currentPartnerTicketDetails = form.partnerId
     ? ticketDetailCache[form.partnerId]
     : undefined;
@@ -576,7 +570,7 @@ const [linkedFormId, setLinkedFormId] = useState<string | null>(
     return () => {
       cancelled = true;
     };
-  }, [form.partnerId, ticketDetailCache]);
+  }, [form.partnerId, ticketDetailCache, hasSavedRequirements]);
 
   useEffect(() => {
     if (!form.partnerId) return;
@@ -968,7 +962,6 @@ const [linkedFormId, setLinkedFormId] = useState<string | null>(
       resetForm,
       router,
       linkedFormId,
-      showWarnings,
       submitting,
       validDays,
       ticketRequirements,

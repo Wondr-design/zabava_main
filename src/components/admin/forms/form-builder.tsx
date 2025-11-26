@@ -386,6 +386,33 @@ function isPricingStep(step: PartnerFormConfig["steps"][number]) {
   return step.variant === "pricing";
 }
 
+function buildDealRequirementLabel(requirement: DealTicketRequirement) {
+  if (requirement.subType) {
+    return `${requirement.subType} · ${requirement.ticketType}`;
+  }
+  return requirement.ticketType;
+}
+
+function doesPricingStepMatchDeal(
+  step: PartnerFormConfig["steps"][number],
+  requirements: DealTicketRequirement[]
+) {
+  if (!isPricingStep(step)) {
+    return false;
+  }
+  const bundles = step.pricing?.bundles ?? [];
+  if (bundles.length !== requirements.length) {
+    return false;
+  }
+  return bundles.every((bundle, index) => {
+    const requirement = requirements[index];
+    return (
+      bundle.ticketType === requirement.ticketType &&
+      bundle.label === buildDealRequirementLabel(requirement)
+    );
+  });
+}
+
 function ensurePricingPayload(
   pricing?: PartnerFormConfig["steps"][number]["pricing"]
 ) {
@@ -626,6 +653,30 @@ export function AdminFormBuilder({
     return draft.config.steps.some((step) => isPricingStep(step));
   }, [draft]);
 
+  const applyDraft = useCallback(
+    (mutator: (form: PartnerFormRecord) => void) => {
+      setDraft((prev) => {
+        if (!prev) return prev;
+        const next = cloneForm(prev);
+        mutator(next);
+        return next;
+      });
+    },
+    [setDraft],
+  );
+
+  const updateConfig = useCallback(
+    (updater: (config: PartnerFormConfig) => PartnerFormConfig | void) => {
+      applyDraft((form) => {
+        const result = updater(form.config);
+        if (result) {
+          form.config = result;
+        }
+      });
+    },
+    [applyDraft],
+  );
+
   // Ensure ALL forms always have a pricing step as the first step (locked)
   useEffect(() => {
     if (!draft) return;
@@ -774,7 +825,7 @@ export function AdminFormBuilder({
     void loadRelationships();
     previousPartnerIdRef.current = partnerId;
     return () => controller.abort();
-  }, [draft?.partnerId, partnerLookup, hasPricingStep]);
+  }, [draft?.partnerId, partnerLookup, hasPricingStep, applyDraft]);
 
   const hasUnsavedChanges = useMemo(() => {
     if (!draft || !selectedForm) return false;
@@ -882,6 +933,15 @@ export function AdminFormBuilder({
     if (!dealId) return;
     const deal = dealLookup.get(dealId);
     if (!deal || !deal.ticketRequirements.length) return;
+    const currentPricingStep = draft.config.steps.find((step) =>
+      isPricingStep(step)
+    );
+    if (
+      currentPricingStep &&
+      doesPricingStepMatchDeal(currentPricingStep, deal.ticketRequirements)
+    ) {
+      return;
+    }
     updateConfig((config) => {
       const steps = config.steps.map((step) => ({ ...step }));
       const pricingIndex = steps.findIndex((step) => isPricingStep(step));
@@ -908,26 +968,6 @@ export function AdminFormBuilder({
       return cleanupConfig({ ...config, steps });
     });
   }, [draft, draft?.dealId, draft?.usageType, dealLookup, updateConfig]);
-
-  function applyDraft(mutator: (form: PartnerFormRecord) => void) {
-    setDraft((prev) => {
-      if (!prev) return prev;
-      const next = cloneForm(prev);
-      mutator(next);
-      return next;
-    });
-  }
-
-  function updateConfig(
-    updater: (config: PartnerFormConfig) => PartnerFormConfig | void
-  ) {
-    applyDraft((form) => {
-      const result = updater(form.config);
-      if (result) {
-        form.config = result;
-      }
-    });
-  }
 
   function updateField(
     fieldId: string,

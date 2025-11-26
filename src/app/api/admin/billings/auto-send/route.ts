@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
       });
       sent += 1;
     } catch (error) {
-      // Log and continue
+      console.error("auto_send_billing_error", error);
       continue;
     }
   }

@@ -8,6 +8,11 @@ import {
   type PublicDealSummary,
 } from "@/lib/data/flash-deals";
 import { SiteNav } from "@/site/components/site-nav";
+import { CmsRenderer } from "@/components/cms/cms-renderer";
+import { getPublishedCmsPage } from "@/lib/data/cms";
+import { getDefaultCmsPage } from "@/lib/cms-defaults";
+import type { CmsRenderableBlock } from "@/lib/data/cms";
+import { resolveLocale, type Locale } from "@/i18n/config";
 
 const DEAL_TYPE_LABELS: Record<DealType, string> = {
   flash: "Flash deal",
@@ -20,6 +25,7 @@ const DEAL_TYPES: DealType[] = ["flash", "weekly_promo", "group"];
 type SearchParams = Record<string, string | string[] | undefined>;
 
 type PageProps = {
+  params: Promise<{ locale: string }>;
   searchParams?: Promise<SearchParams>;
 };
 
@@ -62,16 +68,19 @@ function buildDetailHref(deal: PublicDealSummary) {
   return `/special-flash-deals?deal=${deal.id}`;
 }
 
-export default async function SpecialFlashDealsPage({ searchParams }: PageProps) {
-  const params = (await searchParams) ?? {};
+export default async function SpecialFlashDealsPage({
+  params,
+  searchParams,
+}: PageProps) {
+  const { locale: rawLocale } = await params;
+  const locale = resolveLocale(rawLocale);
+  const query = (await searchParams) ?? {};
 
-  const rawCity = getSingleParam(params.city);
-  const rawTag = getSingleParam(params.tag);
-  const rawAudience = getSingleParam(params.audience);
-  const rawType = getSingleParam(params.type);
-  const rawOnlyActive = getSingleParam(
-    params.onlyActive ?? params.active,
-  );
+  const rawCity = getSingleParam(query.city);
+  const rawTag = getSingleParam(query.tag);
+  const rawAudience = getSingleParam(query.audience);
+  const rawType = getSingleParam(query.type);
+  const rawOnlyActive = getSingleParam(query.onlyActive ?? query.active);
 
   const dealType =
     rawType && DEAL_TYPES.includes(rawType as DealType)
@@ -80,13 +89,16 @@ export default async function SpecialFlashDealsPage({ searchParams }: PageProps)
 
   const onlyActive = rawOnlyActive === "true";
 
-  const result = await listPublicDeals({
-    city: rawCity,
-    tag: rawTag,
-    audience: rawAudience,
-    dealType: dealType ?? null,
-    onlyActive: onlyActive ? true : undefined,
-  });
+  const [result, cmsBlocks] = await Promise.all([
+    listPublicDeals({
+      city: rawCity,
+      tag: rawTag,
+      audience: rawAudience,
+      dealType: dealType ?? null,
+      onlyActive: onlyActive ? true : undefined,
+    }),
+    getSpecialDealsCms(locale),
+  ]);
 
   const { items, facets } = result;
   const activeCount = items.filter((deal) => deal.isActive).length;
@@ -277,6 +289,11 @@ export default async function SpecialFlashDealsPage({ searchParams }: PageProps)
             </div>
           )}
         </section>
+        {cmsBlocks.length ? (
+          <section className="space-y-6 rounded-3xl border border-white/15 bg-white/5 p-6 text-slate-200 backdrop-blur-sm shadow-lg shadow-black/30">
+            <CmsRenderer blocks={cmsBlocks} />
+          </section>
+        ) : null}
       </section>
     </main>
   );
@@ -408,4 +425,19 @@ function DealCard({ deal }: { deal: PublicDealSummary }) {
       </div>
     </article>
   );
+}
+
+async function getSpecialDealsCms(locale: Locale): Promise<CmsRenderableBlock[]> {
+  const published = await getPublishedCmsPage("special-deals", locale);
+  const fallback = getDefaultCmsPage("special-deals", locale);
+  const blocks =
+    published?.blocks ??
+    (fallback?.blocks ?? []).map((block, index) => ({
+      id: `${block.type}-${index}`,
+      type: block.type,
+      sortOrder: index,
+      visible: block.visible ?? true,
+      data: block.data,
+    }));
+  return blocks.filter((block) => block.visible !== false);
 }

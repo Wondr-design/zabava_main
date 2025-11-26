@@ -21,7 +21,7 @@ interface VisitDetailResponse {
 export function VisitDetailPanel({ visit, onClose }: VisitDetailPanelProps) {
   const [open, setOpen] = useState<boolean>(Boolean(visit));
   const [data, setData] = useState<VisitDetailResponse | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {

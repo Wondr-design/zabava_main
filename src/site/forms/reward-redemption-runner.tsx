@@ -151,11 +151,14 @@ export function RewardRedemptionRunner({
   }, [steps]);
   const bookingCap = useMemo(() => {
     const cap =
-      (pricingStep?.pricing as any)?.maxGuestsPerBooking ??
-      (form.config.pricing as any)?.maxGuestsPerBooking ??
+      pricingStep?.pricing?.maxGuestsPerBooking ??
+      form.config.pricing?.maxGuestsPerBooking ??
       null;
     return typeof cap === "number" && cap > 0 ? cap : null;
   }, [pricingStep?.pricing, form.config.pricing]);
+
+  const ticketFieldId =
+    form.config.pricing?.ticketFieldId ?? "ticketType";
 
   // Build bundle catalog for interactive selection
   const bundleCatalog = useMemo(() => {
@@ -218,14 +221,13 @@ export function RewardRedemptionRunner({
           setValues((prev) => ({
             ...prev,
             // Use form config's ticketFieldId if available, otherwise use a default field name
-            [form.config.pricing?.ticketFieldId ?? "ticketType"]:
-              selectedBundle.ticketType,
+            [ticketFieldId]: selectedBundle.ticketType,
           }));
         }
         return next;
       });
     },
-    [bundleCatalog, form.config.pricing]
+    [bundleCatalog, bookingCap, ticketFieldId]
   );
 
   const [currentStep, setCurrentStep] = useState(0);

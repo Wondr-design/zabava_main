@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { useLocalizedRouter } from "@/i18n/use-localized-router";
+import { useEmailVerification } from "@/hooks/use-email-verification";
 
 type InviteStatus = "pending" | "expired" | "accepted";
 
@@ -30,6 +31,31 @@ export default function AdminInviteAcceptPage() {
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [codeInput, setCodeInput] = useState("");
+  const {
+    email: verificationEmail,
+    requestCode,
+    requesting: codeRequesting,
+    verifyCode,
+    verifying: codeVerifying,
+    verifiedAt,
+    expiresAt,
+    error: verificationError,
+    reset: resetVerification,
+  } = useEmailVerification({ type: "admin_signup" });
+
+  const normalizedInviteEmail = invite?.email?.trim().toLowerCase() ?? "";
+  const isEmailVerified =
+    Boolean(verifiedAt) &&
+    normalizedInviteEmail.length > 0 &&
+    verificationEmail?.toLowerCase() === normalizedInviteEmail;
+
+  useEffect(() => {
+    resetVerification();
+    setCodeInput("");
+    setNotice(null);
+  }, [normalizedInviteEmail, resetVerification]);
 
   useEffect(() => {
     async function loadInvite() {
@@ -60,6 +86,7 @@ export default function AdminInviteAcceptPage() {
     if (!token || !invite) return;
     if (submitting) return;
     setError(null);
+    setNotice(null);
 
     if (!password || password.length < 8) {
       setError("Password must be at least 8 characters.");
@@ -67,6 +94,11 @@ export default function AdminInviteAcceptPage() {
     }
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
+      return;
+    }
+
+    if (!isEmailVerified) {
+      setError("Verify the invite email before creating an account.");
       return;
     }
 
@@ -108,6 +140,32 @@ export default function AdminInviteAcceptPage() {
     );
   }
 
+  async function handleRequestCode() {
+    if (!normalizedInviteEmail) {
+      setError("Invite email missing. Contact your administrator.");
+      return;
+    }
+    setError(null);
+    setNotice(null);
+    await requestCode(normalizedInviteEmail);
+    setNotice("Verification code sent. Check your email.");
+  }
+
+  async function handleVerifyCode() {
+    if (!normalizedInviteEmail) {
+      setError("Invite email missing. Contact your administrator.");
+      return;
+    }
+    if (!codeInput.trim()) {
+      setError("Enter the verification code we emailed you.");
+      return;
+    }
+    const ok = await verifyCode(codeInput.trim());
+    if (ok) {
+      setNotice("Email verified. Finish setting up your account.");
+    }
+  }
+
   return (
     <div className="flex min-h-[60vh] items-center justify-center bg-background px-6 py-12">
       <div className="w-full max-w-md space-y-5 rounded-2xl border border-border bg-card p-6 shadow-xl">
@@ -143,8 +201,79 @@ export default function AdminInviteAcceptPage() {
 
         {success ? <p className="text-sm text-emerald-500">{success}</p> : null}
 
+        {notice ? <p className="text-sm text-emerald-500">{notice}</p> : null}
+        {verificationError ? (
+          <p className="text-sm text-destructive">{verificationError}</p>
+        ) : null}
         {invite && invite.status === "pending" ? (
           <form className="space-y-4" onSubmit={onAccept}>
+            <div className="space-y-3 rounded-xl border border-border/80 bg-muted/40 p-3 text-sm">
+              <p className="text-muted-foreground">
+                Verify <span className="font-medium text-foreground">{invite.email}</span> with a
+                one-time code to unlock this form.
+              </p>
+              <div className="space-y-2">
+                <label className="block text-xs font-medium uppercase text-muted-foreground">
+                  Invite email
+                </label>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <input
+                    className="flex-1 rounded border border-input bg-background px-3 py-2 text-sm text-foreground"
+                    value={invite.email}
+                    readOnly
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRequestCode}
+                    disabled={codeRequesting || !normalizedInviteEmail.length || isEmailVerified}
+                    className="rounded bg-muted px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted/80 disabled:opacity-60"
+                  >
+                    {codeRequesting ? "Sending…" : isEmailVerified ? "Code sent" : "Send code"}
+                  </button>
+                </div>
+                {expiresAt && !isEmailVerified ? (
+                  <p className="text-xs text-muted-foreground">
+                    Code expires at {new Date(expiresAt).toLocaleTimeString()}.
+                  </p>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <label className="block text-xs font-medium uppercase text-muted-foreground">
+                  Verification code
+                </label>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <input
+                    className="flex-1 rounded border border-input bg-background px-3 py-2 text-sm text-foreground"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="Enter the emailed code"
+                    value={codeInput}
+                    maxLength={8}
+                    onChange={(event) => setCodeInput(event.target.value)}
+                    disabled={isEmailVerified}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleVerifyCode}
+                    disabled={
+                      isEmailVerified || codeVerifying || codeInput.trim().length === 0
+                    }
+                    className="rounded bg-muted px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted/80 disabled:opacity-60"
+                  >
+                    {codeVerifying ? "Verifying…" : isEmailVerified ? "Verified" : "Verify"}
+                  </button>
+                </div>
+                {isEmailVerified ? (
+                  <p className="text-xs font-medium text-emerald-500">
+                    Email verified. Continue below.
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Request and enter the code sent to {invite.email} to enable account creation.
+                  </p>
+                )}
+              </div>
+            </div>
             <div className="space-y-2">
               <label className="block text-sm text-muted-foreground" htmlFor="invite-name">
                 Name (optional)
@@ -191,7 +320,7 @@ export default function AdminInviteAcceptPage() {
               />
             </div>
             <button
-              disabled={submitting}
+              disabled={submitting || !isEmailVerified}
               className="w-full rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-60"
             >
               {submitting ? "Creating account…" : "Create account"}

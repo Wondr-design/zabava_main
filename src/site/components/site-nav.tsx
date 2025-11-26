@@ -23,6 +23,8 @@ export function SiteNav() {
     { href: "/", label: t("home") },
     { href: "/partners", label: t("partners") },
     { href: "/special-flash-deals", label: t("specialFlashDeals") },
+    { href: "/faq", label: t("faq") },
+    { href: "/reviews", label: t("reviews") },
     { href: "/bonus", label: t("bonus") },
   ];
   const [primaryLocale, secondaryLocale] = locales;

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { withCors, preflightResponse } from "@/lib/http/cors";
 
@@ -11,7 +11,7 @@ export function OPTIONS() {
   return preflightResponse(CORS_CONFIG);
 }
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
 
     return withCors(NextResponse.json({ ticketTypes }), CORS_CONFIG);
   } catch (error) {
+    console.error("ticket_types_error", error);
     return withCors(
       NextResponse.json(
         { error: "Internal server error" },
@@ -48,4 +49,3 @@ export async function GET(req: NextRequest) {
     );
   }
 }
-
