@@ -943,7 +943,10 @@ export function AdminFormBuilder({
   );
 
   useEffect(() => {
-    if (!draft || draft.usageType !== "deal") return;
+    // For deal forms we no longer inject pricing/requirements into the form itself.
+    // The public runner and server validation handle the requirement gate.
+    // This avoids a render loop with the deal-only pricing removal effect.
+    if (!draft || draft.usageType === "deal") return;
     const dealId = draft.dealId;
     if (!dealId) return;
     const deal = dealLookup.get(dealId);
@@ -3134,6 +3137,54 @@ export function AdminFormBuilder({
   function renderSteps() {
     if (!draft) return null;
     const steps = draft.config.steps;
+    const dealRequirementRows =
+      draft.usageType === "deal" && draft.dealId
+        ? dealLookup.get(draft.dealId)?.ticketRequirements ?? []
+        : [];
+    const groupedDealRequirements = (() => {
+      const formatLabel = (value: string) => {
+        if (!value) return value;
+        return value
+          .split(/[\s-_]+/)
+          .filter(Boolean)
+          .map(
+            (part) =>
+              part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+          )
+          .join(" ");
+      };
+      const map = new Map<
+        string,
+        {
+          ticketType: string;
+          items: { subType: string | null; quantity: number }[];
+        }
+      >();
+      dealRequirementRows.forEach((req) => {
+        const key = req.ticketType.toLowerCase();
+        const entry =
+          map.get(key) ??
+          {
+            ticketType: req.ticketType,
+            items: [],
+          };
+        entry.items.push({
+          subType: req.subType ?? null,
+          quantity: req.quantity,
+        });
+        map.set(key, entry);
+      });
+      return Array.from(map.values()).map((entry) => ({
+        ...entry,
+        displayTicketType: formatLabel(entry.ticketType),
+        items: entry.items.map((item) => ({
+          ...item,
+          displaySubType: item.subType ? formatLabel(item.subType) : null,
+        })),
+      }));
+    })();
+    const requirementItemCount = dealRequirementRows.length;
+    const hasDealRequirementStep = requirementItemCount > 0;
     return (
       <Card className="border-slate-200 bg-white shadow-sm">
         <CardHeader>
@@ -3144,6 +3195,81 @@ export function AdminFormBuilder({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
+          {hasDealRequirementStep ? (
+            <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/60">
+              <details open className="group">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-t-xl bg-slate-100/80 px-4 py-3 text-sm font-medium">
+                  <span>Step 1: Ticket requirements (read-only)</span>
+                  <span className="text-xs text-muted-foreground">
+                    {requirementItemCount} requirement
+                    {requirementItemCount === 1 ? "" : "s"}
+                  </span>
+                </summary>
+                <div className="space-y-4 border-t border-slate-200 bg-white/90 px-4 py-5 text-sm">
+                  <p className="text-muted-foreground">
+                    Pulled from the linked flash deal. Users see these
+                    requirements before completing the form.
+                  </p>
+                  <div className="space-y-3">
+                    {groupedDealRequirements.map((group) => {
+                      const hasSubOptions = group.items.some(
+                        (item) => item.subType,
+                      );
+                      const baseItem =
+                        group.items.find((item) => !item.subType) ?? null;
+                      const subItems = hasSubOptions
+                        ? group.items.filter((item) => item.subType)
+                        : [];
+                      return (
+                        <div
+                          key={group.ticketType}
+                          className="space-y-2 rounded-lg border border-slate-100 bg-slate-50 p-3"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-slate-800">
+                                {group.displayTicketType}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                Ticket type: {group.ticketType}
+                              </span>
+                            </div>
+                            {!hasSubOptions && baseItem ? (
+                              <span className="text-xs font-semibold text-slate-700">
+                                Qty {baseItem.quantity}
+                              </span>
+                            ) : null}
+                          </div>
+                          {hasSubOptions ? (
+                            <div className="space-y-1">
+                              {subItems.map((item, idx) => (
+                                <div
+                                  key={`${group.ticketType}-${item.subType ?? "base"}-${idx}`}
+                                  className="flex items-center justify-between rounded-md border border-slate-100 bg-white px-3 py-2"
+                                >
+                                  <div className="flex flex-col">
+                                    <span className="font-semibold text-slate-800">
+                                      {`${group.displayTicketType} · ${item.displaySubType}`}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {`Sub-option: ${item.displaySubType}`}
+                                    </span>
+                                  </div>
+                                  <span className="text-xs font-semibold text-slate-700">
+                                    Qty {item.quantity}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </details>
+            </div>
+          ) : null}
           {steps.map((step, index) => {
             const availableConditionFields = steps
               .slice(0, index)
@@ -3163,13 +3289,14 @@ export function AdminFormBuilder({
                 ? `${pricingMeta.bundles.length} bundles · ${pricingMeta.addons.length} add-ons`
                 : `${step.fields.length} fields`;
 
+            const stepNumber = hasDealRequirementStep ? index + 2 : index + 1;
             return (
               <div key={step.id} className="space-y-3">
                 <div className="rounded-xl border border-slate-200 bg-slate-50/60">
                   <details open className="group">
                     <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-t-xl bg-slate-100/80 px-4 py-3 text-sm font-medium">
                       <span>
-                        Step {index + 1}: {step.title}
+                        Step {stepNumber}: {step.title}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {summaryLabel}
