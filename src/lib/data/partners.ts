@@ -118,9 +118,9 @@ export const partnerStatusSchema = z.enum([
   "hidden",
 ]);
 
-export const partnerTypeSchema = z.enum(["standard", "transport", "taxi"]);
+export const partnerTypeSchema = z.enum(["standard", "transport"]);
 
-export const partnerRelationshipTypeSchema = z.enum(["transport", "taxi"]);
+export const partnerRelationshipTypeSchema = z.enum(["transport"]);
 
 const contractSchema = z
   .object({

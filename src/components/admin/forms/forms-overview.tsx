@@ -48,7 +48,7 @@ import {
 type PartnerOption = {
   id: string;
   displayName: string | null;
-  type?: "standard" | "transport" | "taxi";
+  type?: "standard" | "transport";
 };
 
 const STATUS_LABELS: Record<PartnerFormRecord["status"], string> = {

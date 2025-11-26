@@ -53,7 +53,7 @@ interface CreatePartnerForm {
   partnerId: string;
   displayName: string;
   status: "active" | "pending" | "hidden";
-  type: "standard" | "transport" | "taxi";
+  type: "standard" | "transport";
   contactEmail: string;
   contactName: string;
   contactPhone: string;
@@ -357,7 +357,7 @@ export function PartnersDashboard({
       createForm.assignedStandardPartners.length === 0
     ) {
       toast.error(
-        "Select at least one standard partner to link transportation and taxi partners."
+        "Select at least one standard partner to link transportation partners."
       );
       return;
     }
@@ -433,9 +433,7 @@ export function PartnersDashboard({
       const relationships =
         createForm.type === "standard"
           ? undefined
-          : createForm.type === "transport"
-          ? { transport: createForm.assignedStandardPartners }
-          : { taxi: createForm.assignedStandardPartners };
+          : { transport: createForm.assignedStandardPartners };
       const normalizedWebsite = ensureExternalUrl(createForm.website);
       const normalizedGoogleMap = ensureExternalUrl(createForm.googleMapUrl);
       const payload = {
@@ -630,11 +628,10 @@ export function PartnersDashboard({
                   >
                     <option value="standard">Standard partner</option>
                     <option value="transport">Transportation partner</option>
-                    <option value="taxi">Taxi partner</option>
                   </select>
                   <p className="text-xs text-slate-500">
-                    Transportation and taxi partners can be linked to standard
-                    partners for booking flows.
+                    Transportation partners can be linked to standard partners
+                    for booking flows.
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -680,7 +677,7 @@ export function PartnersDashboard({
                         assignedStandardPartners: value,
                       }))
                     }
-                    placeholder="Create a standard partner first to link transport or taxi partners."
+                    placeholder="Create a standard partner first to link transport partners."
                   />
                 </div>
               ) : null}

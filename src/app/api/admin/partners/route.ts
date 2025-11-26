@@ -25,7 +25,6 @@ const JWT_SECRET = process.env.JWT_SECRET || '';
 
 const parentPartnerAssignmentsSchema = z.object({
   transport: z.array(z.string()).optional(),
-  taxi: z.array(z.string()).optional(),
 });
 
 const listingTierKeySchema = z
@@ -220,18 +219,6 @@ export async function PUT(req: NextRequest) {
     ) {
       await setPartnerParentRelationships(partnerId, 'transport', []);
     }
-    if (
-      parentPartners &&
-      Object.prototype.hasOwnProperty.call(parentPartners, 'taxi')
-    ) {
-      await setPartnerParentRelationships(
-        partnerId,
-        'taxi',
-        parentPartners.taxi ?? []
-      );
-    } else if (payload.type === 'standard' || result.type !== 'taxi') {
-      await setPartnerParentRelationships(partnerId, 'taxi', []);
-    }
     revalidatePublicDirectory();
     return withCors(NextResponse.json(result), CORS_CONFIG);
   } catch (err) {
@@ -354,16 +341,6 @@ export async function POST(req: NextRequest) {
         normalizedId,
         'transport',
         payload.parentPartners?.transport ?? []
-      );
-    }
-    if (
-      payload.type === 'taxi' ||
-      (payload.parentPartners && payload.parentPartners.taxi)
-    ) {
-      await setPartnerParentRelationships(
-        normalizedId,
-        'taxi',
-        payload.parentPartners?.taxi ?? []
       );
     }
     revalidatePublicDirectory();

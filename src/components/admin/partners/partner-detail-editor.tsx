@@ -1024,7 +1024,6 @@ export function PartnerDetailEditor({
   const [partnerType, setPartnerType] =
     useState<PartnerMeta["type"]>("standard");
   const [transportParentIds, setTransportParentIds] = useState<string[]>([]);
-  const [taxiParentIds, setTaxiParentIds] = useState<string[]>([]);
   const [isFeatured, setIsFeatured] = useState(false);
   const [loadingMeta, setLoadingMeta] = useState(false);
   const sensors = useSensors(
@@ -1121,16 +1120,13 @@ export function PartnerDetailEditor({
   );
   const activeParentIds = useMemo(() => {
     if (partnerType === "transport") return transportParentIds;
-    if (partnerType === "taxi") return taxiParentIds;
     return [] as string[];
-  }, [partnerType, transportParentIds, taxiParentIds]);
+  }, [partnerType, transportParentIds]);
 
   const handleParentSelectionChange = useCallback(
     (nextIds: string[]) => {
       if (partnerType === "transport") {
         setTransportParentIds(nextIds);
-      } else if (partnerType === "taxi") {
-        setTaxiParentIds(nextIds);
       }
     },
     [partnerType]
@@ -1399,7 +1395,7 @@ export function PartnerDetailEditor({
         item?: PartnerMeta | null;
         relationships?: Array<{
           parentPartnerId: string;
-          relationship: "transport" | "taxi";
+          relationship: "transport";
         }>;
       };
       const item = response?.item ?? null;
@@ -1409,11 +1405,7 @@ export function PartnerDetailEditor({
       const transportParents = relationships
         .filter((rel) => rel.relationship === "transport")
         .map((rel) => rel.parentPartnerId);
-      const taxiParents = relationships
-        .filter((rel) => rel.relationship === "taxi")
-        .map((rel) => rel.parentPartnerId);
       setTransportParentIds(transportParents);
-      setTaxiParentIds(taxiParents);
       if (item) {
         setStatus(item.status);
         setPartnerType(item.type ?? "standard");
@@ -1439,7 +1431,6 @@ export function PartnerDetailEditor({
         setStatus("active");
         setPartnerType("standard");
         setTransportParentIds([]);
-        setTaxiParentIds([]);
         setProfileForm(buildProfileFormFromMeta(null, activePartnerId));
         setPricingForm(buildPricingFormFromMeta(null));
         setTicketTypesForm([]);
@@ -1459,7 +1450,6 @@ export function PartnerDetailEditor({
       setStatus("active");
       setPartnerType("standard");
       setTransportParentIds([]);
-      setTaxiParentIds([]);
       setProfileForm(buildProfileFormFromMeta(null, activePartnerId));
       setPricingForm(buildPricingFormFromMeta(null));
       setTicketTypesForm([]);
@@ -1743,7 +1733,7 @@ export function PartnerDetailEditor({
     }
     if (partnerType !== "standard" && activeParentIds.length === 0) {
       toast.error(
-        "Select at least one linked standard partner for transportation and taxi profiles."
+        "Select at least one linked standard partner for transportation profiles."
       );
       return;
     }
@@ -1949,10 +1939,8 @@ export function PartnerDetailEditor({
       const uniqueCategoryIds = Array.from(new Set(selectedCategories));
       const parentPartnersPayload =
         partnerType === "standard"
-          ? { transport: [] as string[], taxi: [] as string[] }
-          : partnerType === "transport"
-          ? { transport: transportParentIds }
-          : { taxi: taxiParentIds };
+          ? { transport: [] as string[] }
+          : { transport: transportParentIds };
       const ticketTypesPayload = Array.from(
         new Set(
           ticketTypesForm.map((value) => value.trim()).filter((value) => value)
@@ -2276,12 +2264,11 @@ export function PartnerDetailEditor({
                   <SelectItem value="transport">
                     Transportation partner
                   </SelectItem>
-                  <SelectItem value="taxi">Taxi partner</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Transportation and taxi partners are linked to standard partners
-                for booking flows.
+                Transportation partners are linked to standard partners for
+                booking flows.
               </p>
             </div>
             <div className="space-y-2">
@@ -2314,14 +2301,14 @@ export function PartnerDetailEditor({
                 <Label>Linked standard partners</Label>
                 <p className="text-xs text-muted-foreground">
                   Choose the primary partners that should reveal this transport
-                  or taxi option inside their booking forms.
+                  option inside their booking forms.
                 </p>
               </div>
               <MultiSelect
                 options={standardPartnerOptions}
                 value={activeParentIds}
                 onChange={handleParentSelectionChange}
-                placeholder="Create a standard partner first to link transport or taxi providers."
+                placeholder="Create a standard partner first to link transport providers."
                 className="rounded-xl border border-slate-200/70 bg-white p-3 text-sm dark:border-slate-700/70 dark:bg-slate-900"
               />
             </div>

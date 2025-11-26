@@ -69,7 +69,7 @@ import { ImageUploadField } from "@/components/admin/media/image-upload-field";
 type PartnerOption = {
   id: string;
   displayName: string | null;
-  type?: "standard" | "transport" | "taxi";
+  type?: "standard" | "transport";
 };
 
 type DealOption = {
@@ -2479,7 +2479,7 @@ export function AdminFormBuilder({
             <span>Transport settings</span>
             <span className="text-xs uppercase tracking-wide text-slate-500">
               {transport.enabled ? "Enabled" : "Disabled"} · linked{" "}
-              {linkedTransportCount} bus / {linkedTaxiCount} taxi
+              {linkedTransportCount} partners
             </span>
           </summary>
           <div className="space-y-4 border-t border-slate-200 bg-white/90 p-4">
@@ -2698,7 +2698,7 @@ export function AdminFormBuilder({
                   <p className="font-medium text-slate-900">Partner list</p>
                   <p className="text-sm text-slate-500">
                     Displayed when transport is set to “Yes”. Sync pulls active
-                    transport and taxi partners linked to this merchant.
+                    transport partners linked to this merchant.
                   </p>
                 </div>
 
@@ -3014,19 +3014,13 @@ export function AdminFormBuilder({
     [childRelationships]
   );
 
-  const linkedTaxiCount = useMemo(
-    () =>
-      childRelationships.filter((rel) => rel.relationship === "taxi").length,
-    [childRelationships]
-  );
-
   function handleSyncTransportPartners() {
     if (!draft) return;
     const relevantRelationships = childRelationships.filter(
-      (rel) => rel.relationship === "transport" || rel.relationship === "taxi"
+      (rel) => rel.relationship === "transport"
     );
     if (relevantRelationships.length === 0) {
-      toast.info("No linked transport or taxi partners to sync.");
+      toast.info("No linked transport partners to sync.");
       return;
     }
     const unique = new Map<string, PartnerRelationship>();
@@ -3045,13 +3039,11 @@ export function AdminFormBuilder({
       t.partners = Array.from(unique.values()).map((rel) => {
         const partner = partnerLookup.get(rel.childPartnerId);
         const label = partner?.displayName?.trim() || rel.childPartnerId;
-        const relationshipLabel =
-          rel.relationship === "taxi" ? "Taxi" : "Transport";
         return {
           id: rel.childPartnerId,
           label,
           value: rel.childPartnerId,
-          description: `${relationshipLabel} partner`,
+          description: "Transport partner",
         };
       });
       return { ...config, transport: t };
