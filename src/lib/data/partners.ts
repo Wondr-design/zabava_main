@@ -120,6 +120,8 @@ export const partnerStatusSchema = z.enum([
 
 export const partnerTypeSchema = z.enum(["standard", "transport"]);
 
+export const transportationTypeSchema = z.enum(["taxi", "bus", "limousine"]);
+
 export const partnerRelationshipTypeSchema = z.enum(["transport"]);
 
 const contractSchema = z
@@ -240,6 +242,9 @@ export const partnerMetaUpdateSchema = z
     displayName: z.string().optional(),
     status: partnerStatusSchema.optional(),
     type: partnerTypeSchema.optional(),
+    transportationType: transportationTypeSchema
+      .nullable()
+      .optional(),
     listingTierKey: z
       .union([
         z
@@ -332,6 +337,7 @@ export interface PartnerMeta {
   displayName: string | null;
   status: "active" | "pending" | "hidden";
   type: z.infer<typeof partnerTypeSchema>;
+  transportationType: z.infer<typeof transportationTypeSchema> | null;
   contract: PartnerMetaContract;
   ticketing: PartnerMetaTicketing;
   info: PartnerMetaInfo;
@@ -349,6 +355,7 @@ interface PartnerRow {
   display_name: string | null;
   status: string | null;
   type: string | null;
+  transportation_type: string | null;
   contact_email: string | null;
   contact_name: string | null;
   tags: string[] | null;
@@ -449,6 +456,7 @@ function buildDefaultPartnerMeta(partnerId: string): PartnerMeta {
     displayName: partnerId,
     status: "active",
     type: "standard",
+    transportationType: null,
     contract: { ...DEFAULT_CONTRACT },
     ticketing: {
       ...DEFAULT_TICKETING,
@@ -728,6 +736,21 @@ function mergePartnerMeta(
     }
   }
 
+  if (updates.transportationType !== undefined) {
+    if (
+      updates.transportationType === null ||
+      typeof updates.transportationType === "string"
+    ) {
+      const parsedTransportation = updates.transportationType === null
+        ? { success: true, data: null }
+        : transportationTypeSchema.safeParse(updates.transportationType);
+      if (parsedTransportation.success) {
+        merged.transportationType =
+          parsedTransportation.data ?? merged.transportationType ?? null;
+      }
+    }
+  }
+
   if (updates.listingTierKey !== undefined) {
     if (
       typeof updates.listingTierKey === "string" &&
@@ -941,6 +964,12 @@ function mergePartnerMeta(
     merged.tags = sanitizeStringArray(updates.tags);
   }
 
+  if (merged.type !== "transport") {
+    merged.transportationType = null;
+  } else if (!merged.transportationType) {
+    merged.transportationType = "taxi";
+  }
+
   merged.updatedAt = new Date().toISOString();
   return merged;
 }
@@ -1071,12 +1100,22 @@ function mapRowToMeta(
 
   const parsedType = partnerTypeSchema.safeParse(row.type);
   const partnerType = parsedType.success ? parsedType.data : base.type;
+  const parsedTransportationType = transportationTypeSchema.safeParse(
+    row.transportation_type ?? undefined
+  );
+  const transportationType =
+    partnerType === "transport"
+      ? parsedTransportationType.success
+        ? parsedTransportationType.data
+        : "taxi"
+      : null;
 
   return {
     partnerId: row.id,
     displayName: row.display_name ?? row.id,
     status: statusFromRow(row.status),
     type: partnerType,
+    transportationType,
     contract,
     ticketing,
     info,
@@ -1104,6 +1143,8 @@ function metaToRow(meta: PartnerMeta): Partial<PartnerRow> & { id: string } {
     display_name: meta.displayName ?? meta.partnerId,
     status: rowStatus,
     type: meta.type,
+    transportation_type:
+      meta.type === "transport" ? meta.transportationType ?? "taxi" : null,
     contact_email: meta.info.contactEmail || null,
     contact_name: meta.info.contactName || null,
     tags: meta.tags,

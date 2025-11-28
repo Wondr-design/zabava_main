@@ -37,6 +37,7 @@ import { Switch } from "@/components/ui/switch";
 import { PartnersTable } from "@/components/partners/partners-table";
 import { useGlobalValues } from "@/hooks/use-global-values";
 import { ensureExternalUrl } from "@/lib/utils/url";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface PartnersDashboardProps {
   overviewPartners: PartnerOverview[];
@@ -54,6 +55,7 @@ interface CreatePartnerForm {
   displayName: string;
   status: "active" | "pending" | "hidden";
   type: "standard" | "transport";
+  transportationType: "taxi" | "bus" | "limousine";
   contactEmail: string;
   contactName: string;
   contactPhone: string;
@@ -150,6 +152,7 @@ const DEFAULT_CREATE_FORM: CreatePartnerForm = {
   displayName: "",
   status: "active",
   type: "standard",
+  transportationType: "taxi",
   contactEmail: "",
   contactName: "",
   contactPhone: "",
@@ -193,6 +196,9 @@ export function PartnersDashboard({
   const [creatingPartner, setCreatingPartner] = useState(false);
   const [overviewList, setOverviewList] = useState(overviewPartners);
   const [partnerEntries, setPartnerEntries] = useState(directory.partners);
+  const [activeTab, setActiveTab] = useState<"standard" | "transport">(
+    "standard",
+  );
 
   useEffect(() => {
     setOverviewList(overviewPartners);
@@ -217,6 +223,21 @@ export function PartnersDashboard({
     });
     return map;
   }, [overviewList]);
+  const transportCount = useMemo(
+    () => overviewList.filter((partner) => partner.type === "transport").length,
+    [overviewList],
+  );
+  const standardCount = useMemo(
+    () => overviewList.length - transportCount,
+    [overviewList, transportCount],
+  );
+  const filteredOverview = useMemo(() => {
+    return overviewList.filter((partner) =>
+      activeTab === "transport"
+        ? partner.type === "transport"
+        : partner.type !== "transport",
+    );
+  }, [overviewList, activeTab]);
   const standardPartnerOptions = useMemo(
     () =>
       overviewList
@@ -441,6 +462,10 @@ export function PartnersDashboard({
         displayName,
         status: createForm.status,
         type: createForm.type,
+        transportationType:
+          createForm.type === "transport"
+            ? createForm.transportationType
+            : null,
         contactEmail: createForm.contactEmail.trim(),
         contactName: createForm.contactName.trim() || undefined,
         contactPhone: createForm.contactPhone.trim() || undefined,
@@ -618,6 +643,10 @@ export function PartnersDashboard({
                       setCreateForm((prev) => ({
                         ...prev,
                         type: nextType,
+                        transportationType:
+                          nextType === "transport"
+                            ? prev.transportationType ?? "taxi"
+                            : "taxi",
                         assignedStandardPartners:
                           nextType === "standard"
                             ? []
@@ -634,6 +663,29 @@ export function PartnersDashboard({
                     for booking flows.
                   </p>
                 </div>
+                {createForm.type === "transport" ? (
+                  <div className="space-y-2">
+                    <Label>Transportation type</Label>
+                    <select
+                      value={createForm.transportationType}
+                      onChange={(event) =>
+                        setCreateForm((prev) => ({
+                          ...prev,
+                          transportationType: event.target
+                            .value as CreatePartnerForm["transportationType"],
+                        }))
+                      }
+                      className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+                    >
+                      <option value="taxi">Taxi</option>
+                      <option value="limousine">Limousine</option>
+                      <option value="bus">Bus</option>
+                    </select>
+                    <p className="text-xs text-slate-500">
+                      Specify the service type customers should see.
+                    </p>
+                  </div>
+                ) : null}
                 <div className="space-y-2">
                   <Label>Listing tier</Label>
                   <select
@@ -1097,13 +1149,40 @@ export function PartnersDashboard({
 
   return (
     <div className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) =>
+          setActiveTab(value as "standard" | "transport")
+        }
+        className="w-full"
+      >
+        <TabsList className="flex w-full max-w-md gap-2">
+          <TabsTrigger value="standard" className="flex-1">
+            Partners
+            <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+              {standardCount}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="transport" className="flex-1">
+            Transportation
+            <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+              {transportCount}
+            </span>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       <PartnersTable
-        partners={overviewList}
+        partners={filteredOverview}
         actions={
         <Button
           type="button"
           onClick={() => {
             resetCreateForm();
+            setCreateForm((prev) => ({
+              ...prev,
+              type: activeTab === "transport" ? "transport" : "standard",
+            }));
             setView("create");
             syncRouteState("create");
           }}

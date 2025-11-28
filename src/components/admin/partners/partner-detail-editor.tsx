@@ -1023,6 +1023,9 @@ export function PartnerDetailEditor({
   const [status, setStatus] = useState<PartnerMeta["status"]>("active");
   const [partnerType, setPartnerType] =
     useState<PartnerMeta["type"]>("standard");
+  const [transportationType, setTransportationType] = useState<
+    "taxi" | "bus" | "limousine"
+  >("taxi");
   const [transportParentIds, setTransportParentIds] = useState<string[]>([]);
   const [isFeatured, setIsFeatured] = useState(false);
   const [loadingMeta, setLoadingMeta] = useState(false);
@@ -1409,6 +1412,9 @@ export function PartnerDetailEditor({
       if (item) {
         setStatus(item.status);
         setPartnerType(item.type ?? "standard");
+        setTransportationType(
+          item.transportationType ?? (item.type === "transport" ? "taxi" : "taxi")
+        );
         setProfileForm(buildProfileFormFromMeta(item, activePartnerId));
         setPricingForm(buildPricingFormFromMeta(item));
         setTicketTypesForm(item.ticketing?.ticketTypes ?? []);
@@ -1430,6 +1436,7 @@ export function PartnerDetailEditor({
       } else {
         setStatus("active");
         setPartnerType("standard");
+        setTransportationType("taxi");
         setTransportParentIds([]);
         setProfileForm(buildProfileFormFromMeta(null, activePartnerId));
         setPricingForm(buildPricingFormFromMeta(null));
@@ -1449,6 +1456,7 @@ export function PartnerDetailEditor({
       toast.error("Unable to load partner profile details.");
       setStatus("active");
       setPartnerType("standard");
+      setTransportationType("taxi");
       setTransportParentIds([]);
       setProfileForm(buildProfileFormFromMeta(null, activePartnerId));
       setPricingForm(buildPricingFormFromMeta(null));
@@ -2008,6 +2016,8 @@ export function PartnerDetailEditor({
             displayName: normalizedDisplayName,
             status,
             type: partnerType,
+            transportationType:
+              partnerType === "transport" ? transportationType : null,
             listingTierKey,
             info: infoPayload,
             contract: contractPayload,
@@ -2037,6 +2047,9 @@ export function PartnerDetailEditor({
       if (updatedMeta) {
         setStatus(updatedMeta.status);
         setPartnerType(updatedMeta.type);
+        setTransportationType(
+          updatedMeta.transportationType ?? "taxi"
+        );
         setProfileForm(buildProfileFormFromMeta(updatedMeta, activePartnerId));
         setPricingForm(buildPricingFormFromMeta(updatedMeta));
         setNotes(updatedMeta.notes ?? []);
@@ -2259,18 +2272,44 @@ export function PartnerDetailEditor({
                 <SelectTrigger className="w-full justify-between">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="standard">Standard partner</SelectItem>
+                <SelectItem value="transport">
+                  Transportation partner
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Transportation partners are linked to standard partners for
+              booking flows.
+            </p>
+          </div>
+          {partnerType === "transport" ? (
+            <div className="space-y-2">
+              <Label>Transportation type</Label>
+              <Select
+                value={transportationType}
+                onValueChange={(value) =>
+                  setTransportationType(
+                    value as "taxi" | "bus" | "limousine",
+                  )
+                }
+                disabled={loadingMeta || saving}
+              >
+                <SelectTrigger className="w-full justify-between">
+                  <SelectValue placeholder="Select transport service" />
+                </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="standard">Standard partner</SelectItem>
-                  <SelectItem value="transport">
-                    Transportation partner
-                  </SelectItem>
+                  <SelectItem value="taxi">Taxi</SelectItem>
+                  <SelectItem value="limousine">Limousine</SelectItem>
+                  <SelectItem value="bus">Bus</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Transportation partners are linked to standard partners for
-                booking flows.
+                This label appears anywhere the transport partner is shown.
               </p>
             </div>
+          ) : null}
             <div className="space-y-2">
               <Label>Partner status</Label>
               <Select

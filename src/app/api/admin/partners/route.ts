@@ -12,6 +12,7 @@ import {
   partnerStatusSchema,
   partnerExists,
   partnerTypeSchema,
+  transportationTypeSchema,
   partnerNoteSchema,
   setPartnerParentRelationships,
   getPartnerRelationshipsForChild,
@@ -54,6 +55,7 @@ const partnerCreateSchema = z.object({
   displayName: z.string().min(1).optional(),
   status: partnerStatusSchema.optional(),
   type: partnerTypeSchema.default('standard'),
+  transportationType: transportationTypeSchema.optional(),
   contactEmail: z.string().email().optional(),
   contactName: z.string().optional(),
   contactPhone: z.string().optional(),
@@ -326,6 +328,10 @@ export async function POST(req: NextRequest) {
       displayName: payload.displayName ?? payload.partnerId,
       status: payload.status,
       type: payload.type,
+      transportationType:
+        payload.type === 'transport'
+          ? payload.transportationType ?? 'taxi'
+          : null,
       listingTierKey,
       contract: contractUpdates,
       info: infoUpdates,
