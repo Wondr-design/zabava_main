@@ -9,7 +9,7 @@ import { NormalizedVisitRecord } from "@/lib/services/visit-normalizer";
 import { formatDateTime } from "@/lib/format/date";
 import { formatCurrencyCZK } from "@/lib/format/currency";
 import { toast } from "sonner";
-import { AdminDrawerVisibilityContext } from "@/app/[locale]/(site)/admin/admin-shell";
+import { AdminDrawerVisibilityContext } from "@/app/[locale]/admin/admin-shell";
 import {
   extractVisitLinks,
   expandVisitPayload,

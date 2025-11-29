@@ -13,7 +13,7 @@ import {
   DrawerFooter,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import "../../../../styles/theme-staff.css";
+import "../../../styles/theme-staff.css";
 import { LogOut, Menu, X } from "lucide-react";
 import { LocalizedLink } from "@/components/ui/localized-link";
 import { useLocalizedRouter } from "@/i18n/use-localized-router";

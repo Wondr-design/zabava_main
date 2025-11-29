@@ -3,7 +3,7 @@
 import { ReactNode, useMemo } from "react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { usePathname } from "next/navigation";
-import "../../../../styles/theme-partner.css";
+import "../../../styles/theme-partner.css";
 import { LocalizedLink } from "@/components/ui/localized-link";
 import { useLocale } from "@/i18n/provider";
 import { buildLocalizedPath } from "@/i18n/routing";
