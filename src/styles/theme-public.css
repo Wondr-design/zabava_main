@@ -1,0 +1,76 @@
+.theme-public {
+  color-scheme: light;
+
+  /* Typography */
+  --ds-text-strong: #2f2e28;
+  --ds-text-muted: #8d8a7a;
+  --ds-text-subtle: #b3af9e;
+  --ds-text-inverse: #fdfcf7;
+
+  /* Surfaces */
+  --ds-surface-base: #f5f3ed;
+  --ds-surface-muted: #ece8de;
+  --ds-surface-card: #fcfbf7;
+  --ds-surface-elevated: #ebe6d8;
+  --ds-surface-popover: #ffffff;
+
+  /* Borders & shadows */
+  --ds-border-subtle: #d9d3c6;
+  --ds-border-strong: #bcb49c;
+  --ds-focus-ring: #7b7755;
+  --ds-shadow-soft: 0 24px 60px rgba(47, 46, 40, 0.08);
+  --ds-shadow-popover: 0 28px 70px rgba(47, 46, 40, 0.12);
+  --ds-overlay: color(srgb 0 0 0 / 0.3);
+
+  /* Interaction */
+  --ds-primary: #7b7755;
+  --ds-primary-foreground: var(--ds-text-inverse);
+  --ds-secondary: #b5b28e;
+  --ds-secondary-foreground: var(--ds-text-strong);
+  --ds-success: #c9e0c1;
+  --ds-warning: #f5d4ba;
+  --ds-danger: #d99282;
+
+  /* Charts */
+  --ds-chart-1: #7b7755;
+  --ds-chart-2: #b5b28e;
+  --ds-chart-3: #f5d4ba;
+  --ds-chart-4: #d9c8b4;
+  --ds-chart-5: #8d8a7a;
+}
+
+.dark .theme-public {
+  color-scheme: dark;
+
+  --ds-text-strong: #f5f3ed;
+  --ds-text-muted: #c7c2b3;
+  --ds-text-subtle: #a5a08f;
+  --ds-text-inverse: #23211a;
+
+  --ds-surface-base: #070011;
+  --ds-surface-muted: #2f2c25;
+  --ds-surface-card: #343026;
+  --ds-surface-elevated: #3b362b;
+  --ds-surface-popover: #423b30;
+
+  --ds-border-subtle: #3f3a32;
+  --ds-border-strong: #5c5646;
+  --ds-focus-ring: #d9c8b4;
+  --ds-shadow-soft: 0 24px 60px rgba(0, 0, 0, 0.45);
+  --ds-shadow-popover: 0 28px 70px rgba(0, 0, 0, 0.55);
+  --ds-overlay: color(srgb 0 0 0 / 0.55);
+
+  --ds-primary: #d0c9a8;
+  --ds-primary-foreground: #26241f;
+  --ds-secondary: #4a4736;
+  --ds-secondary-foreground: #f0eee5;
+  --ds-success: #9fc793;
+  --ds-warning: #f0c7a6;
+  --ds-danger: #d3a094;
+
+  --ds-chart-1: #d0c9a8;
+  --ds-chart-2: #7b7755;
+  --ds-chart-3: #f0c7a6;
+  --ds-chart-4: #9fc793;
+  --ds-chart-5: #8d8a7a;
+}

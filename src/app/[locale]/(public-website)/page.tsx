@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 
 import { HomeHero } from "@/site/sections/home-hero";
-import { FeaturedPartners } from "@/site/partners/featured-partners";
+import { PartnerLogoMarquee } from "@/site/partners/partner-logo-marquee";
 import { SiteNav } from "@/site/components/site-nav";
 import { getPublicDirectory } from "@/lib/data/site-directory";
 import {
@@ -38,30 +38,19 @@ export default async function HomePage({ params }: HomePageProps) {
   const featuredPool = partners.filter((partner) => partner.isFeatured);
   const prioritizedPartners = featuredPool.length > 0 ? featuredPool : partners;
 
-  const featuredPartners = prioritizedPartners.map((partner) => ({
+  const partnerLogos = prioritizedPartners.map((partner) => ({
     partnerId: partner.partnerId,
     slug: partner.slug,
     name: partner.name,
-    description: partner.description,
+    logoUrl: partner.media.logoUrl,
     heroImageUrl: partner.heroImageUrl,
-    isFeatured: partner.isFeatured,
-    categories: partner.categories.map((category) => ({
-      id: category.id,
-      name: category.name,
-      slug: category.slug,
-    })),
-    highlights: partner.highlights,
-    ctaPrimaryLabel: partner.ctaPrimaryLabel,
-    selectedFormId: partner.selectedFormId,
   }));
 
   return (
-    <main className="flex min-h-screen flex-col bg-slate-950 text-white">
+    <main className="flex min-h-screen flex-col text-white relative z-10">
       <SiteNav />
       <HomeHero categories={heroCategories} />
-      <Suspense fallback={null}>
-        <FeaturedPartners partners={featuredPartners} />
-      </Suspense>
+      <PartnerLogoMarquee partners={partnerLogos} />
       <HomeReviews {...homeCms.reviews} />
       <HomeFaq {...homeCms.faq} />
     </main>

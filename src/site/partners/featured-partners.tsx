@@ -1,12 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { MapPin, Star } from "lucide-react";
+import { MapPin, Star, ArrowRight } from "lucide-react";
 import { motion, type Variants } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 import { useTranslations } from "@/i18n/provider";
 import { LocalizedLink } from "@/components/ui/localized-link";
+import { Badge } from "@/components/ui/badge";
 
 export interface FeaturedPartner {
   partnerId: string;
@@ -35,49 +36,52 @@ export function FeaturedPartners({
   if (partners.length === 0) return null;
 
   const cardVariants: Variants = {
-    hidden: { opacity: 0, y: 24 },
+    hidden: { opacity: 0, y: 20 },
     visible: (index: number = 0) => ({
       opacity: 1,
       y: 0,
       transition: {
         type: "spring",
-        stiffness: 140,
-        damping: 18,
-        delay: index * 0.08,
+        stiffness: 100,
+        damping: 15,
+        delay: index * 0.05,
       },
     }),
   };
 
   return (
-    <section className="bg-gradient-to-b from-slate-900/60 via-slate-950/40 to-slate-950 py-16 sm:py-20 lg:py-24">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 sm:gap-12 sm:px-6 lg:px-8">
+    <section className="relative py-20 sm:py-24">
+      <div className="mx-auto max-w-[120rem] px-4 lg:px-24">
         <motion.div
-          className="flex flex-col gap-3 sm:gap-4"
-          initial={{ opacity: 0, y: 24 }}
+          className="mb-12 flex flex-col items-center text-center"
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.4 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+          transition={{ duration: 0.5 }}
         >
-          <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.3em] text-violet-300">
+          <Badge
+            variant="outline"
+            className="mb-4 border-indigo-500/30 bg-indigo-500/10 text-indigo-300"
+          >
             {t("tagline")}
-          </span>
-          <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white via-violet-200 to-purple-200 bg-clip-text text-transparent sm:text-4xl md:text-5xl">
+          </Badge>
+          <h2 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
             {t("headline")}
           </h2>
-          <p className="max-w-2xl text-base text-slate-200 leading-relaxed sm:text-lg">
+          <p className="mt-4 max-w-2xl text-lg text-slate-400">
             {t("description")}
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-8 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {partners.map((partner, index) => (
             <motion.article
               key={partner.partnerId}
-              className="group flex h-full flex-col overflow-hidden rounded-3xl border border-white/20 bg-gradient-to-br from-white/10 via-white/5 to-white/5 shadow-lg shadow-black/30 backdrop-blur transition hover:-translate-y-1 hover:border-violet-400/60 hover:shadow-violet-500/20"
+              className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/5 transition-all duration-300 hover:border-indigo-500/50 hover:bg-white/10 hover:shadow-2xl hover:shadow-indigo-500/10"
               variants={cardVariants}
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: true, amount: 0.2 }}
+              viewport={{ once: true, amount: 0.1 }}
               custom={index}
             >
               <div className="relative aspect-[4/3] overflow-hidden">
@@ -86,88 +90,84 @@ export function FeaturedPartners({
                     src={partner.heroImageUrl}
                     alt={partner.name}
                     fill
-                    className="object-cover transition duration-500 group-hover:scale-105"
+                    className="object-cover transition duration-700 group-hover:scale-105"
                     sizes="(max-width: 1024px) 100vw, 33vw"
                     priority={false}
                   />
                 ) : (
-                  <div className="flex h-full items-center justify-center bg-gradient-to-br from-indigo-500/30 via-slate-800/40 to-slate-900 text-3xl font-semibold text-white/40">
+                  <div className="flex h-full items-center justify-center bg-slate-900 text-3xl font-bold text-slate-700">
                     {partner.name.slice(0, 2).toUpperCase()}
                   </div>
                 )}
-                {partner.isFeatured !== false ? (
-                  <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-gradient-to-t from-slate-950/90 to-transparent px-4 sm:px-5 pb-3 sm:pb-4 pt-12 sm:pt-14 text-xs uppercase tracking-[0.25em] text-violet-200">
-                    <Star className="h-3 w-3 text-amber-400" />
-                    {t("badge")}
+
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0" />
+
+                {partner.isFeatured !== false && (
+                  <div className="absolute top-4 right-4">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-amber-400 shadow-lg">
+                      <Star className="h-4 w-4 fill-current" />
+                    </div>
                   </div>
-                ) : null}
+                )}
+
+                <div className="absolute bottom-4 left-4 right-4">
+                  <div className="flex flex-wrap gap-2">
+                    {partner.categories.slice(0, 2).map((category) => (
+                      <span
+                        key={category.id}
+                        className="inline-flex items-center rounded-full bg-black/50 border border-white/10 px-2.5 py-0.5 text-xs font-medium text-white backdrop-blur-md"
+                      >
+                        {category.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              <div className="flex flex-1 flex-col gap-4 sm:gap-6 p-4 sm:p-6">
-                <div className="flex flex-col gap-2 sm:gap-3">
-                  <h3 className="text-lg sm:text-xl font-semibold text-white">
-                    {partner.name}
-                  </h3>
-                  {partner.description ? (
-                    <p className="text-sm text-slate-200 leading-relaxed line-clamp-3">
-                      {partner.description}
-                    </p>
-                  ) : null}
-                </div>
+              <div className="flex flex-1 flex-col p-6">
+                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-indigo-300 transition-colors">
+                  {partner.name}
+                </h3>
 
-                {partner.highlights && partner.highlights.length > 0 ? (
-                  <ul className="space-y-2">
-                    {partner.highlights.slice(0, 3).map((highlight) => (
+                {partner.description ? (
+                  <p className="text-sm text-slate-400 line-clamp-2 mb-4 flex-grow">
+                    {partner.description}
+                  </p>
+                ) : (
+                  <div className="flex-grow" />
+                )}
+
+                {partner.highlights && partner.highlights.length > 0 && (
+                  <ul className="mb-6 space-y-2">
+                    {partner.highlights.slice(0, 2).map((highlight) => (
                       <li
                         key={highlight.id}
-                        className="flex items-start gap-2 text-sm text-slate-200"
+                        className="flex items-start text-sm text-slate-300"
                       >
-                        <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-violet-400 shadow-[0_0_10px_rgba(139,92,246,0.6)]" />
-                        <span className="line-clamp-2">
-                          <strong className="text-slate-100">
-                            {highlight.title}
-                          </strong>
-                          {highlight.description
-                            ? ` – ${highlight.description}`
-                            : null}
-                        </span>
+                        <span className="mr-2 mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-indigo-500" />
+                        <span className="line-clamp-1">{highlight.title}</span>
                       </li>
                     ))}
                   </ul>
-                ) : null}
+                )}
 
-                <div className="mt-auto flex flex-wrap items-center gap-2">
-                  {partner.categories.map((category) => (
-                    <LocalizedLink
-                      key={category.id}
-                      href={`/categories/${category.slug}`}
-                      className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-medium text-slate-200 transition hover:border-violet-300 hover:bg-white/10 hover:text-white min-h-[28px] touch-manipulation"
-                    >
-                      <MapPin className="h-3 w-3 text-violet-300" />
-                      {category.name}
-                    </LocalizedLink>
-                  ))}
-                </div>
-
-                <div className="flex flex-col gap-2 sm:gap-3 pt-2">
+                <div className="mt-auto grid grid-cols-2 gap-3">
                   <LocalizedLink
                     href={`/partners/${partner.slug}`}
-                    className={cn(
-                      "inline-flex items-center justify-center gap-2 rounded-full border border-violet-300/70 px-4 py-2.5 text-sm font-medium text-violet-100 transition min-h-[44px] touch-manipulation",
-                      "hover:-translate-y-0.5 hover:border-violet-200 hover:text-white"
-                    )}
+                    className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10"
                   >
                     {t("learnMore")}
                   </LocalizedLink>
                   {partner.selectedFormId ? (
                     <LocalizedLink
                       href={`/partners/${partner.slug}/book`}
-                      className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-500 via-indigo-500 to-purple-500 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-500/40 transition hover:from-violet-600 hover:via-indigo-600 hover:to-purple-600 min-h-[44px] touch-manipulation"
+                      className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 shadow-lg shadow-indigo-500/20"
                     >
                       {partner.ctaPrimaryLabel ?? t("reserve")}
                     </LocalizedLink>
                   ) : (
-                    <span className="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2.5 text-sm font-medium text-slate-300 min-h-[44px]">
+                    <span className="inline-flex items-center justify-center rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-sm font-medium text-slate-500 cursor-not-allowed">
                       {t("comingSoon")}
                     </span>
                   )}

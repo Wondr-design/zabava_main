@@ -9,6 +9,7 @@ import { useLocale } from "@/i18n/provider";
 import { buildLocalizedPath } from "@/i18n/routing";
 import { Settings, Clock } from "lucide-react";
 import { DesignButton } from "@/components/design-system";
+import { BodyThemeClass } from "@/components/body-theme-class";
 
 export default function PartnerLayout({ children }: { children: ReactNode }) {
   const locale = useLocale();
@@ -18,15 +19,20 @@ export default function PartnerLayout({ children }: { children: ReactNode }) {
 
   if (isAuthRoute) {
     return (
-      <div className="theme-partner flex min-h-screen items-center justify-center bg-background text-foreground">
-        <div className="w-full max-w-md px-4">{children}</div>
-      </div>
+      <>
+        <BodyThemeClass className="theme-partner" />
+        <div className="theme-partner flex min-h-screen items-center justify-center bg-background text-foreground">
+          <div className="w-full max-w-md px-4">{children}</div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="theme-partner min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-sm shadow-sm">
+    <>
+      <BodyThemeClass className="theme-partner" />
+      <div className="theme-partner min-h-screen bg-background text-foreground">
+        <header className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-sm shadow-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
             <LocalizedLink
@@ -57,10 +63,11 @@ export default function PartnerLayout({ children }: { children: ReactNode }) {
             <ThemeToggle />
           </div>
         </div>
-      </header>
-      <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="space-y-8">{children}</div>
-      </main>
-    </div>
+        </header>
+        <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="space-y-8">{children}</div>
+        </main>
+      </div>
+    </>
   );
 }

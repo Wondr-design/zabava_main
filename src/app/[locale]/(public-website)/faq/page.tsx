@@ -35,8 +35,8 @@ export default async function FaqPage({ params }: FaqPageProps) {
     published?.page.displayName ?? fallback?.title ?? "Frequently Asked Questions";
 
   return (
-    <main className="min-h-screen bg-[color:var(--ds-surface-base)] px-4 py-12 text-[color:var(--ds-text-strong)] sm:px-6 lg:px-8">
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-10">
+    <main className="min-h-screen bg-[color:var(--ds-surface-base)] py-12 text-[color:var(--ds-text-strong)]">
+      <div className="mx-auto flex w-full max-w-[120rem] flex-col gap-10 px-4 lg:px-24">
         <header className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.4em] text-[color:var(--ds-text-subtle)]">
             Zabava

@@ -30,6 +30,7 @@ import {
   Globe2,
 } from "lucide-react";
 import { DesignButton } from "@/components/design-system";
+import { BodyThemeClass } from "@/components/body-theme-class";
 
 export const AdminDrawerVisibilityContext = React.createContext<
   ((open: boolean) => void) | null
@@ -187,15 +188,20 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   if (isAuthRoute) {
     return (
-      <div className="theme-admin flex min-h-screen items-center justify-center bg-background text-foreground">
-        {children}
-      </div>
+      <>
+        <BodyThemeClass className="theme-admin" />
+        <div className="theme-admin flex min-h-screen items-center justify-center bg-background text-foreground">
+          {children}
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="theme-admin min-h-screen overflow-x-hidden bg-background text-foreground">
-      <aside className="bg-card lg:fixed lg:inset-y-0 lg:left-0 lg:w-[280px] lg:border-r lg:shadow-sm">
+    <>
+      <BodyThemeClass className="theme-admin" />
+      <div className="theme-admin min-h-screen overflow-x-hidden bg-background text-foreground">
+        <aside className="bg-card lg:fixed lg:inset-y-0 lg:left-0 lg:w-[280px] lg:border-r lg:shadow-sm">
         <div className="flex h-full flex-col gap-6 overflow-y-auto px-5 py-6">
           <div className="space-y-3">
             <LocalizedLink href="/admin/dashboard" className="flex items-center gap-3">
@@ -276,6 +282,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
         </main>
       </div>
     </div>
+    </>
   );
 }
 

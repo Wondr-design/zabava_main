@@ -319,7 +319,7 @@ export default async function PartnerPage({ params }: PartnerPageContext) {
       <SiteNav />
       <section className="relative isolate overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(99,102,241,0.25),transparent_60%)]" />
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 pb-20 pt-24 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-[120rem] flex-col gap-10 px-4 pb-20 pt-24 lg:px-24">
           <div className="flex flex-wrap items-center gap-3 text-sm text-indigo-200">
             <LocalizedLink
               href="/"
@@ -450,7 +450,7 @@ export default async function PartnerPage({ params }: PartnerPageContext) {
       </section>
 
       <section className="border-t border-white/5 bg-slate-950/90 py-16">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-[120rem] flex-col gap-12 px-4 lg:px-24">
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold text-white">
               Essential Information
@@ -936,7 +936,7 @@ export default async function PartnerPage({ params }: PartnerPageContext) {
 
       {sections.length > 0 ? (
         <section className="border-t border-white/8 bg-slate-950/80 py-16">
-          <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto flex w-full max-w-[120rem] flex-col gap-6 px-4 lg:px-24">
             {sections.map((section) => {
               switch (section.type) {
                 case "heading":
@@ -1002,7 +1002,7 @@ export default async function PartnerPage({ params }: PartnerPageContext) {
 
       {partner.ctaPrimaryUrl ? (
         <section className="border-t border-white/5 bg-slate-950/90 py-16">
-          <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 px-4 text-center sm:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-[120rem] flex-col items-center gap-6 px-4 text-center lg:px-24">
             <h2 className="text-2xl font-semibold text-white">
               {partner.ctaPrimaryLabel ?? "Ready to visit?"}
             </h2>

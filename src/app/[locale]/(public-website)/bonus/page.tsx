@@ -119,7 +119,7 @@ export default function BonusPage() {
           <div className="absolute top-1/4 right-1/4 h-[400px] w-[400px] rounded-full bg-purple-500/15 blur-3xl" />
         </div>
 
-        <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 md:py-20 lg:px-8 lg:py-24">
+        <div className="relative mx-auto max-w-[120rem] px-4 py-12 sm:py-16 md:py-20 lg:px-24 lg:py-24">
           <div className="grid gap-8 md:gap-12 lg:grid-cols-2 lg:gap-16 lg:items-center">
             {/* Left Content Section */}
             <div className="space-y-5 sm:space-y-6 lg:space-y-8">

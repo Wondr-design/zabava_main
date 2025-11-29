@@ -48,7 +48,7 @@ export function HomeReviews({
 }: HomeReviewsProps) {
   const safeItems = items.length ? items : defaultHomeReviewsContent.items;
   return (
-    <section className="mx-auto w-full max-w-6xl space-y-8 px-6 py-16 text-white">
+    <section className="mx-auto w-full max-w-[120rem] space-y-8 px-4 py-16 lg:px-24 text-white">
       <div className="space-y-3 text-center">
         {eyebrow ? (
           <p className="text-xs font-semibold uppercase tracking-[0.4em] text-emerald-300/80">

@@ -1,12 +1,13 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { motion, type Variants } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 import { useTranslations } from "@/i18n/provider";
 import { LocalizedLink } from "@/components/ui/localized-link";
+import { Badge } from "@/components/ui/badge";
 
 export interface HomeCategoryCard {
   id: string;
@@ -17,11 +18,11 @@ export interface HomeCategoryCard {
 }
 
 const heroTextVariants: Variants = {
-  hidden: { opacity: 0, y: 32 },
+  hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: "easeOut" as const },
+    transition: { duration: 0.5, ease: "easeOut" },
   },
 };
 
@@ -29,17 +30,18 @@ const cardsContainer: Variants = {
   hidden: {},
   visible: {
     transition: {
-      staggerChildren: 0.08,
+      staggerChildren: 0.1,
     },
   },
 };
 
 const cardVariants: Variants = {
-  hidden: { opacity: 0, y: 32 },
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { type: "spring" as const, stiffness: 120, damping: 18 },
+    scale: 1,
+    transition: { type: "spring", stiffness: 100, damping: 15 },
   },
 };
 
@@ -47,89 +49,122 @@ export function HomeHero({ categories }: { categories: HomeCategoryCard[] }) {
   const t = useTranslations("hero");
 
   return (
-    <motion.section
-      className="relative isolate overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white"
-      initial="hidden"
-      animate="visible"
-    >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.18),transparent_55%)]" />
-      <div className="mx-auto flex min-h-[70vh] w-full max-w-6xl flex-col gap-12 px-4 py-16 sm:gap-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
-        <motion.div variants={heroTextVariants} className="space-y-6">
-          <span className="inline-flex items-center gap-2 rounded-full border border-violet-400/40 bg-gradient-to-r from-violet-500/20 via-indigo-500/20 to-purple-500/20 px-4 py-1 text-xs font-bold uppercase tracking-[0.35em] text-violet-200 backdrop-blur-sm shadow-lg shadow-violet-500/20">
-            {t("tagline")}
-          </span>
-          <h1 className="text-balance text-4xl font-bold tracking-tight bg-gradient-to-r from-white via-violet-200 via-fuchsia-200 to-purple-200 bg-clip-text text-transparent sm:text-5xl lg:text-6xl">
+    <section className="relative isolate w-full overflow-hidden pt-20 sm:pt-24">
+      {/* Background Gradients */}
+      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-violet-600/20 rounded-full blur-[100px] opacity-50 mix-blend-screen" />
+        <div className="absolute bottom-0 left-1/4 w-[800px] h-[400px] bg-indigo-600/10 rounded-full blur-[80px] opacity-30" />
+      </div>
+
+      <div className="mx-auto max-w-[120rem] px-4 pb-20 lg:px-24">
+        <motion.div
+          className="flex flex-col items-center text-center"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: {},
+            visible: { transition: { staggerChildren: 0.15 } },
+          }}
+        >
+          <motion.div variants={heroTextVariants} className="mb-6">
+            <Badge
+              variant="outline"
+              className="border-violet-500/30 bg-violet-500/10 px-4 py-1.5 text-sm font-medium text-violet-200 backdrop-blur-md hover:bg-violet-500/20 transition-colors"
+            >
+              <Sparkles className="mr-2 h-3.5 w-3.5 text-violet-300" />
+              {t("tagline")}
+            </Badge>
+          </motion.div>
+
+          <motion.h1
+            variants={heroTextVariants}
+            className="max-w-4xl text-balance text-5xl font-bold tracking-tight text-white sm:text-6xl md:text-7xl"
+          >
             {t("headline")}
-          </h1>
-          <p className="max-w-2xl text-base text-slate-200 leading-relaxed sm:text-lg md:text-xl">
+          </motion.h1>
+
+          <motion.p
+            variants={heroTextVariants}
+            className="mt-6 max-w-2xl text-lg text-slate-300 leading-relaxed sm:text-xl"
+          >
             {t("description")}
-          </p>
-          <div className="flex flex-wrap items-center gap-3">
+          </motion.p>
+
+          <motion.div
+            variants={heroTextVariants}
+            className="mt-10 flex flex-wrap items-center justify-center gap-4"
+          >
             <LocalizedLink
               href="#categories"
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-500 via-indigo-500 to-purple-500 px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-500/40 transition hover:from-violet-600 hover:via-indigo-600 hover:to-purple-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-300"
+              className="inline-flex h-12 items-center justify-center rounded-full bg-white px-8 text-sm font-semibold text-slate-950 transition-all hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-slate-950"
             >
               {t("exploreCategories")}
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="ml-2 h-4 w-4" />
             </LocalizedLink>
             <LocalizedLink
               href="/bonus"
-              className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/5 px-5 py-2.5 text-sm font-medium text-white/90 transition hover:border-violet-400/60 hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 backdrop-blur-sm"
+              className="inline-flex h-12 items-center justify-center rounded-full border border-white/10 bg-white/5 px-8 text-sm font-semibold text-white transition-all hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-slate-950"
             >
               {t("checkBonus")}
             </LocalizedLink>
-          </div>
+          </motion.div>
         </motion.div>
 
         <motion.div
           id="categories"
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3"
+          className="mt-20 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
           variants={cardsContainer}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
         >
           {categories.map((category, idx) => (
-            <LocalizedLink key={category.id} href={`/categories/${category.slug}`} className="group block">
+            <LocalizedLink
+              key={category.id}
+              href={`/categories/${category.slug}`}
+              className="group relative"
+            >
               <motion.article
                 variants={cardVariants}
                 className={cn(
-                  "relative overflow-hidden rounded-3xl border border-white/20 bg-gradient-to-br from-white/10 via-white/5 to-white/5 p-6 transition group-hover:-translate-y-1 group-hover:border-violet-400/60 group-hover:bg-white/10 backdrop-blur-sm"
+                  "relative h-full overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-8 transition-all duration-300 hover:border-violet-500/50 hover:bg-white/10 hover:shadow-2xl hover:shadow-violet-500/10"
                 )}
                 style={
                   category.accentColor
                     ? ({
-                        background:
-                          idx % 2 === 0
-                            ? `linear-gradient(135deg, ${category.accentColor}22, rgba(255,255,255,0.04))`
-                            : undefined,
+                        "--accent": category.accentColor,
                       } as CSSProperties)
                     : undefined
                 }
-                whileHover={{ y: -6 }}
               >
-                <div className="flex flex-col gap-3">
-                  <span className="text-sm font-medium uppercase tracking-[0.25em] text-indigo-200">
-                    {t("categoryLabel")}
-                  </span>
-                  <h2 className="text-2xl font-semibold tracking-tight text-white">
+                <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-white/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                
+                <div className="relative z-10 flex flex-col h-full">
+                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-white shadow-inner ring-1 ring-white/20 group-hover:bg-violet-500 group-hover:text-white transition-colors duration-300">
+                    {/* Placeholder icon based on index or category name could go here */}
+                     <span className="text-lg font-bold">{category.name.charAt(0)}</span>
+                  </div>
+                  
+                  <h3 className="text-xl font-semibold text-white mb-2 group-hover:text-violet-200 transition-colors">
                     {category.name}
-                  </h2>
+                  </h3>
+                  
                   {category.description ? (
-                    <p className="text-sm text-slate-200/80 line-clamp-3">
+                    <p className="text-sm text-slate-400 line-clamp-3 mb-6 flex-grow">
                       {category.description}
                     </p>
-                  ) : null}
-                </div>
-                <div className="mt-6 flex items-center gap-2 text-sm font-medium text-violet-300 group-hover:text-violet-200 transition-colors">
-                  {t("viewPartners")}
-                  <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                  ) : <div className="flex-grow" />}
+
+                  <div className="flex items-center text-sm font-medium text-slate-300 group-hover:text-white transition-colors">
+                    {t("viewPartners")}
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </div>
                 </div>
               </motion.article>
             </LocalizedLink>
           ))}
         </motion.div>
       </div>
-    </motion.section>
+    </section>
   );
 }

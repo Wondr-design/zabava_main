@@ -40,7 +40,7 @@ export function HomeFaq({
 }: HomeFaqProps) {
   const safeItems = items.length ? items : defaultHomeFaqContent.items;
   return (
-    <section className="mx-auto w-full max-w-5xl space-y-8 px-6 py-16 text-white">
+    <section className="mx-auto w-full max-w-[120rem] space-y-8 px-4 py-16 lg:px-24 text-white">
       <div className="space-y-3 text-center">
         {eyebrow ? (
           <p className="text-xs font-semibold uppercase tracking-[0.4em] text-sky-300/80">

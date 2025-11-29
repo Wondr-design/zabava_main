@@ -107,7 +107,7 @@ export default async function SpecialFlashDealsPage({
   return (
     <main className="flex min-h-screen flex-col bg-gradient-to-b from-slate-950 via-indigo-950/30 to-slate-950 text-white">
       <SiteNav />
-      <section className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-12 sm:gap-10 sm:px-6 sm:py-16 lg:px-8 lg:py-24">
+      <section className="mx-auto flex w-full max-w-[120rem] flex-1 flex-col gap-8 px-4 py-12 sm:gap-10 lg:px-24 lg:py-24">
         <header className="space-y-3 sm:space-y-4">
           <p className="text-xs font-bold uppercase tracking-[0.35em] text-violet-300">
             Special & Flash Deals

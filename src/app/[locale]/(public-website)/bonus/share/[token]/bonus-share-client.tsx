@@ -853,7 +853,7 @@ export function BonusShareClient({ token }: { token: string }) {
           <div className="absolute left-1/2 top-[-10%] h-64 w-64 -translate-x-1/2 rounded-full bg-indigo-500/25 blur-3xl" />
           <div className="absolute bottom-0 right-0 h-96 w-96 translate-x-1/3 bg-fuchsia-500/10 blur-3xl" />
         </div>
-        <div className="relative mx-auto flex max-w-6xl flex-col gap-6 px-4 py-20 sm:px-6 lg:px-8">
+        <div className="relative mx-auto flex max-w-[120rem] flex-col gap-6 px-4 py-20 lg:px-24">
           <div className="space-y-4">
             <span className="text-sm font-semibold uppercase tracking-[0.35em] text-indigo-200">
               Rewards
@@ -931,7 +931,7 @@ export function BonusShareClient({ token }: { token: string }) {
         </div>
       </section>
 
-      <section className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-16 sm:px-6 lg:px-8">
+      <section className="mx-auto flex w-full max-w-[120rem] flex-col gap-10 px-4 py-16 lg:px-24">
         <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-xl shadow-black/20 backdrop-blur">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-1">

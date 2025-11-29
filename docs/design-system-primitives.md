@@ -6,7 +6,10 @@ full Storybook coverage.
 
 ## Theme + Tokens
 
-- Light/dark palettes live in `src/styles/design-system.css`.
+- Base light/dark token mappings live in `src/styles/design-system.css`. The public
+  marketing palette is defined in `src/styles/theme-public.css`, while the Admin,
+  Partner, and Staff consoles override the same tokens via their respective
+  `theme-*.css` files.
 - Prefer the CSS variables exposed there (`--ds-*`) instead of ad-hoc colors.
 - New components already consume those tokens; when composing custom UI embed
   classes like `bg-[color:var(--ds-surface-muted)]`.
@@ -134,4 +137,3 @@ Partner, and Staff experiences.
   stabilizes.
 - Document layout primitives (grid, cards) and typography scale if we introduce
   them.
-

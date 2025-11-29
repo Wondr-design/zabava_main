@@ -111,7 +111,7 @@ export function PartnerDirectory({ categories, partners }: PartnerDirectoryProps
   }, [activeCategory, partners, normalizedQuery]);
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-12 sm:gap-10 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
+    <div className="mx-auto flex w-full max-w-[120rem] flex-col gap-8 px-4 py-12 sm:gap-10 lg:px-24 lg:py-20">
       <div className="flex flex-col gap-6">
         <div className="space-y-2 sm:space-y-3">
           <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl bg-gradient-to-r from-white via-violet-200 to-purple-200 bg-clip-text text-transparent">

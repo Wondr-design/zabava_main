@@ -62,7 +62,7 @@ export default async function CategoryPage({ params }: CategoryPageContext) {
     <main className="flex min-h-screen flex-col bg-slate-950 text-white">
       <SiteNav />
       <section className="bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-24">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-[120rem] flex-col gap-8 px-4 lg:px-24">
           <div className="flex flex-wrap items-center gap-3 text-sm text-indigo-200">
             <LocalizedLink
               href="/"

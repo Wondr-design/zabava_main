@@ -113,7 +113,7 @@ export default async function SpecialFlashDealDetailPage({ params }: PageProps) 
   return (
     <main className="flex min-h-screen flex-col bg-slate-950 text-white">
       <SiteNav />
-      <section className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-4 py-20 sm:px-6 lg:px-8">
+      <section className="mx-auto flex w-full max-w-[120rem] flex-1 flex-col gap-10 px-4 py-20 lg:px-24">
         <LocalizedLink
           href="/special-flash-deals"
           className="inline-flex w-max items-center gap-2 text-xs font-semibold uppercase tracking-[0.35em] text-indigo-200/80 transition hover:text-indigo-200"

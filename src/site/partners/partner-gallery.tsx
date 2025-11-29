@@ -59,7 +59,7 @@ export function PartnerGallery({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-[120rem] flex-col gap-4 px-4 lg:px-24">
       <Swiper
         spaceBetween={16}
         slidesPerView={1}
