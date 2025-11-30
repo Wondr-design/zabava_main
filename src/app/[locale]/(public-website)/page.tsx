@@ -27,12 +27,14 @@ export default async function HomePage({ params }: HomePageProps) {
     getHomeCms(locale),
   ]);
 
-  const heroCategories = categories.slice(0, 6).map((category) => ({
+  const heroCategories = categories.map((category) => ({
     id: category.id,
     slug: category.slug,
     name: category.name,
     description: category.description,
     accentColor: category.accentColor,
+    media: category.media,
+    tag: category.tag,
   }));
 
   const featuredPool = partners.filter((partner) => partner.isFeatured);

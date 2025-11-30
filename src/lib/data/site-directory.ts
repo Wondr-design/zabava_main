@@ -13,6 +13,12 @@ import type {
 
 export const SITE_DIRECTORY_TAG = "public-site-directory";
 
+export interface CategoryCardMedia {
+  type: "image" | "gif" | "video";
+  url: string;
+  alt?: string;
+}
+
 export interface PublicCategory {
   id: string;
   slug: string;
@@ -20,6 +26,8 @@ export interface PublicCategory {
   description: string | null;
   sortOrder: number;
   accentColor?: string | null;
+  media?: CategoryCardMedia | null;
+  tag?: string | null;
 }
 
 export interface PublicPartner {
@@ -65,17 +73,53 @@ const loadDirectory = unstable_cache(
     const { categories, partners } = await getPartnerShowcaseDirectory();
 
   const activeCategories: PublicCategory[] = categories
-    .map((category) => ({
-      id: category.id,
-      slug: category.slug,
-      name: category.name,
-      description: category.description,
-      sortOrder: category.sortOrder,
-      accentColor:
-        typeof category.cardContent?.backgroundColor === "string"
-          ? category.cardContent.backgroundColor
-          : null,
-    }))
+    .map((category) => {
+      const cardContent = category.cardContent || {};
+      const heroImageUrl = cardContent.heroImageUrl;
+      
+      // Determine media type from URL extension or metadata
+      let media: CategoryCardMedia | null = null;
+      if (heroImageUrl) {
+        const urlLower = heroImageUrl.toLowerCase();
+        let mediaType: "image" | "gif" | "video" = "image";
+        
+        if (urlLower.endsWith(".gif")) {
+          mediaType = "gif";
+        } else if (
+          urlLower.endsWith(".mp4") ||
+          urlLower.endsWith(".webm") ||
+          urlLower.endsWith(".mov")
+        ) {
+          mediaType = "video";
+        }
+        
+        media = {
+          type: mediaType,
+          url: heroImageUrl,
+          alt: category.name,
+        };
+      }
+
+      // Extract tag from cardContent subtitle or metadata
+      const tag =
+        typeof cardContent.subtitle === "string" && cardContent.subtitle.trim()
+          ? cardContent.subtitle.trim().toUpperCase()
+          : null;
+
+      return {
+        id: category.id,
+        slug: category.slug,
+        name: category.name,
+        description: category.description,
+        sortOrder: category.sortOrder,
+        accentColor:
+          typeof cardContent.backgroundColor === "string"
+            ? cardContent.backgroundColor
+            : null,
+        media,
+        tag,
+      };
+    })
     .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
 
   const categoriesById = new Map(activeCategories.map((cat) => [cat.id, cat]));

@@ -1,13 +1,12 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { motion, type Variants } from "framer-motion";
 
-import { cn } from "@/lib/utils";
 import { useTranslations } from "@/i18n/provider";
 import { LocalizedLink } from "@/components/ui/localized-link";
 import { Badge } from "@/components/ui/badge";
+import { CategoryMarquee } from "./category-marquee";
 
 export interface HomeCategoryCard {
   id: string;
@@ -15,6 +14,12 @@ export interface HomeCategoryCard {
   name: string;
   description?: string | null;
   accentColor?: string | null;
+  media?: {
+    type: "image" | "gif" | "video";
+    url: string;
+    alt?: string;
+  } | null;
+  tag?: string | null;
 }
 
 const heroTextVariants: Variants = {
@@ -26,24 +31,6 @@ const heroTextVariants: Variants = {
   },
 };
 
-const cardsContainer: Variants = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const cardVariants: Variants = {
-  hidden: { opacity: 0, y: 20, scale: 0.95 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { type: "spring", stiffness: 100, damping: 15 },
-  },
-};
 
 export function HomeHero({ categories }: { categories: HomeCategoryCard[] }) {
   const t = useTranslations("hero");
@@ -110,60 +97,9 @@ export function HomeHero({ categories }: { categories: HomeCategoryCard[] }) {
           </motion.div>
         </motion.div>
 
-        <motion.div
-          id="categories"
-          className="mt-20 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
-          variants={cardsContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
-        >
-          {categories.map((category, idx) => (
-            <LocalizedLink
-              key={category.id}
-              href={`/categories/${category.slug}`}
-              className="group relative"
-            >
-              <motion.article
-                variants={cardVariants}
-                className={cn(
-                  "relative h-full overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-8 transition-all duration-300 hover:border-violet-500/50 hover:bg-white/10 hover:shadow-2xl hover:shadow-violet-500/10"
-                )}
-                style={
-                  category.accentColor
-                    ? ({
-                        "--accent": category.accentColor,
-                      } as CSSProperties)
-                    : undefined
-                }
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-white/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                
-                <div className="relative z-10 flex flex-col h-full">
-                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-white shadow-inner ring-1 ring-white/20 group-hover:bg-violet-500 group-hover:text-white transition-colors duration-300">
-                    {/* Placeholder icon based on index or category name could go here */}
-                     <span className="text-lg font-bold">{category.name.charAt(0)}</span>
-                  </div>
-                  
-                  <h3 className="text-xl font-semibold text-white mb-2 group-hover:text-violet-200 transition-colors">
-                    {category.name}
-                  </h3>
-                  
-                  {category.description ? (
-                    <p className="text-sm text-slate-400 line-clamp-3 mb-6 flex-grow">
-                      {category.description}
-                    </p>
-                  ) : <div className="flex-grow" />}
-
-                  <div className="flex items-center text-sm font-medium text-slate-300 group-hover:text-white transition-colors">
-                    {t("viewPartners")}
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                  </div>
-                </div>
-              </motion.article>
-            </LocalizedLink>
-          ))}
-        </motion.div>
+        <div id="categories" className="mt-20">
+          <CategoryMarquee categories={categories} />
+        </div>
       </div>
     </section>
   );

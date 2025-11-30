@@ -377,8 +377,8 @@ export function CategoriesDashboard({ directory }: CategoriesDashboardProps) {
                 />
               </div>
               <ImageUploadField
-                label="Card image"
-                description="Displayed on the categories landing page."
+                label="Card media (image, gif, or video)"
+                description="Displayed on the homepage category marquee. Upload images or paste URLs for videos (.mp4, .webm, .mov) or gifs (.gif) in the URL field below."
                 value={categoryForm.cardHeroImageUrl}
                 onChange={(url) =>
                   setCategoryForm((prev) => ({
@@ -387,6 +387,8 @@ export function CategoriesDashboard({ directory }: CategoriesDashboardProps) {
                   }))
                 }
                 folder={`${categoryAssetFolder}/card`}
+                readOnlyUrl={false}
+                helperText="Supports images (.jpg, .png, .webp), animated gifs (.gif), and videos (.mp4, .webm, .mov). For videos and gifs, paste the URL directly in the field below."
               />
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
@@ -459,8 +461,8 @@ export function CategoriesDashboard({ directory }: CategoriesDashboardProps) {
                 />
               </div>
               <ImageUploadField
-                label="Card image"
-                description="Displayed on the categories landing page."
+                label="Card media (image, gif, or video)"
+                description="Displayed on the homepage category marquee. Upload images or paste URLs for videos (.mp4, .webm, .mov) or gifs (.gif) in the URL field below."
                 value={categoryForm.cardHeroImageUrl}
                 onChange={(url) =>
                   setCategoryForm((prev) => ({
@@ -469,6 +471,8 @@ export function CategoriesDashboard({ directory }: CategoriesDashboardProps) {
                   }))
                 }
                 folder={`${categoryAssetFolder}/card`}
+                readOnlyUrl={false}
+                helperText="Supports images (.jpg, .png, .webp), animated gifs (.gif), and videos (.mp4, .webm, .mov). For videos and gifs, paste the URL directly in the field below."
               />
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
