@@ -125,7 +125,8 @@ function toTitleCase(value: string) {
   return value
     .split(/[\s_-]+/)
     .map(
-      (segment) => segment.charAt(0).toUpperCase() + segment.slice(1).toLowerCase()
+      (segment) =>
+        segment.charAt(0).toUpperCase() + segment.slice(1).toLowerCase()
     )
     .join(" ");
 }
@@ -211,7 +212,10 @@ function getVideoEmbed(url: string) {
     if (host.includes("youtu.be")) {
       const id = parsed.pathname.replace("/", "");
       if (id) {
-        return { type: "iframe" as const, url: `https://www.youtube.com/embed/${id}` };
+        return {
+          type: "iframe" as const,
+          url: `https://www.youtube.com/embed/${id}`,
+        };
       }
     }
     if (host.includes("youtube.com")) {
@@ -219,13 +223,19 @@ function getVideoEmbed(url: string) {
         parsed.searchParams.get("v") ??
         parsed.pathname.split("/").filter(Boolean).pop();
       if (id) {
-        return { type: "iframe" as const, url: `https://www.youtube.com/embed/${id}` };
+        return {
+          type: "iframe" as const,
+          url: `https://www.youtube.com/embed/${id}`,
+        };
       }
     }
     if (host.includes("vimeo.com")) {
       const id = parsed.pathname.split("/").filter(Boolean).pop();
       if (id) {
-        return { type: "iframe" as const, url: `https://player.vimeo.com/video/${id}` };
+        return {
+          type: "iframe" as const,
+          url: `https://player.vimeo.com/video/${id}`,
+        };
       }
     }
   } catch {
@@ -284,7 +294,8 @@ export default async function PartnerPage({ params }: PartnerPageContext) {
   const visitorRange = bookingCap
     ? `Up to ${bookingCap} guests`
     : "Flexible group sizes";
-  const minAgeLabel = info.minAge > 0 ? `${info.minAge}+ years` : "All ages welcome";
+  const minAgeLabel =
+    info.minAge > 0 ? `${info.minAge}+ years` : "All ages welcome";
   const vatLabel = info.vatRegistered
     ? info.vatRate > 0
       ? `Yes (${info.vatRate}%)`
@@ -303,19 +314,18 @@ export default async function PartnerPage({ params }: PartnerPageContext) {
     ticketDetails
   );
 
-  const googleMapFallback =
-    fullAddress
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-          fullAddress
-        )}`
-      : null;
+  const googleMapFallback = fullAddress
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        fullAddress
+      )}`
+    : null;
   const googleMapLink =
     ensureExternalUrl(info.googleMapUrl) || googleMapFallback;
   const rawWebsiteUrl = info.website || partner.detailUrl;
   const websiteHref = ensureExternalUrl(rawWebsiteUrl);
 
   return (
-    <main className="flex min-h-screen flex-col bg-slate-950 text-white">
+    <main className="flex min-h-screen flex-col text-white">
       <SiteNav />
       <section className="relative isolate overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(99,102,241,0.25),transparent_60%)]" />
@@ -496,7 +506,9 @@ export default async function PartnerPage({ params }: PartnerPageContext) {
                 </dl>
               </div>
               <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-                <h3 className="text-lg font-semibold text-white">Working hours</h3>
+                <h3 className="text-lg font-semibold text-white">
+                  Working hours
+                </h3>
                 {info.openingHours.length ? (
                   <dl className="mt-4 space-y-2 text-sm text-slate-200">
                     {info.openingHours.map((entry) => (
@@ -512,8 +524,8 @@ export default async function PartnerPage({ params }: PartnerPageContext) {
                             .filter(Boolean)
                             .join(" – ")}
                         </dd>
-                     </div>
-                   ))}
+                      </div>
+                    ))}
                   </dl>
                 ) : (
                   <p className="mt-3 text-sm text-slate-300">
@@ -596,14 +608,14 @@ export default async function PartnerPage({ params }: PartnerPageContext) {
                       </tbody>
                     </table>
                     <p className="border-t border-white/10 bg-slate-950/40 px-4 py-3 text-xs text-slate-300">
-                      Prices shown are valid when booking via Zabava and include any
-                      applicable online discounts.
+                      Prices shown are valid when booking via Zabava and include
+                      any applicable online discounts.
                     </p>
                   </div>
                 ) : (
                   <p className="mt-4 text-sm text-slate-300">
-                    Ticket pricing is tailored per booking. Request a reservation to
-                    receive the latest offer.
+                    Ticket pricing is tailored per booking. Request a
+                    reservation to receive the latest offer.
                   </p>
                 )}
                 {ticketAddons.length ? (
@@ -614,11 +626,11 @@ export default async function PartnerPage({ params }: PartnerPageContext) {
                     <ul className="space-y-2 text-sm text-slate-200">
                       {ticketAddons.map((addon) => {
                         const basePrice = formatCurrency(addon.price);
-                        const discounted = formatCurrency(addon.discountedPrice);
+                        const discounted = formatCurrency(
+                          addon.discountedPrice
+                        );
                         const showDiscount =
-                          basePrice &&
-                          discounted &&
-                          discounted !== basePrice;
+                          basePrice && discounted && discounted !== basePrice;
                         return (
                           <li
                             key={addon.id}
@@ -681,7 +693,9 @@ export default async function PartnerPage({ params }: PartnerPageContext) {
                       Cash currencies
                     </p>
                     <p className="text-base text-white">
-                      {cashCurrencies.map((currency) => currency.toUpperCase()).join(", ")}
+                      {cashCurrencies
+                        .map((currency) => currency.toUpperCase())
+                        .join(", ")}
                     </p>
                   </div>
                   <div className="mt-4 space-y-1 text-sm text-slate-200">
@@ -739,7 +753,9 @@ export default async function PartnerPage({ params }: PartnerPageContext) {
             </h2>
             <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
               <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-                <h3 className="text-lg font-semibold text-white">Map & access</h3>
+                <h3 className="text-lg font-semibold text-white">
+                  Map & access
+                </h3>
                 <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-slate-900/40">
                   {mapEmbedUrl ? (
                     <iframe
@@ -772,14 +788,17 @@ export default async function PartnerPage({ params }: PartnerPageContext) {
                       Public transport
                     </p>
                     <p className="text-base text-white">
-                      {info.publicTransport || "Details shared with your ticket."}
+                      {info.publicTransport ||
+                        "Details shared with your ticket."}
                     </p>
                   </div>
                 </div>
               </div>
               <div className="space-y-6">
                 <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-                  <h3 className="text-base font-semibold text-white">Contact</h3>
+                  <h3 className="text-base font-semibold text-white">
+                    Contact
+                  </h3>
                   <dl className="mt-3 space-y-3 text-sm text-slate-200">
                     {info.contactName ? (
                       <div>
@@ -868,7 +887,8 @@ export default async function PartnerPage({ params }: PartnerPageContext) {
                               key={facility}
                               className="rounded-full border border-white/10 bg-slate-950/40 px-3 py-1 text-xs font-medium uppercase tracking-wide text-indigo-100"
                             >
-                              {facilityLabelMap[facility] ?? toTitleCase(facility)}
+                              {facilityLabelMap[facility] ??
+                                toTitleCase(facility)}
                             </span>
                           ))}
                         </div>
@@ -888,8 +908,8 @@ export default async function PartnerPage({ params }: PartnerPageContext) {
               <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
                 <h3 className="text-lg font-semibold text-white">Images</h3>
                 <p className="mt-2 text-sm text-slate-300">
-                  The gallery above contains the latest photos supplied by the partner.
-                  Images are automatically resized for optimal viewing.
+                  The gallery above contains the latest photos supplied by the
+                  partner. Images are automatically resized for optimal viewing.
                 </p>
               </div>
               <div className="rounded-3xl border border-white/10 bg-white/5 p-6">

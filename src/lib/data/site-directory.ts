@@ -219,9 +219,9 @@ const loadDirectory = unstable_cache(
             override?.accentColor ??
             (typeof cardContent.backgroundColor === "string"
               ? cardContent.backgroundColor
-              : null),
-          media: override?.media ?? media,
-          tag: override?.tag ?? tagFromCard,
+              : null) ?? null,
+          media: override?.media ?? media ?? null,
+          tag: override?.tag ?? tagFromCard ?? null,
         } satisfies PublicCategory;
       })
       .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
@@ -232,27 +232,22 @@ const loadDirectory = unstable_cache(
     );
 
     const heroCategories = globalOverrides
-      .map((override) => {
+      .flatMap((override) => {
         const partnerCategory = categoriesBySlug.get(override.slug);
         if (!partnerCategory) {
-          return null;
+          return [] as Array<{ sortOrder: number; card: HomeCategoryCard }>;
         }
-        return {
-          sortOrder: override.sortOrder,
-          card: {
-            id: partnerCategory.id,
-            slug: partnerCategory.slug,
-            name: override.label,
-            description: override.description ?? partnerCategory.description,
-            accentColor: override.accentColor ?? partnerCategory.accentColor,
-            media: override.media ?? partnerCategory.media,
-            tag: override.tag ?? partnerCategory.tag,
-          },
+        const card: HomeCategoryCard = {
+          id: partnerCategory.id,
+          slug: partnerCategory.slug,
+          name: override.label,
+          description: override.description ?? partnerCategory.description,
+          accentColor: override.accentColor ?? partnerCategory.accentColor ?? null,
+          media: override.media ?? partnerCategory.media ?? null,
+          tag: override.tag ?? partnerCategory.tag ?? null,
         };
+        return [{ sortOrder: override.sortOrder, card }];
       })
-      .filter((entry): entry is { sortOrder: number; card: HomeCategoryCard } =>
-        Boolean(entry),
-      )
       .sort(
         (a, b) => a.sortOrder - b.sortOrder || a.card.name.localeCompare(b.card.name),
       )

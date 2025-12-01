@@ -13,7 +13,10 @@ type SiteLayoutProps = {
 
 export default function SiteLayout({ children }: SiteLayoutProps) {
   return (
-    <div className="theme-public">
+    <div
+      className="theme-public min-h-screen"
+      style={{ backgroundColor: "var(--ds-surface-base)" }}
+    >
       <BodyThemeClass className="theme-public" />
       <PlasmaWrapper />
       <DotGridWrapper />

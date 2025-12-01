@@ -9,7 +9,15 @@ import { SiteNav } from "@/site/components/site-nav";
 import { getPartnerFormById } from "@/lib/data/partner-forms";
 import { PartnerFormRunner } from "@/site/forms/partner-form-runner";
 
-const WEEKDAY_LABELS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const WEEKDAY_LABELS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -25,7 +33,9 @@ function formatWeekdays(days: number[] | null) {
   return labels.length ? labels.join(", ") : "Valid all week";
 }
 
-export default async function SpecialFlashDealDetailPage({ params }: PageProps) {
+export default async function SpecialFlashDealDetailPage({
+  params,
+}: PageProps) {
   const { slug } = await params;
   const deal = await getPublicDealBySlug(slug);
 
@@ -43,13 +53,13 @@ export default async function SpecialFlashDealDetailPage({ params }: PageProps) 
   const statusLabel = deal.isActive
     ? "Active"
     : deal.isUpcoming
-    ? "Starting soon"
-    : "Fully booked";
+      ? "Starting soon"
+      : "Fully booked";
   const statusVariant: "default" | "secondary" | "outline" = deal.isActive
     ? "default"
     : deal.isUpcoming
-    ? "secondary"
-    : "outline";
+      ? "secondary"
+      : "outline";
   const groupedTicketRequirements = (() => {
     const entries = new Map<
       string,
@@ -63,13 +73,11 @@ export default async function SpecialFlashDealDetailPage({ params }: PageProps) 
       const ticketType = req.ticketType?.trim();
       if (!ticketType) return;
       const quantity = typeof req.quantity === "number" ? req.quantity : 0;
-      const entry =
-        entries.get(ticketType) ??
-        {
-          ticketType,
-          subItems: [],
-          totalQuantity: 0,
-        };
+      const entry = entries.get(ticketType) ?? {
+        ticketType,
+        subItems: [],
+        totalQuantity: 0,
+      };
       entry.subItems.push({
         subType: req.subType ?? null,
         quantity,
@@ -80,7 +88,9 @@ export default async function SpecialFlashDealDetailPage({ params }: PageProps) 
     return Array.from(entries.values());
   })();
 
-  const connectedForm = deal.formId ? await getPartnerFormById(deal.formId) : null;
+  const connectedForm = deal.formId
+    ? await getPartnerFormById(deal.formId)
+    : null;
   const formIsPublished =
     connectedForm?.status === "published" && connectedForm.usageType === "deal";
   const formMatchesDeal =
@@ -111,7 +121,7 @@ export default async function SpecialFlashDealDetailPage({ params }: PageProps) 
   };
 
   return (
-    <main className="flex min-h-screen flex-col bg-slate-950 text-white">
+    <main className="flex min-h-screen flex-col text-white">
       <SiteNav />
       <section className="mx-auto flex w-full max-w-[120rem] flex-1 flex-col gap-10 px-4 py-20 lg:px-24">
         <LocalizedLink
@@ -139,7 +149,9 @@ export default async function SpecialFlashDealDetailPage({ params }: PageProps) 
             </Badge>
           </div>
           {deal.description ? (
-            <p className="max-w-3xl text-base text-slate-200">{deal.description}</p>
+            <p className="max-w-3xl text-base text-slate-200">
+              {deal.description}
+            </p>
           ) : null}
         </header>
 
@@ -161,7 +173,10 @@ export default async function SpecialFlashDealDetailPage({ params }: PageProps) 
             {deal.media.length > 1 ? (
               <div className="grid gap-4">
                 {deal.media.slice(1, 4).map((item) => (
-                  <figure key={item.id} className="relative h-40 overflow-hidden rounded-2xl">
+                  <figure
+                    key={item.id}
+                    className="relative h-40 overflow-hidden rounded-2xl"
+                  >
                     <Image
                       src={item.url}
                       alt={item.altText ?? deal.title}
@@ -180,24 +195,36 @@ export default async function SpecialFlashDealDetailPage({ params }: PageProps) 
           <article className="space-y-3 rounded-2xl border border-white/5 bg-white/5 p-5">
             <h2 className="text-lg font-semibold text-white">Deal specifics</h2>
             <ul className="space-y-2 text-slate-200">
-              <li>QR validity: {Math.round(deal.qrValiditySeconds / 86400)} days from issuance</li>
+              <li>
+                QR validity: {Math.round(deal.qrValiditySeconds / 86400)} days
+                from issuance
+              </li>
               {deal.city ? <li>City focus: {deal.city}</li> : null}
               {deal.timeZoneLabel ? (
                 <li>
-                  Time zone: <span className="font-semibold text-white">{deal.timeZoneLabel}</span>
+                  Time zone:{" "}
+                  <span className="font-semibold text-white">
+                    {deal.timeZoneLabel}
+                  </span>
                 </li>
               ) : null}
             </ul>
             <div className="flex flex-wrap gap-2">
               {deal.tags.map((tag) => (
-                <Badge key={tag} variant="outline" className="border-white/20 bg-transparent text-slate-200">
+                <Badge
+                  key={tag}
+                  variant="outline"
+                  className="border-white/20 bg-transparent text-slate-200"
+                >
                   {tag}
                 </Badge>
               ))}
             </div>
           </article>
           <article className="space-y-3 rounded-2xl border border-white/5 bg-white/5 p-5">
-            <h2 className="text-lg font-semibold text-white">Availability & capacity</h2>
+            <h2 className="text-lg font-semibold text-white">
+              Availability & capacity
+            </h2>
             <ul className="space-y-2 text-slate-200">
               <li>
                 Valid window:{" "}
@@ -213,7 +240,8 @@ export default async function SpecialFlashDealDetailPage({ params }: PageProps) 
               </li>
               {deal.usageLimit ? (
                 <li>
-                  Total cap: {deal.usageCount}/{deal.usageLimit} redemptions used
+                  Total cap: {deal.usageCount}/{deal.usageLimit} redemptions
+                  used
                 </li>
               ) : null}
               {deal.usageLimitDaily ? (
@@ -232,7 +260,9 @@ export default async function SpecialFlashDealDetailPage({ params }: PageProps) 
 
         <section className="grid gap-4 rounded-3xl border border-white/10 bg-white/5 p-6 text-sm text-slate-200 md:grid-cols-2">
           <article className="space-y-3 rounded-2xl border border-white/5 bg-white/5 p-5">
-            <h2 className="text-lg font-semibold text-white">Ticket requirements</h2>
+            <h2 className="text-lg font-semibold text-white">
+              Ticket requirements
+            </h2>
             {groupedTicketRequirements.length ? (
               <div className="grid gap-3">
                 {groupedTicketRequirements.map((requirement) => (
@@ -241,9 +271,12 @@ export default async function SpecialFlashDealDetailPage({ params }: PageProps) 
                     className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200"
                   >
                     <div className="flex items-center justify-between">
-                      <p className="font-semibold text-white">{requirement.ticketType}</p>
+                      <p className="font-semibold text-white">
+                        {requirement.ticketType}
+                      </p>
                       <p className="text-[11px] uppercase tracking-[0.35em] text-slate-400">
-                        {requirement.totalQuantity} guest{requirement.totalQuantity === 1 ? "" : "s"}
+                        {requirement.totalQuantity} guest
+                        {requirement.totalQuantity === 1 ? "" : "s"}
                       </p>
                     </div>
                     {requirement.subItems.length ? (
@@ -262,7 +295,9 @@ export default async function SpecialFlashDealDetailPage({ params }: PageProps) 
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-slate-300">No specific ticket mixes are enforced for this deal.</p>
+              <p className="text-xs text-slate-300">
+                No specific ticket mixes are enforced for this deal.
+              </p>
             )}
           </article>
         </section>
@@ -273,9 +308,13 @@ export default async function SpecialFlashDealDetailPage({ params }: PageProps) 
               <p className="text-xs font-semibold uppercase tracking-[0.35em] text-violet-300">
                 Partner profile
               </p>
-              <h2 className="text-2xl font-semibold text-white">{partner.name}</h2>
+              <h2 className="text-2xl font-semibold text-white">
+                {partner.name}
+              </h2>
               {partner.description ? (
-                <p className="text-base text-slate-200">{partner.description}</p>
+                <p className="text-base text-slate-200">
+                  {partner.description}
+                </p>
               ) : null}
             </div>
             <div className="grid gap-3 md:grid-cols-2">
@@ -312,10 +351,16 @@ export default async function SpecialFlashDealDetailPage({ params }: PageProps) 
                 ) : null}
               </ul>
               <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Categories</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  Categories
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {partner.categories.map((category) => (
-                    <Badge key={category.id} variant="outline" className="border-white/20 bg-white/5 text-xs">
+                    <Badge
+                      key={category.id}
+                      variant="outline"
+                      className="border-white/20 bg-white/5 text-xs"
+                    >
                       {category.name}
                     </Badge>
                   ))}
@@ -337,7 +382,9 @@ export default async function SpecialFlashDealDetailPage({ params }: PageProps) 
               partnerId={deal.partnerId}
               partnerName={deal.partnerName ?? partner?.name ?? deal.partnerId}
               form={dealForm}
-              categories={(partner?.categories ?? []).map((category) => category.name)}
+              categories={(partner?.categories ?? []).map(
+                (category) => category.name
+              )}
               ticketCatalog={partner?.ticketDetails ?? []}
               ticketAddons={partner?.ticketAddons ?? []}
               dealSnapshot={dealSnapshot}

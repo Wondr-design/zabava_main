@@ -53,20 +53,22 @@ export default async function PartnerBookingPage({
   const bookingCap = partner.ticketing?.maxGuestsPerBooking ?? null;
   const enrichedForm =
     form && bookingCap ? applyBookingCapToForm(form, bookingCap) : form;
-  let dealSnapshot:
-    | {
-        id: string;
-        slug: string | null;
-        title: string;
-        minVisitors: number;
-        validFrom: string | null;
-        validTo: string | null;
-        validDays: number[] | null;
-        ticketRequirements: DealTicketRequirement[];
-      }
-    | null = null;
+  let dealSnapshot: {
+    id: string;
+    slug: string | null;
+    title: string;
+    minVisitors: number;
+    validFrom: string | null;
+    validTo: string | null;
+    validDays: number[] | null;
+    ticketRequirements: DealTicketRequirement[];
+  } | null = null;
 
-  if (enrichedForm && enrichedForm.usageType === "deal" && enrichedForm.dealId) {
+  if (
+    enrichedForm &&
+    enrichedForm.usageType === "deal" &&
+    enrichedForm.dealId
+  ) {
     try {
       const entry = await getDealWithMeta(enrichedForm.dealId);
       if (entry?.deal) {
@@ -79,7 +81,9 @@ export default async function PartnerBookingPage({
           validTo: entry.deal.valid_to,
           validDays: entry.deal.valid_days,
           ticketRequirements:
-            (entry.deal.ticket_requirements as DealTicketRequirement[] | null) ?? [],
+            (entry.deal.ticket_requirements as
+              | DealTicketRequirement[]
+              | null) ?? [],
         };
       }
     } catch (error) {
@@ -88,7 +92,7 @@ export default async function PartnerBookingPage({
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-slate-950 text-white">
+    <main className="flex min-h-screen flex-col text-white">
       <SiteNav />
       <section className="bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-20">
         <div className="mx-auto flex w-full max-w-[120rem] flex-col gap-6 px-4 lg:px-24">
@@ -130,7 +134,8 @@ export default async function PartnerBookingPage({
             />
           ) : (
             <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-sm text-indigo-200/80 shadow-2xl shadow-black/30">
-              Booking for this partner is temporarily unavailable. Please check back soon or contact our team for assistance.
+              Booking for this partner is temporarily unavailable. Please check
+              back soon or contact our team for assistance.
             </div>
           )}
         </div>

@@ -5,7 +5,7 @@ import { motion, type Variants } from "framer-motion";
 
 import { useTranslations } from "@/i18n/provider";
 import { LocalizedLink } from "@/components/ui/localized-link";
-import { Badge } from "@/components/ui/badge";
+import { Button as MovingBorderButton } from "@/components/ui/moving-border";
 import type { HomeCategoryCard } from "@/lib/data/site-directory";
 import { CategoryMarquee } from "./category-marquee";
 
@@ -40,18 +40,21 @@ export function HomeHero({ categories }: { categories: HomeCategoryCard[] }) {
           }}
         >
           <motion.div variants={heroTextVariants} className="mb-6">
-            <Badge
-              variant="outline"
-              className="border-violet-500/30 bg-violet-500/10 px-4 py-1.5 text-sm font-medium text-violet-200 backdrop-blur-md hover:bg-violet-500/20 transition-colors"
+            <MovingBorderButton
+              borderRadius="9999px"
+              containerClassName="h-auto w-auto"
+              borderClassName="bg-[radial-gradient(violet_40%,transparent_60%)] opacity-[0.8]"
+              className="!border-transparent !bg-[var(--ds-surface-base)] px-4 py-1.5 text-sm font-medium text-violet-200 flex items-center"
+              duration={3000}
             >
               <Sparkles className="mr-2 h-3.5 w-3.5 text-violet-300" />
               {t("tagline")}
-            </Badge>
+            </MovingBorderButton>
           </motion.div>
 
           <motion.h1
             variants={heroTextVariants}
-            className="max-w-4xl text-balance text-5xl font-bold tracking-tight text-white sm:text-6xl md:text-7xl"
+            className="max-w-4xl text-balance text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl bg-gradient-to-r from-white via-violet-200 to-purple-200 bg-clip-text text-transparent bg-[length:200%_auto] animate-shine"
           >
             {t("headline")}
           </motion.h1>

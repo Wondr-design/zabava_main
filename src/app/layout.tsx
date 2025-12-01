@@ -22,6 +22,13 @@ const influencer = localFont({
   display: "swap",
 });
 
+const neueHaasGrotDisp = localFont({
+  src: "../../public/fonts/body fonts/NeueHaasGrotDisp-55Roman-Trial.woff",
+  variable: "--font-neue-haas-grot-disp",
+  display: "swap",
+  weight: "400",
+});
+
 export const metadata: Metadata = {
   title: "Zabava",
   description: "Internal tools for managing visits and partners",
@@ -39,7 +46,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${influencer.variable} antialiased min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} ${influencer.variable} ${neueHaasGrotDisp.variable} antialiased min-h-screen`}
       >
         {children}
       </body>

@@ -84,30 +84,28 @@ export function CategoryMarquee({ categories }: CategoryMarqueeProps) {
           {/* Content */}
           <div
             className={cn(
-              "relative z-10 flex h-full flex-col justify-between px-5 py-8",
+              "relative z-10 flex h-full flex-col justify-between px-5 pt-12 pb-5",
               textColorClass
             )}
           >
             {/* Top Section: Title & Subtext */}
-            <div className="flex flex-col gap-4 items-start text-left">
-              <h3 className="font-[family-name:var(--font-influencer)] text-6xl uppercase tracking-wide leading-[0.4]">
+            <div className="flex flex-col gap-3 items-start text-left">
+              <h3 className="font-[family-name:var(--font-influencer)] text-[4rem] uppercase tracking-wide leading-[0.4]">
                 {category.name}
               </h3>
 
-              <div className="relative overflow-hidden">
-                {category.description && (
-                  <p
-                    className={cn(
-                      "text-lg font-medium leading-snug",
-                      hasMedia
-                        ? "opacity-0 transition-all duration-500 transform translate-y-4 group-hover:opacity-100 group-hover:translate-y-0"
-                        : "opacity-100"
-                    )}
-                  >
-                    {category.description}
-                  </p>
-                )}
-              </div>
+              {category.description && (
+                <p
+                  className={cn(
+                    "text-lg font-medium leading-snug w-full text-wrap h-auto [&::first-letter]:uppercase",
+                    hasMedia
+                      ? "opacity-0 transition-all duration-500 transform translate-y-4 group-hover:opacity-100 group-hover:translate-y-0"
+                      : "opacity-100"
+                  )}
+                >
+                  {category.description}
+                </p>
+              )}
             </div>
 
             {/* Bottom Section: Arrow Icon */}

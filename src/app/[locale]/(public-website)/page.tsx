@@ -2,6 +2,7 @@ import { Suspense } from "react";
 
 import { HomeHero } from "@/site/sections/home-hero";
 import { PartnerLogoMarquee } from "@/site/partners/partner-logo-marquee";
+import { PartnerLogoGrid } from "@/site/partners/partner-logo-grid";
 import { SiteNav } from "@/site/components/site-nav";
 import { getPublicDirectory } from "@/lib/data/site-directory";
 import {
@@ -40,10 +41,8 @@ export default async function HomePage({ params }: HomePageProps) {
           tag: category.tag,
         }));
 
-  const featuredPool = partners.filter((partner) => partner.isFeatured);
-  const prioritizedPartners = featuredPool.length > 0 ? featuredPool : partners;
-
-  const partnerLogos = prioritizedPartners.map((partner) => ({
+  // Show all partners, not just featured ones
+  const partnerLogos = partners.map((partner) => ({
     partnerId: partner.partnerId,
     slug: partner.slug,
     name: partner.name,
@@ -55,7 +54,7 @@ export default async function HomePage({ params }: HomePageProps) {
     <main className="flex min-h-screen flex-col text-white relative z-10">
       <SiteNav />
       <HomeHero categories={heroCategoryCards} />
-      <PartnerLogoMarquee partners={partnerLogos} />
+      <PartnerLogoGrid partners={partnerLogos} />
       <HomeReviews {...homeCms.reviews} />
       <HomeFaq {...homeCms.faq} />
     </main>

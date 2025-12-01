@@ -9,30 +9,34 @@ import {
 export default async function PartnersDirectoryPage() {
   const { categories, partners } = await getPublicDirectory();
 
-  const directoryCategories: PartnerDirectoryCategory[] = categories.map((category) => ({
-    id: category.id,
-    name: category.name,
-    slug: category.slug,
-  }));
-
-  const directoryPartners: PartnerDirectoryPartner[] = partners.map((partner) => ({
-    partnerId: partner.partnerId,
-    slug: partner.slug,
-    name: partner.name,
-    description: partner.description,
-    heroImageUrl: partner.heroImageUrl,
-    categories: partner.categories.map((category) => ({
+  const directoryCategories: PartnerDirectoryCategory[] = categories.map(
+    (category) => ({
       id: category.id,
       name: category.name,
       slug: category.slug,
-    })),
-    highlights: partner.highlights,
-    selectedFormId: partner.selectedFormId,
-    ctaPrimaryLabel: partner.ctaPrimaryLabel,
-  }));
+    })
+  );
+
+  const directoryPartners: PartnerDirectoryPartner[] = partners.map(
+    (partner) => ({
+      partnerId: partner.partnerId,
+      slug: partner.slug,
+      name: partner.name,
+      description: partner.description,
+      heroImageUrl: partner.heroImageUrl,
+      categories: partner.categories.map((category) => ({
+        id: category.id,
+        name: category.name,
+        slug: category.slug,
+      })),
+      highlights: partner.highlights,
+      selectedFormId: partner.selectedFormId,
+      ctaPrimaryLabel: partner.ctaPrimaryLabel,
+    })
+  );
 
   return (
-    <main className="flex min-h-screen flex-col bg-slate-950 text-white">
+    <main className="flex min-h-screen flex-col text-white">
       <SiteNav />
       <PartnerDirectory
         categories={directoryCategories}

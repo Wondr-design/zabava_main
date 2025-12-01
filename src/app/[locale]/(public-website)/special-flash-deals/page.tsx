@@ -30,7 +30,7 @@ type PageProps = {
 };
 
 function getSingleParam(
-  value: string | string[] | undefined,
+  value: string | string[] | undefined
 ): string | undefined {
   if (Array.isArray(value)) {
     return value[0];
@@ -102,10 +102,12 @@ export default async function SpecialFlashDealsPage({
 
   const { items, facets } = result;
   const activeCount = items.filter((deal) => deal.isActive).length;
-  const upcomingCount = items.filter((deal) => deal.isUpcoming && !deal.isActive).length;
+  const upcomingCount = items.filter(
+    (deal) => deal.isUpcoming && !deal.isActive
+  ).length;
 
   return (
-    <main className="flex min-h-screen flex-col bg-gradient-to-b from-slate-950 via-indigo-950/30 to-slate-950 text-white">
+    <main className="flex min-h-screen flex-col text-white">
       <SiteNav />
       <section className="mx-auto flex w-full max-w-[120rem] flex-1 flex-col gap-8 px-4 py-12 sm:gap-10 lg:px-24 lg:py-24">
         <header className="space-y-3 sm:space-y-4">
@@ -113,28 +115,37 @@ export default async function SpecialFlashDealsPage({
             Special & Flash Deals
           </p>
           <h1 className="text-balance text-3xl font-bold tracking-tight bg-gradient-to-r from-white via-violet-200 to-purple-200 bg-clip-text text-transparent sm:text-4xl md:text-5xl lg:text-6xl">
-            Limited-time experiences with exclusive pricing and concierge support
+            Limited-time experiences with exclusive pricing and concierge
+            support
           </h1>
           <p className="text-base text-slate-200 leading-relaxed sm:text-lg md:text-xl max-w-3xl">
-            Curated offers from our partner network. Each deal enforces minimum visitor counts and
-            one-time QR passes so your team or family can unlock concierge-level perks.
+            Curated offers from our partner network. Each deal enforces minimum
+            visitor counts and one-time QR passes so your team or family can
+            unlock concierge-level perks.
           </p>
         </header>
 
         <section className="grid gap-4 rounded-3xl border border-white/20 bg-gradient-to-br from-white/10 via-white/5 to-white/5 p-5 sm:p-6 text-sm text-slate-200 md:grid-cols-2 backdrop-blur-sm shadow-lg shadow-black/20">
           <article className="space-y-2 rounded-2xl border border-white/5 bg-white/5 p-5">
-            <h2 className="text-lg font-semibold text-white">What&apos;s included</h2>
+            <h2 className="text-lg font-semibold text-white">
+              What&apos;s included
+            </h2>
             <ul className="list-disc space-y-1 pl-5 text-slate-300">
-              <li>Dynamic QR passes with 10-day validity and concierge support</li>
+              <li>
+                Dynamic QR passes with 10-day validity and concierge support
+              </li>
               <li>Minimum visitor counts clearly enforced at scan-in</li>
               <li>Group-focused pricing with optional transport add-ons</li>
             </ul>
           </article>
           <article className="space-y-2 rounded-2xl border border-white/5 bg-white/5 p-5">
-            <h2 className="text-lg font-semibold text-white">Need a bespoke package?</h2>
+            <h2 className="text-lg font-semibold text-white">
+              Need a bespoke package?
+            </h2>
             <p className="text-slate-200 leading-relaxed">
-              Share your group size, preferred dates, and the city you&apos;re visiting. Our
-              concierge desk will match you to upcoming specials or craft a custom itinerary.
+              Share your group size, preferred dates, and the city you&apos;re
+              visiting. Our concierge desk will match you to upcoming specials
+              or craft a custom itinerary.
             </p>
             <div className="flex flex-wrap gap-3">
               <LocalizedLink
@@ -258,10 +269,12 @@ export default async function SpecialFlashDealsPage({
         <section className="space-y-4">
           <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-white">Available packages</h2>
+              <h2 className="text-lg font-semibold text-white">
+                Available packages
+              </h2>
               <p className="text-sm text-slate-300">
-                Showing {items.length} deal{items.length === 1 ? "" : "s"} · {activeCount} active ·{" "}
-                {upcomingCount} upcoming
+                Showing {items.length} deal{items.length === 1 ? "" : "s"} ·{" "}
+                {activeCount} active · {upcomingCount} upcoming
               </p>
             </div>
             <p className="text-xs text-slate-400">
@@ -304,13 +317,13 @@ function DealCard({ deal }: { deal: PublicDealSummary }) {
   const statusLabel = deal.isActive
     ? "Active"
     : deal.isUpcoming
-    ? "Starting soon"
-    : "Unavailable";
+      ? "Starting soon"
+      : "Unavailable";
   const statusVariant: "default" | "secondary" | "outline" = deal.isActive
     ? "default"
     : deal.isUpcoming
-    ? "secondary"
-    : "outline";
+      ? "secondary"
+      : "outline";
 
   const requirementSummary =
     deal.ticketRequirements && deal.ticketRequirements.length
@@ -342,15 +355,21 @@ function DealCard({ deal }: { deal: PublicDealSummary }) {
       ) : null}
       <div className="flex flex-1 flex-col gap-3 sm:gap-4 p-4 sm:p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wide text-violet-300">{deal.partnerName ?? deal.partnerId}</span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-violet-300">
+            {deal.partnerName ?? deal.partnerId}
+          </span>
           <Badge variant={statusVariant} className="uppercase w-fit">
             {statusLabel}
           </Badge>
         </div>
         <div className="space-y-2">
-          <h3 className="text-lg sm:text-xl font-semibold text-white leading-tight">{deal.title}</h3>
+          <h3 className="text-lg sm:text-xl font-semibold text-white leading-tight">
+            {deal.title}
+          </h3>
           {deal.descriptionSnippet ? (
-            <p className="text-sm text-slate-200 leading-relaxed line-clamp-2">{deal.descriptionSnippet}</p>
+            <p className="text-sm text-slate-200 leading-relaxed line-clamp-2">
+              {deal.descriptionSnippet}
+            </p>
           ) : null}
         </div>
         <ul className="space-y-1.5 text-xs text-slate-200 leading-relaxed">
@@ -360,7 +379,12 @@ function DealCard({ deal }: { deal: PublicDealSummary }) {
               <span className="text-slate-400"> · {deal.timeZoneLabel}</span>
             ) : null}
           </li>
-          {deal.city ? <li>City focus: <span className="font-semibold text-slate-100">{deal.city}</span></li> : null}
+          {deal.city ? (
+            <li>
+              City focus:{" "}
+              <span className="font-semibold text-slate-100">{deal.city}</span>
+            </li>
+          ) : null}
           {typeof deal.usageRemaining === "number" ? (
             <li>
               Capacity remaining:{" "}
@@ -369,8 +393,8 @@ function DealCard({ deal }: { deal: PublicDealSummary }) {
                   deal.usageRemaining === 0
                     ? "font-bold text-rose-400"
                     : deal.usageRemaining <= 3
-                    ? "font-bold text-amber-400"
-                    : "font-bold text-emerald-400"
+                      ? "font-bold text-amber-400"
+                      : "font-bold text-emerald-400"
                 }
               >
                 {deal.usageRemaining}
@@ -394,7 +418,11 @@ function DealCard({ deal }: { deal: PublicDealSummary }) {
         </ul>
         <div className="flex flex-wrap gap-2">
           {deal.tags.map((tag) => (
-            <Badge key={tag} variant="outline" className="border-white/30 bg-white/5 text-slate-200 text-xs">
+            <Badge
+              key={tag}
+              variant="outline"
+              className="border-white/30 bg-white/5 text-slate-200 text-xs"
+            >
               {tag}
             </Badge>
           ))}
@@ -415,11 +443,17 @@ function DealCard({ deal }: { deal: PublicDealSummary }) {
             </LocalizedLink>
           ) : null}
           {deal.isActive ? (
-            <span className="text-xs font-bold text-emerald-400 text-center sm:text-right">Available now</span>
+            <span className="text-xs font-bold text-emerald-400 text-center sm:text-right">
+              Available now
+            </span>
           ) : deal.isUpcoming ? (
-            <span className="text-xs font-bold text-amber-400 text-center sm:text-right">Launching soon</span>
+            <span className="text-xs font-bold text-amber-400 text-center sm:text-right">
+              Launching soon
+            </span>
           ) : (
-            <span className="text-xs font-semibold text-slate-400 text-center sm:text-right">Fully booked</span>
+            <span className="text-xs font-semibold text-slate-400 text-center sm:text-right">
+              Fully booked
+            </span>
           )}
         </div>
       </div>
@@ -427,7 +461,9 @@ function DealCard({ deal }: { deal: PublicDealSummary }) {
   );
 }
 
-async function getSpecialDealsCms(locale: Locale): Promise<CmsRenderableBlock[]> {
+async function getSpecialDealsCms(
+  locale: Locale
+): Promise<CmsRenderableBlock[]> {
   const published = await getPublishedCmsPage("special-deals", locale);
   const fallback = getDefaultCmsPage("special-deals", locale);
   const blocks =

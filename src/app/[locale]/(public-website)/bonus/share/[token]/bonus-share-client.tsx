@@ -105,7 +105,10 @@ interface RewardListItem {
   nextRedeemAt?: string | null;
   partnerConfigs?: Map<
     string,
-    { formId: string | null; tickets?: { key: string; label: string; points: number }[] }
+    {
+      formId: string | null;
+      tickets?: { key: string; label: string; points: number }[];
+    }
   >;
 }
 
@@ -232,8 +235,8 @@ export function BonusShareClient({ token }: { token: string }) {
             (response.status === 409
               ? tBonus("secureLink.consumed")
               : response.status === 410
-              ? tBonus("secureLink.expired")
-              : tBonus("secureLink.loadError"));
+                ? tBonus("secureLink.expired")
+                : tBonus("secureLink.loadError"));
           if (!cancelled) {
             setError(reason);
             setLoading(false);
@@ -273,7 +276,10 @@ export function BonusShareClient({ token }: { token: string }) {
     async (rewardId: string) => {
       if (!verifiedEmail) return;
       const rewardFromList = rewards.find((item) => item.id === rewardId);
-      if (rewardFromList?.limitStatus && rewardFromList.limitStatus !== "available") {
+      if (
+        rewardFromList?.limitStatus &&
+        rewardFromList.limitStatus !== "available"
+      ) {
         toast.error(tBonus("errors.rewardUnavailable"));
         return;
       }
@@ -548,7 +554,8 @@ export function BonusShareClient({ token }: { token: string }) {
   const nextRewardCost = useMemo(() => {
     const pending = rewards
       .filter((reward) => {
-        const limitBlocked = reward.limitStatus && reward.limitStatus !== "available";
+        const limitBlocked =
+          reward.limitStatus && reward.limitStatus !== "available";
         if (limitBlocked) return false;
         // Calculate actual minimum cost for this reward
         let minCost = reward.pointsCost || 0;
@@ -632,7 +639,7 @@ export function BonusShareClient({ token }: { token: string }) {
 
   if (error) {
     return (
-      <main className="min-h-screen bg-slate-950 text-white">
+      <main className="min-h-screen text-white">
         <SiteNav />
         <section className="flex min-h-[60vh] items-center justify-center px-4">
           <div className="w-full max-w-2xl space-y-4 rounded-3xl border border-white/10 bg-slate-900/70 p-8 text-center shadow-2xl shadow-black/40">
@@ -651,7 +658,7 @@ export function BonusShareClient({ token }: { token: string }) {
 
   if (loading || !data || !debug || !linkInfo) {
     return (
-      <main className="min-h-screen bg-slate-950 text-white">
+      <main className="min-h-screen text-white">
         <SiteNav />
         <section className="flex min-h-[60vh] items-center justify-center px-4">
           <div className="flex flex-col items-center gap-3 rounded-3xl border border-white/10 bg-slate-900/60 px-8 py-12 shadow-2xl shadow-black/40">
@@ -666,7 +673,7 @@ export function BonusShareClient({ token }: { token: string }) {
   }
   if (error) {
     return (
-      <main className="min-h-screen bg-slate-950 text-white">
+      <main className="min-h-screen text-white">
         <SiteNav />
         <section className="flex min-h-[60vh] items-center justify-center px-4">
           <div className="w-full max-w-2xl space-y-4 rounded-3xl border border-white/10 bg-slate-900/70 p-8 text-center shadow-2xl shadow-black/40">
@@ -685,7 +692,7 @@ export function BonusShareClient({ token }: { token: string }) {
 
   if (loading || !data || !debug || !linkInfo) {
     return (
-      <main className="min-h-screen bg-slate-950 text-white">
+      <main className="min-h-screen text-white">
         <SiteNav />
         <section className="flex min-h-[60vh] items-center justify-center px-4">
           <div className="flex flex-col items-center gap-3 rounded-3xl border border-white/10 bg-slate-900/60 px-8 py-12 shadow-2xl shadow-black/40">
@@ -748,7 +755,9 @@ export function BonusShareClient({ token }: { token: string }) {
     }
     if (typeof value === "object") {
       const parts = Object.values(value as Record<string, unknown>)
-        .map((entry) => (entry === null || entry === undefined ? "" : String(entry)))
+        .map((entry) =>
+          entry === null || entry === undefined ? "" : String(entry)
+        )
         .filter(Boolean);
       return parts.join(", ");
     }
@@ -846,7 +855,7 @@ export function BonusShareClient({ token }: { token: string }) {
   }
 
   return (
-    <main className="space-y-10 bg-slate-950 text-white">
+    <main className="space-y-10 text-white">
       <SiteNav />
       <section className="relative isolate overflow-hidden border-b border-white/10 bg-gradient-to-br from-indigo-700/20 via-slate-950 to-slate-950">
         <div className="absolute inset-0 -z-10">
@@ -1018,7 +1027,10 @@ export function BonusShareClient({ token }: { token: string }) {
                       reward.partnerConfigs.forEach((config) => {
                         const tickets = config.tickets ?? [];
                         tickets.forEach((ticket) => {
-                          if (typeof ticket.points === "number" && ticket.points > 0) {
+                          if (
+                            typeof ticket.points === "number" &&
+                            ticket.points > 0
+                          ) {
                             costs.push(ticket.points);
                           }
                         });
@@ -1075,7 +1087,8 @@ export function BonusShareClient({ token }: { token: string }) {
                       .toUpperCase();
 
                     const formattedNextAvailable =
-                      reward.nextRedeemAt && !Number.isNaN(Date.parse(reward.nextRedeemAt))
+                      reward.nextRedeemAt &&
+                      !Number.isNaN(Date.parse(reward.nextRedeemAt))
                         ? formatDateTime(reward.nextRedeemAt)
                         : null;
                     const limitMessage = (() => {
@@ -1150,7 +1163,8 @@ export function BonusShareClient({ token }: { token: string }) {
                     }
 
                     // Use primary image (imageUrl) first, then fall back to first hero image
-                    const heroImageUrl = reward.imageUrl ?? reward.heroImages?.[0] ?? null;
+                    const heroImageUrl =
+                      reward.imageUrl ?? reward.heroImages?.[0] ?? null;
 
                     return (
                       <li
@@ -1226,7 +1240,8 @@ export function BonusShareClient({ token }: { token: string }) {
                             </p>
                           </div>
 
-                          {reward.ticketPoints && reward.ticketPoints.length > 0 ? (
+                          {reward.ticketPoints &&
+                          reward.ticketPoints.length > 0 ? (
                             <div className="flex flex-wrap gap-2">
                               {reward.ticketPoints.map((tp) => (
                                 <span
