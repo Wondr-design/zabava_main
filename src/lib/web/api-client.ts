@@ -315,7 +315,15 @@ export const adminApi = {
     return json<{ items: GlobalValueRecord[] }>(url, { method: 'GET' }, opts);
   },
   globalCreate: (
-    body: { type: GlobalValueType; label: string; key?: string; description?: string | null; sortOrder?: number; isActive?: boolean },
+    body: {
+      type: GlobalValueType;
+      label: string;
+      key?: string;
+      description?: string | null;
+      sortOrder?: number;
+      isActive?: boolean;
+      metadata?: Record<string, unknown>;
+    },
     opts: RequestOptions = {},
   ) =>
     json<{ item: GlobalValueRecord }>(
@@ -325,7 +333,14 @@ export const adminApi = {
     ),
   globalUpdate: (
     id: string,
-    body: { label?: string; key?: string; description?: string | null; sortOrder?: number; isActive?: boolean },
+    body: {
+      label?: string;
+      key?: string;
+      description?: string | null;
+      sortOrder?: number;
+      isActive?: boolean;
+      metadata?: Record<string, unknown>;
+    },
     opts: RequestOptions = {},
   ) =>
     json<{ item: GlobalValueRecord }>(

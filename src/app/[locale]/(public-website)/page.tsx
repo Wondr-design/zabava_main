@@ -22,20 +22,23 @@ interface HomePageProps {
 export default async function HomePage({ params }: HomePageProps) {
   const { locale: rawLocale } = await params;
   const locale = resolveLocale(rawLocale);
-  const [{ categories, partners }, homeCms] = await Promise.all([
+  const [{ categories, partners, heroCategories }, homeCms] = await Promise.all([
     getPublicDirectory(),
     getHomeCms(locale),
   ]);
 
-  const heroCategories = categories.map((category) => ({
-    id: category.id,
-    slug: category.slug,
-    name: category.name,
-    description: category.description,
-    accentColor: category.accentColor,
-    media: category.media,
-    tag: category.tag,
-  }));
+  const heroCategoryCards =
+    heroCategories.length > 0
+      ? heroCategories
+      : categories.map((category) => ({
+          id: category.id,
+          slug: category.slug,
+          name: category.name,
+          description: category.description,
+          accentColor: category.accentColor,
+          media: category.media,
+          tag: category.tag,
+        }));
 
   const featuredPool = partners.filter((partner) => partner.isFeatured);
   const prioritizedPartners = featuredPool.length > 0 ? featuredPool : partners;
@@ -51,7 +54,7 @@ export default async function HomePage({ params }: HomePageProps) {
   return (
     <main className="flex min-h-screen flex-col text-white relative z-10">
       <SiteNav />
-      <HomeHero categories={heroCategories} />
+      <HomeHero categories={heroCategoryCards} />
       <PartnerLogoMarquee partners={partnerLogos} />
       <HomeReviews {...homeCms.reviews} />
       <HomeFaq {...homeCms.faq} />

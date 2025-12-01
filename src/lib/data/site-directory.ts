@@ -2,6 +2,8 @@ import { unstable_cache, revalidateTag } from "next/cache";
 
 import { getPartnerShowcaseDirectory } from "./partner-showcase";
 import type { PartnerShowcaseEntry } from "./partner-showcase";
+import { listGlobalValues } from "./global-values";
+import type { GlobalValueRecord } from "./global-values";
 import type {
   PartnerMetaContract,
   PartnerMetaInfo,
@@ -25,6 +27,16 @@ export interface PublicCategory {
   name: string;
   description: string | null;
   sortOrder: number;
+  accentColor?: string | null;
+  media?: CategoryCardMedia | null;
+  tag?: string | null;
+}
+
+export interface HomeCategoryCard {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
   accentColor?: string | null;
   media?: CategoryCardMedia | null;
   tag?: string | null;
@@ -68,104 +80,227 @@ function derivePartnerSlug(entry: PartnerShowcaseEntry) {
     .replace(/^-+|-+$/g, "");
 }
 
+function normalizeSlugCandidate(value?: string | null) {
+  if (!value) return "";
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function parseMetadataString(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function inferMediaTypeFromUrl(url: string): CategoryCardMedia["type"] {
+  const normalized = url.split("?")[0]?.toLowerCase() ?? "";
+  if (
+    normalized.endsWith(".mp4") ||
+    normalized.endsWith(".webm") ||
+    normalized.endsWith(".mov") ||
+    normalized.endsWith(".m4v")
+  ) {
+    return "video";
+  }
+  if (normalized.endsWith(".gif")) {
+    return "gif";
+  }
+  return "image";
+}
+
+interface GlobalCategoryOverride {
+  id: string;
+  slug: string;
+  label: string;
+  description: string | null;
+  accentColor: string | null;
+  media: CategoryCardMedia | null;
+  tag: string | null;
+  sortOrder: number;
+}
+
+function buildGlobalCategoryOverrides(values: GlobalValueRecord[]) {
+  const overrides: GlobalCategoryOverride[] = [];
+  for (const value of values) {
+    const metadata = (value.metadata ?? {}) as Record<string, unknown>;
+    const slugSource =
+      parseMetadataString(metadata.slug) || value.key || value.label;
+    const normalizedSlug = normalizeSlugCandidate(slugSource);
+    if (!normalizedSlug) {
+      continue;
+    }
+
+    const heroMediaUrl = parseMetadataString(metadata.heroMediaUrl);
+    const heroMediaAlt =
+      parseMetadataString(metadata.heroMediaAlt) || value.label;
+
+    const media: CategoryCardMedia | null = heroMediaUrl
+      ? {
+          type: inferMediaTypeFromUrl(heroMediaUrl),
+          url: heroMediaUrl,
+          alt: heroMediaAlt,
+        }
+      : null;
+
+    overrides.push({
+      id: value.id,
+      slug: normalizedSlug,
+      label: value.label,
+      description: value.description ?? null,
+      accentColor: parseMetadataString(metadata.accentColor) || null,
+      media,
+      tag: parseMetadataString(metadata.tag) || null,
+      sortOrder: value.sortOrder ?? 0,
+    });
+  }
+  return overrides;
+}
+
 const loadDirectory = unstable_cache(
   async () => {
-    const { categories, partners } = await getPartnerShowcaseDirectory();
+    const [{ categories, partners }, globalCategoryValues] = await Promise.all([
+      getPartnerShowcaseDirectory(),
+      listGlobalValues({ type: "category", includeInactive: false }),
+    ]);
 
-  const activeCategories: PublicCategory[] = categories
-    .map((category) => {
-      const cardContent = category.cardContent || {};
-      const heroImageUrl = cardContent.heroImageUrl;
-      
-      // Determine media type from URL extension or metadata
-      let media: CategoryCardMedia | null = null;
-      if (heroImageUrl) {
-        const urlLower = heroImageUrl.toLowerCase();
-        let mediaType: "image" | "gif" | "video" = "image";
-        
-        if (urlLower.endsWith(".gif")) {
-          mediaType = "gif";
-        } else if (
-          urlLower.endsWith(".mp4") ||
-          urlLower.endsWith(".webm") ||
-          urlLower.endsWith(".mov")
-        ) {
-          mediaType = "video";
+    const globalOverrides = buildGlobalCategoryOverrides(globalCategoryValues);
+    const overrideMap = new Map(globalOverrides.map((entry) => [entry.slug, entry]));
+
+    const activeCategories: PublicCategory[] = categories
+      .map((category) => {
+        const cardContent = category.cardContent || {};
+        const heroImageUrl = cardContent.heroImageUrl;
+
+        let media: CategoryCardMedia | null = null;
+        if (heroImageUrl) {
+          const urlLower = heroImageUrl.toLowerCase();
+          let mediaType: "image" | "gif" | "video" = "image";
+
+          if (urlLower.endsWith(".gif")) {
+            mediaType = "gif";
+          } else if (
+            urlLower.endsWith(".mp4") ||
+            urlLower.endsWith(".webm") ||
+            urlLower.endsWith(".mov") ||
+            urlLower.endsWith(".m4v")
+          ) {
+            mediaType = "video";
+          }
+
+          media = {
+            type: mediaType,
+            url: heroImageUrl,
+            alt: category.name,
+          };
         }
-        
-        media = {
-          type: mediaType,
-          url: heroImageUrl,
-          alt: category.name,
+
+        const normalizedSlug = normalizeSlugCandidate(category.slug);
+        const override = normalizedSlug
+          ? overrideMap.get(normalizedSlug)
+          : undefined;
+
+        const tagFromCard =
+          typeof cardContent.subtitle === "string" && cardContent.subtitle.trim()
+            ? cardContent.subtitle.trim().toUpperCase()
+            : null;
+
+        const baseSortOrder =
+          typeof category.sortOrder === "number" ? category.sortOrder : 0;
+
+        return {
+          id: category.id,
+          slug: category.slug,
+          name: override?.label ?? category.name,
+          description: override?.description ?? category.description,
+          sortOrder: override?.sortOrder ?? baseSortOrder,
+          accentColor:
+            override?.accentColor ??
+            (typeof cardContent.backgroundColor === "string"
+              ? cardContent.backgroundColor
+              : null),
+          media: override?.media ?? media,
+          tag: override?.tag ?? tagFromCard,
+        } satisfies PublicCategory;
+      })
+      .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
+
+    const categoriesById = new Map(activeCategories.map((cat) => [cat.id, cat]));
+    const categoriesBySlug = new Map(
+      activeCategories.map((cat) => [normalizeSlugCandidate(cat.slug), cat]),
+    );
+
+    const heroCategories = globalOverrides
+      .map((override) => {
+        const partnerCategory = categoriesBySlug.get(override.slug);
+        if (!partnerCategory) {
+          return null;
+        }
+        return {
+          sortOrder: override.sortOrder,
+          card: {
+            id: partnerCategory.id,
+            slug: partnerCategory.slug,
+            name: override.label,
+            description: override.description ?? partnerCategory.description,
+            accentColor: override.accentColor ?? partnerCategory.accentColor,
+            media: override.media ?? partnerCategory.media,
+            tag: override.tag ?? partnerCategory.tag,
+          },
         };
-      }
+      })
+      .filter((entry): entry is { sortOrder: number; card: HomeCategoryCard } =>
+        Boolean(entry),
+      )
+      .sort(
+        (a, b) => a.sortOrder - b.sortOrder || a.card.name.localeCompare(b.card.name),
+      )
+      .map((entry) => entry.card);
 
-      // Extract tag from cardContent subtitle or metadata
-      const tag =
-        typeof cardContent.subtitle === "string" && cardContent.subtitle.trim()
-          ? cardContent.subtitle.trim().toUpperCase()
-          : null;
+    const publicPartners: PublicPartner[] = partners
+      .filter((partner) => partner.status === "active")
+      .map((partner) => {
+        const partnerCategories = partner.categories
+          .map((categoryId) => categoriesById.get(categoryId))
+          .filter((value): value is PublicCategory => Boolean(value));
+        const metadata = (partner.metadata ?? {}) as Record<string, unknown>;
+        const selectedFormId =
+          partner.selectedFormId ??
+          (typeof metadata.selectedFormId === "string"
+            ? (metadata.selectedFormId as string)
+            : null);
 
-      return {
-        id: category.id,
-        slug: category.slug,
-        name: category.name,
-        description: category.description,
-        sortOrder: category.sortOrder,
-        accentColor:
-          typeof cardContent.backgroundColor === "string"
-            ? cardContent.backgroundColor
-            : null,
-        media,
-        tag,
-      };
-    })
-    .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
-
-  const categoriesById = new Map(activeCategories.map((cat) => [cat.id, cat]));
-
-  const publicPartners: PublicPartner[] = partners
-    .filter((partner) => partner.status === "active")
-    .map((partner) => {
-      const partnerCategories = partner.categories
-        .map((categoryId) => categoriesById.get(categoryId))
-        .filter((value): value is PublicCategory => Boolean(value));
-      const metadata = (partner.metadata ?? {}) as Record<string, unknown>;
-      const selectedFormId =
-        partner.selectedFormId ??
-        (typeof metadata.selectedFormId === "string"
-          ? (metadata.selectedFormId as string)
-          : null);
-
-      return {
-        partnerId: partner.partnerId,
-        slug: derivePartnerSlug(partner),
-        name: partner.name,
-        description: partner.description,
-        heroImageUrl: partner.heroImageUrl,
-        isFeatured: partner.isFeatured,
-        categories: partnerCategories,
-        highlights: partner.highlights,
-        gallery: partner.gallery,
-        ctaPrimaryLabel: partner.ctaPrimaryLabel,
-        ctaPrimaryUrl: partner.ctaPrimaryUrl,
-        detailUrl: partner.detailUrl,
-      metadata,
-      selectedFormId,
-      info: partner.info,
-      contract: partner.contract,
-      ticketing: partner.ticketing,
-      ticketDetails: partner.ticketDetails,
-      ticketAddons: partner.ticketAddons,
-      media: partner.media,
-      bonusProgramEnabled: partner.bonusProgramEnabled,
-      listingTierKey: partner.listingTierKey,
-    };
-  });
+        return {
+          partnerId: partner.partnerId,
+          slug: derivePartnerSlug(partner),
+          name: partner.name,
+          description: partner.description,
+          heroImageUrl: partner.heroImageUrl,
+          isFeatured: partner.isFeatured,
+          categories: partnerCategories,
+          highlights: partner.highlights,
+          gallery: partner.gallery,
+          ctaPrimaryLabel: partner.ctaPrimaryLabel,
+          ctaPrimaryUrl: partner.ctaPrimaryUrl,
+          detailUrl: partner.detailUrl,
+          metadata,
+          selectedFormId,
+          info: partner.info,
+          contract: partner.contract,
+          ticketing: partner.ticketing,
+          ticketDetails: partner.ticketDetails,
+          ticketAddons: partner.ticketAddons,
+          media: partner.media,
+          bonusProgramEnabled: partner.bonusProgramEnabled,
+          listingTierKey: partner.listingTierKey,
+        } satisfies PublicPartner;
+      });
 
     return {
       categories: activeCategories,
       partners: publicPartners,
+      heroCategories,
     };
   },
   ["site-directory"],

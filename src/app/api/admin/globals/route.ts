@@ -11,6 +11,7 @@ import {
   globalValueTypeSchema,
   listGlobalValues,
 } from "@/lib/data/global-values";
+import { revalidatePublicDirectory } from "@/lib/data/site-directory";
 import { resolveAllowedOrigin } from "@/lib/http/allowed-origin";
 
 const BASE_CORS = {
@@ -106,6 +107,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const payload = createGlobalValueSchema.parse(body ?? {});
     const created = await createGlobalValue(payload);
+    if (created.type === "category") {
+      revalidatePublicDirectory();
+    }
     const response = NextResponse.json({ item: created });
     response.headers.set("x-csrf-token", generateCsrfToken());
     log.info("admin_global_created", {

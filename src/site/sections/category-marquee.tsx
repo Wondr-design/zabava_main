@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { ArrowUpRight } from "lucide-react";
 import { CardSpotlight } from "@/components/ui/card-spotlight";
 import { LocalizedLink } from "@/components/ui/localized-link";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import type { HomeCategoryCard } from "./home-hero";
+import type { HomeCategoryCard } from "@/lib/data/site-directory";
 
 interface CategoryMarqueeProps {
   categories: HomeCategoryCard[];
@@ -28,6 +28,11 @@ export function CategoryMarquee({ categories }: CategoryMarqueeProps) {
   const handleMouseLeave = () => setIsPaused(false);
 
   const CategoryCard = ({ category }: { category: HomeCategoryCard }) => {
+    // Determine if card has media or should use solid color
+    const hasMedia = Boolean(category.media);
+    const backgroundColor = category.accentColor || "#a3e635"; // Default to lime-400
+    const textColorClass = hasMedia ? "text-white" : "text-black";
+
     return (
       <LocalizedLink
         href={`/categories/${category.slug}`}
@@ -35,14 +40,14 @@ export function CategoryMarquee({ categories }: CategoryMarqueeProps) {
       >
         <CardSpotlight
           radius={350}
-          color="rgb(34, 197, 94)"
-          className="relative h-full w-full overflow-hidden rounded-3xl border border-white/10 bg-black/40 backdrop-blur-xl group"
+          color="rgb(255, 191, 0)"
+          className="relative h-full w-full overflow-hidden rounded-3xl group !p-0 bg-transparent border-transparent"
         >
-          {/* Media Container */}
+          {/* Background: Media or Solid Color */}
           <div className="absolute inset-0 z-0">
-            {category.media ? (
+            {hasMedia ? (
               <>
-                {category.media.type === "video" ? (
+                {category.media!.type === "video" ? (
                   <video
                     autoPlay
                     loop
@@ -50,52 +55,66 @@ export function CategoryMarquee({ categories }: CategoryMarqueeProps) {
                     playsInline
                     className="h-full w-full object-cover"
                   >
-                    <source src={category.media.url} type="video/mp4" />
-                    <source src={category.media.url} type="video/webm" />
+                    <source src={category.media!.url} type="video/mp4" />
+                    <source src={category.media!.url} type="video/webm" />
                     Your browser does not support the video tag.
                   </video>
                 ) : (
                   <Image
-                    src={category.media.url}
-                    alt={category.media.alt || category.name}
+                    src={category.media!.url}
+                    alt={category.media!.alt || category.name}
                     fill
                     className={cn(
                       "object-cover transition-transform duration-500 group-hover:scale-110",
-                      category.media.type === "gif" && "object-cover"
+                      category.media!.type === "gif" && "object-cover"
                     )}
                     sizes="320px"
-                    unoptimized={category.media.type === "gif"}
+                    unoptimized={category.media!.type === "gif"}
                   />
                 )}
-                {/* Overlay gradient */}
+                {/* Overlay gradient for media */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
               </>
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-900/80 to-slate-950/80" />
+              // Solid color background
+              <div className="absolute inset-0" style={{ backgroundColor }} />
             )}
           </div>
 
           {/* Content */}
-          <div className="relative z-10 flex h-full flex-col justify-end p-6">
-            <div className="flex flex-col">
-              {category.tag && (
-                <Badge
-                  variant="outline"
-                  className="mb-4 w-fit border-lime-400/50 bg-lime-400/10 px-3 py-1 text-xs font-semibold uppercase text-lime-300 backdrop-blur-md"
-                >
-                  {category.tag}
-                </Badge>
-              )}
-
-              <h3 className="mb-2 text-4xl font-bold leading-tight text-white sm:text-5xl">
+          <div
+            className={cn(
+              "relative z-10 flex h-full flex-col justify-between px-5 py-8",
+              textColorClass
+            )}
+          >
+            {/* Top Section: Title & Subtext */}
+            <div className="flex flex-col gap-4 items-start text-left">
+              <h3 className="font-[family-name:var(--font-influencer)] text-6xl uppercase tracking-wide leading-[0.4]">
                 {category.name}
               </h3>
 
-              {category.description && (
-                <p className="text-base leading-relaxed text-white/90 line-clamp-2">
-                  {category.description}
-                </p>
-              )}
+              <div className="relative overflow-hidden">
+                {category.description && (
+                  <p
+                    className={cn(
+                      "text-lg font-medium leading-snug",
+                      hasMedia
+                        ? "opacity-0 transition-all duration-500 transform translate-y-4 group-hover:opacity-100 group-hover:translate-y-0"
+                        : "opacity-100"
+                    )}
+                  >
+                    {category.description}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom Section: Arrow Icon */}
+            <div className="flex w-full justify-end">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-black transition-all duration-500 opacity-0 transform translate-y-4 scale-50 group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100">
+                <ArrowUpRight className="h-6 w-6" />
+              </div>
             </div>
           </div>
         </CardSpotlight>
@@ -143,4 +162,3 @@ export function CategoryMarquee({ categories }: CategoryMarqueeProps) {
     </section>
   );
 }
-

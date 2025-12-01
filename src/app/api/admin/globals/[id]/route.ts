@@ -12,6 +12,7 @@ import {
   updateGlobalValueSchema,
 } from "@/lib/data/global-values";
 import { resolveAllowedOrigin } from "@/lib/http/allowed-origin";
+import { revalidatePublicDirectory } from "@/lib/data/site-directory";
 
 const BASE_CORS = {
   methods: "GET,PUT,DELETE,OPTIONS",
@@ -86,6 +87,9 @@ export async function PUT(
     if (!updated) {
       return cors(req, NextResponse.json({ error: "Not Found" }, { status: 404 }));
     }
+    if (updated.type === "category") {
+      revalidatePublicDirectory();
+    }
     const response = NextResponse.json({ item: updated });
     response.headers.set("x-csrf-token", generateCsrfToken());
     log.info("admin_global_updated", {
@@ -139,7 +143,14 @@ export async function DELETE(
   }
   const { id } = await context.params;
   try {
+    const existing = await getGlobalValueById(id);
+    if (!existing) {
+      return cors(req, NextResponse.json({ error: "Not Found" }, { status: 404 }));
+    }
     await deleteGlobalValue(id);
+    if (existing.type === "category") {
+      revalidatePublicDirectory();
+    }
     const response = NextResponse.json({ ok: true });
     response.headers.set("x-csrf-token", generateCsrfToken());
     log.info("admin_global_deleted", {

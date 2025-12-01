@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Image from "next/image";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Loader2,
@@ -60,6 +61,35 @@ const TYPE_DESCRIPTIONS: Record<GlobalValueType, string> = {
     "Manage the amenities/facilities icons that appear on partner detail cards.",
 };
 
+function slugifyValue(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function readMetadataString(value: unknown) {
+  return typeof value === "string" ? value : "";
+}
+
+function inferMediaKind(url: string): "image" | "video" | "gif" {
+  const normalized = url.split("?")[0]?.toLowerCase() ?? "";
+  if (
+    normalized.endsWith(".mp4") ||
+    normalized.endsWith(".webm") ||
+    normalized.endsWith(".mov") ||
+    normalized.endsWith(".m4v")
+  ) {
+    return "video";
+  }
+  if (normalized.endsWith(".gif")) {
+    return "gif";
+  }
+  return "image";
+}
+
 type GlobalsByType = Record<GlobalValueType, GlobalValueRecord[]>;
 
 interface GlobalsDashboardProps {
@@ -73,6 +103,9 @@ interface FormState {
   sortOrder: string;
   isActive: boolean;
   subOptions: string[]; // Array of ticket type keys for sub-options
+  heroMediaUrl: string;
+  heroMediaAlt: string;
+  accentColor: string;
 }
 
 const EMPTY_FORM: FormState = {
@@ -82,6 +115,9 @@ const EMPTY_FORM: FormState = {
   sortOrder: "0",
   isActive: true,
   subOptions: [],
+  heroMediaUrl: "",
+  heroMediaAlt: "",
+  accentColor: "",
 };
 
 export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
@@ -91,6 +127,8 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const categoryMediaInputRef = useRef<HTMLInputElement | null>(null);
+  const [mediaUploading, setMediaUploading] = useState(false);
 
   const currentValues = useMemo(
     () => values[activeType] ?? [],
@@ -105,6 +143,12 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
       .filter((t) => t.isActive)
       .map((t) => ({ key: t.key, label: t.label }));
   }, [values.ticket_type, editingId, activeType]);
+
+  function getCategoryAssetFolder() {
+    const source = form.key?.trim() || form.label?.trim() || "category";
+    const slug = slugifyValue(source || "category");
+    return `globals/categories/${slug || "category"}`;
+  }
 
   function resetForm(nextType: GlobalValueType = activeType) {
     setForm({
@@ -141,13 +185,29 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
     setLoading(true);
     try {
       const metadata: Record<string, unknown> = {};
+      let includeMetadata = false;
       // Store sub-options in metadata for ticket types (always set to ensure clearing works)
       if (activeType === "ticket_type") {
+        includeMetadata = true;
         if (form.subOptions.length > 0) {
           metadata.subOptions = form.subOptions;
         } else if (editingId) {
-          // If editing and clearing sub-options, ensure metadata is updated
           metadata.subOptions = [];
+        }
+      }
+      if (activeType === "category") {
+        includeMetadata = true;
+        const mediaUrl = form.heroMediaUrl.trim();
+        const mediaAlt = form.heroMediaAlt.trim();
+        const accentColor = form.accentColor.trim();
+        if (mediaUrl) {
+          metadata.heroMediaUrl = mediaUrl;
+        }
+        if (mediaAlt) {
+          metadata.heroMediaAlt = mediaAlt;
+        }
+        if (accentColor) {
+          metadata.accentColor = accentColor;
         }
       }
 
@@ -157,7 +217,7 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
         description: form.description.trim() || undefined,
         sortOrder: Number.parseInt(form.sortOrder, 10) || 0,
         isActive: form.isActive,
-        ...(activeType === "ticket_type" ? { metadata } : {}),
+        ...(includeMetadata ? { metadata } : {}),
       };
 
       if (!payload.label) {
@@ -198,13 +258,52 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
     }
   }
 
+  async function handleCategoryMediaUpload(
+    event: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setMediaUploading(true);
+    try {
+      const result = await adminApi.uploadFile(
+        file,
+        {
+          folder: getCategoryAssetFolder(),
+          contentType: file.type,
+        },
+        {}
+      );
+      if (!result?.url) {
+        toast.warning(
+          "Media uploaded but no URL returned. Check storage permissions."
+        );
+      } else {
+        toast.success("Category media uploaded.");
+      }
+      setForm((prev) => ({
+        ...prev,
+        heroMediaUrl: result?.url ?? "",
+      }));
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to upload media."
+      );
+    } finally {
+      setMediaUploading(false);
+      if (categoryMediaInputRef.current) {
+        categoryMediaInputRef.current.value = "";
+      }
+    }
+  }
+
   function handleEdit(item: GlobalValueRecord) {
     setEditingId(item.id);
+    const metadata = (item.metadata ?? {}) as Record<string, unknown>;
     const subOptions =
       activeType === "ticket_type" &&
-      Array.isArray(item.metadata?.subOptions) &&
-      typeof item.metadata.subOptions[0] === "string"
-        ? (item.metadata.subOptions as string[])
+      Array.isArray(metadata?.subOptions) &&
+      typeof (metadata?.subOptions as unknown[])[0] === "string"
+        ? (metadata.subOptions as string[])
         : [];
     setForm({
       key: item.key,
@@ -213,6 +312,18 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
       sortOrder: `${item.sortOrder ?? 0}`,
       isActive: item.isActive,
       subOptions,
+      heroMediaUrl:
+        activeType === "category"
+          ? readMetadataString(metadata.heroMediaUrl).trim()
+          : "",
+      heroMediaAlt:
+        activeType === "category"
+          ? readMetadataString(metadata.heroMediaAlt).trim()
+          : "",
+      accentColor:
+        activeType === "category"
+          ? readMetadataString(metadata.accentColor).trim()
+          : "",
     });
   }
 
@@ -349,6 +460,121 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
                 placeholder="Optional context for teammates"
               />
             </DesignFormField>
+
+            {activeType === "category" && (
+              <>
+                <DesignFormField
+                  label="Hero media"
+                  helper="Upload an image/video or paste an existing URL. Videos should be .mp4, .webm, or .mov."
+                >
+                  <div className="space-y-3">
+                    {form.heroMediaUrl ? (
+                      <div className="relative h-48 overflow-hidden rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)]">
+                        {inferMediaKind(form.heroMediaUrl) === "video" ? (
+                          <video
+                            className="h-full w-full object-cover"
+                            controls
+                            playsInline
+                            muted
+                            loop
+                            src={form.heroMediaUrl}
+                          />
+                        ) : (
+                          <Image
+                            src={form.heroMediaUrl}
+                            alt={form.heroMediaAlt || form.label || "Category media"}
+                            fill
+                            className="object-cover"
+                            sizes="(min-width: 1024px) 420px, 100vw"
+                            unoptimized
+                          />
+                        )}
+                      </div>
+                    ) : null}
+                    <input
+                      ref={categoryMediaInputRef}
+                      type="file"
+                      className="hidden"
+                      accept="image/*,video/mp4,video/webm,video/quicktime"
+                      onChange={handleCategoryMediaUpload}
+                    />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <DesignButton
+                        type="button"
+                        variant="outline"
+                        onClick={() => categoryMediaInputRef.current?.click()}
+                        disabled={mediaUploading}
+                      >
+                        {mediaUploading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Uploading…
+                          </>
+                        ) : (
+                          "Upload media"
+                        )}
+                      </DesignButton>
+                      {form.heroMediaUrl ? (
+                        <DesignButton
+                          type="button"
+                          variant="ghost"
+                          onClick={() =>
+                            setForm((prev) => ({
+                              ...prev,
+                              heroMediaUrl: "",
+                            }))
+                          }
+                        >
+                          Clear media
+                        </DesignButton>
+                      ) : null}
+                    </div>
+                    <DesignInput
+                      value={form.heroMediaUrl}
+                      onChange={(event) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          heroMediaUrl: event.target.value,
+                        }))
+                      }
+                      placeholder="https://cdn.zabava/media/home-category.mp4"
+                    />
+                  </div>
+                </DesignFormField>
+
+                <DesignFormField
+                  label="Media alt text"
+                  helper="Used for accessibility when media is an image."
+                >
+                  <DesignInput
+                    value={form.heroMediaAlt}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        heroMediaAlt: event.target.value,
+                      }))
+                    }
+                    placeholder="Energetic group enjoying an escape room"
+                  />
+                </DesignFormField>
+
+                <DesignFormField
+                  label="Fallback background color"
+                  helper="Applied when no media is configured. Accepts any CSS color value (e.g., #0f172a)."
+                >
+                  <DesignInput
+                    value={form.accentColor}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        accentColor: event.target.value,
+                      }))
+                    }
+                    placeholder="#a3e635"
+                  />
+                </DesignFormField>
+              </>
+            )}
 
             {activeType === "ticket_type" && (
               <DesignFormField

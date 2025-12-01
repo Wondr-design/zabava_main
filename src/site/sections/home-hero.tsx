@@ -6,21 +6,8 @@ import { motion, type Variants } from "framer-motion";
 import { useTranslations } from "@/i18n/provider";
 import { LocalizedLink } from "@/components/ui/localized-link";
 import { Badge } from "@/components/ui/badge";
+import type { HomeCategoryCard } from "@/lib/data/site-directory";
 import { CategoryMarquee } from "./category-marquee";
-
-export interface HomeCategoryCard {
-  id: string;
-  slug: string;
-  name: string;
-  description?: string | null;
-  accentColor?: string | null;
-  media?: {
-    type: "image" | "gif" | "video";
-    url: string;
-    alt?: string;
-  } | null;
-  tag?: string | null;
-}
 
 const heroTextVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
@@ -31,12 +18,11 @@ const heroTextVariants: Variants = {
   },
 };
 
-
 export function HomeHero({ categories }: { categories: HomeCategoryCard[] }) {
   const t = useTranslations("hero");
 
   return (
-    <section className="relative isolate w-full overflow-hidden pt-20 sm:pt-24">
+    <section className="relative isolate w-full overflow-hidden pt-40 sm:pt-40">
       {/* Background Gradients */}
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-violet-600/20 rounded-full blur-[100px] opacity-50 mix-blend-screen" />
