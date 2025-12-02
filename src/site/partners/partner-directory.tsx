@@ -190,7 +190,7 @@ export function PartnerDirectory({ categories, partners }: PartnerDirectoryProps
               whileTap={{ scale: 0.95 }}
               className={cn(
                 "relative rounded-full border px-5 py-2.5 text-sm font-medium transition-all min-h-[44px] touch-manipulation",
-                "font-[family-name:var(--font-influencer)] uppercase tracking-wide",
+                "uppercase tracking-wide",
                 activeCategory === ALL_KEY
                   ? "border-[var(--ds-accent)]/80 bg-[var(--ds-accent)]/10 text-[var(--ds-accent)] shadow-lg shadow-[var(--ds-accent)]/20"
                   : "border-border/30 bg-[var(--ds-surface-card)]/50 text-foreground/80 hover:border-[var(--ds-accent)]/40 hover:bg-[var(--ds-accent)]/5",
@@ -214,7 +214,7 @@ export function PartnerDirectory({ categories, partners }: PartnerDirectoryProps
                 whileTap={{ scale: 0.95 }}
                 className={cn(
                   "relative rounded-full border px-5 py-2.5 text-sm font-medium transition-all min-h-[44px] touch-manipulation whitespace-nowrap",
-                  "font-[family-name:var(--font-influencer)] uppercase tracking-wide",
+                  "uppercase tracking-wide",
                   activeCategory === category.id
                     ? "border-[var(--ds-accent)]/80 bg-[var(--ds-accent)]/10 text-[var(--ds-accent)] shadow-lg shadow-[var(--ds-accent)]/20"
                     : "border-border/30 bg-[var(--ds-surface-card)]/50 text-foreground/80 hover:border-[var(--ds-accent)]/40 hover:bg-[var(--ds-accent)]/5",
