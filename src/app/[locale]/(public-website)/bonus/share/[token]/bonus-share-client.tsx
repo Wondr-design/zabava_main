@@ -23,7 +23,6 @@ import {
 import { bonusApi } from "@/lib/web/api-client";
 import type { PartnerFormRecord } from "@/lib/data/partner-forms";
 import { RewardRedemptionRunner } from "@/site/forms/reward-redemption-runner";
-import { SiteNav } from "@/site/components/site-nav";
 import { QrPreviewCard } from "@/site/components/qr-preview-card";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "@/i18n/provider";
@@ -640,7 +639,6 @@ export function BonusShareClient({ token }: { token: string }) {
   if (error) {
     return (
       <main className="min-h-screen text-white">
-        <SiteNav />
         <section className="flex min-h-[60vh] items-center justify-center px-4">
           <div className="w-full max-w-2xl space-y-4 rounded-3xl border border-white/10 bg-slate-900/70 p-8 text-center shadow-2xl shadow-black/40">
             <h1 className="text-2xl font-semibold">
@@ -659,7 +657,6 @@ export function BonusShareClient({ token }: { token: string }) {
   if (loading || !data || !debug || !linkInfo) {
     return (
       <main className="min-h-screen text-white">
-        <SiteNav />
         <section className="flex min-h-[60vh] items-center justify-center px-4">
           <div className="flex flex-col items-center gap-3 rounded-3xl border border-white/10 bg-slate-900/60 px-8 py-12 shadow-2xl shadow-black/40">
             <Loader2 className="h-8 w-8 animate-spin text-indigo-300" />
@@ -674,7 +671,6 @@ export function BonusShareClient({ token }: { token: string }) {
   if (error) {
     return (
       <main className="min-h-screen text-white">
-        <SiteNav />
         <section className="flex min-h-[60vh] items-center justify-center px-4">
           <div className="w-full max-w-2xl space-y-4 rounded-3xl border border-white/10 bg-slate-900/70 p-8 text-center shadow-2xl shadow-black/40">
             <h1 className="text-2xl font-semibold">
@@ -693,7 +689,6 @@ export function BonusShareClient({ token }: { token: string }) {
   if (loading || !data || !debug || !linkInfo) {
     return (
       <main className="min-h-screen text-white">
-        <SiteNav />
         <section className="flex min-h-[60vh] items-center justify-center px-4">
           <div className="flex flex-col items-center gap-3 rounded-3xl border border-white/10 bg-slate-900/60 px-8 py-12 shadow-2xl shadow-black/40">
             <Loader2 className="h-8 w-8 animate-spin text-indigo-300" />

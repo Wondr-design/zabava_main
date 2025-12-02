@@ -1,13 +1,19 @@
 .theme-public {
   color-scheme: dark;
-  font-family: var(--font-neue-haas-grot-disp), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family:
+    var(--font-neue-haas-grot-disp),
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
 
   --ds-text-strong: #f5f3ed;
   --ds-text-muted: #c7c2b3;
   --ds-text-subtle: #a5a08f;
   --ds-text-inverse: #23211a;
 
-  --ds-surface-base: #070011;
+  --ds-surface-base: #0d0a03;
   --ds-surface-muted: #2f2c25;
   --ds-surface-card: #343026;
   --ds-surface-elevated: #3b362b;
@@ -24,6 +30,9 @@
   --ds-primary-foreground: #26241f;
   --ds-secondary: #4a4736;
   --ds-secondary-foreground: #f0eee5;
+  --ds-accent: #fbbf24;
+  --ds-accent-hover: #f59e0b;
+  --ds-accent-light: #fcd34d;
   --ds-success: #9fc793;
   --ds-warning: #f0c7a6;
   --ds-danger: #d3a094;
@@ -33,6 +42,9 @@
   --ds-chart-3: #f0c7a6;
   --ds-chart-4: #9fc793;
   --ds-chart-5: #8d8a7a;
+
+  /* Map to Tailwind background variable */
+  --background: var(--ds-surface-base);
 }
 
 .theme-public[data-theme="light"],
@@ -61,6 +73,9 @@
   --ds-primary-foreground: var(--ds-text-inverse);
   --ds-secondary: #b5b28e;
   --ds-secondary-foreground: var(--ds-text-strong);
+  --ds-accent: #fbbf24;
+  --ds-accent-hover: #f59e0b;
+  --ds-accent-light: #fcd34d;
   --ds-success: #c9e0c1;
   --ds-warning: #f5d4ba;
   --ds-danger: #d99282;

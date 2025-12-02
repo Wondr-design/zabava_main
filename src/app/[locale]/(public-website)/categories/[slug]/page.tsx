@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { SiteNav } from "@/site/components/site-nav";
 import { FeaturedPartners } from "@/site/partners/featured-partners";
 import { getCategoryBySlug } from "@/lib/data/site-directory";
 import { LocalizedLink } from "@/components/ui/localized-link";
@@ -60,7 +59,6 @@ export default async function CategoryPage({ params }: CategoryPageContext) {
 
   return (
     <main className="flex min-h-screen flex-col text-white">
-      <SiteNav />
       <section className="bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-24">
         <div className="mx-auto flex w-full max-w-[120rem] flex-col gap-8 px-4 lg:px-24">
           <div className="flex flex-wrap items-center gap-3 text-sm text-indigo-200">

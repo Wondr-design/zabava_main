@@ -66,18 +66,26 @@ export function EmailVerification(props: EmailVerificationProps) {
     }
   }
 
+  const isBonusPage = type === "bonus";
+
   return (
     <div className={cn("w-full space-y-6", className)}>
       <div className="space-y-6">
         <DesignFormField
           className="space-y-3"
           label={
-            <span className="text-[0.7rem] font-bold uppercase tracking-[0.35em] text-violet-300">
+            <span className={cn(
+              "text-[0.7rem] font-bold uppercase tracking-[0.35em]",
+              isBonusPage ? "text-white" : "text-violet-300"
+            )}>
               {t("emailLabel")}
             </span>
           }
         >
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className={cn(
+            "flex gap-3",
+            isBonusPage ? "flex-col" : "flex-col sm:flex-row sm:items-center"
+          )}>
             <DesignInput
               type="email"
               value={inputEmail}
@@ -85,7 +93,12 @@ export function EmailVerification(props: EmailVerificationProps) {
               disabled={verification.requesting || emailVerified}
               placeholder={t("emailPlaceholder")}
               autoComplete="email"
-              className="flex-1 bg-white/10 border-white/30 text-white placeholder:text-slate-400 focus:border-violet-400/60 focus:ring-violet-400/30 transition-all"
+              className={cn(
+                "text-white placeholder:text-slate-400 transition-all",
+                isBonusPage
+                  ? "w-full h-12 bg-white/10 border border-white/20 rounded-xl px-4 focus:border-white/40 focus:ring-2 focus:ring-white/20"
+                  : "flex-1 bg-white/10 border-white/30 focus:border-violet-400/60 focus:ring-violet-400/30"
+              )}
             />
             <DesignButton
               type="button"
@@ -97,7 +110,12 @@ export function EmailVerification(props: EmailVerificationProps) {
                 emailVerified ||
                 inputEmail.trim().length === 0
               }
-              className="sm:min-w-[120px] bg-gradient-to-r from-violet-500 via-indigo-500 to-purple-500 hover:from-violet-600 hover:via-indigo-600 hover:to-purple-600 text-white shadow-lg shadow-violet-500/40 transition-all font-medium"
+              className={cn(
+                "text-white font-medium transition-all",
+                isBonusPage
+                  ? "w-full h-12 rounded-xl bg-white text-slate-950 hover:bg-slate-100 shadow-lg shadow-black/20"
+                  : "sm:min-w-[120px] bg-gradient-to-r from-violet-500 via-indigo-500 to-purple-500 hover:from-violet-600 hover:via-indigo-600 hover:to-purple-600 shadow-lg shadow-violet-500/40"
+              )}
             >
               {verification.requesting ? (
                 <>
@@ -114,12 +132,18 @@ export function EmailVerification(props: EmailVerificationProps) {
         <DesignFormField
           className="space-y-3"
           label={
-            <span className="text-[0.7rem] font-bold uppercase tracking-[0.35em] text-violet-300">
+            <span className={cn(
+              "text-[0.7rem] font-bold uppercase tracking-[0.35em]",
+              isBonusPage ? "text-white" : "text-violet-300"
+            )}>
               {t("codeLabel")}
             </span>
           }
         >
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className={cn(
+            "flex gap-3",
+            isBonusPage ? "flex-col" : "flex-col sm:flex-row sm:items-center"
+          )}>
             <DesignInput
               type="text"
               inputMode="numeric"
@@ -128,7 +152,12 @@ export function EmailVerification(props: EmailVerificationProps) {
               disabled={verification.verifying || emailVerified}
               placeholder={t("codePlaceholder")}
               maxLength={8}
-              className="flex-1 bg-white/10 border-white/30 text-white placeholder:text-slate-400 focus:border-violet-400/60 focus:ring-violet-400/30 transition-all"
+              className={cn(
+                "text-white placeholder:text-slate-400 transition-all",
+                isBonusPage
+                  ? "w-full h-12 bg-white/10 border border-white/20 rounded-xl px-4 focus:border-white/40 focus:ring-2 focus:ring-white/20"
+                  : "flex-1 bg-white/10 border-white/30 focus:border-violet-400/60 focus:ring-violet-400/30"
+              )}
             />
             <DesignButton
               type="button"
@@ -141,7 +170,12 @@ export function EmailVerification(props: EmailVerificationProps) {
                 verification.email.length === 0 ||
                 inputCode.trim().length === 0
               }
-              className="sm:min-w-[120px] bg-gradient-to-r from-violet-500 via-indigo-500 to-purple-500 hover:from-violet-600 hover:via-indigo-600 hover:to-purple-600 text-white shadow-lg shadow-violet-500/40 transition-all font-medium"
+              className={cn(
+                "text-white font-medium transition-all",
+                isBonusPage
+                  ? "w-full h-12 rounded-xl bg-white text-slate-950 hover:bg-slate-100 shadow-lg shadow-black/20"
+                  : "sm:min-w-[120px] bg-gradient-to-r from-violet-500 via-indigo-500 to-purple-500 hover:from-violet-600 hover:via-indigo-600 hover:to-purple-600 shadow-lg shadow-violet-500/40"
+              )}
             >
               {verification.verifying ? (
                 <>
@@ -156,7 +190,12 @@ export function EmailVerification(props: EmailVerificationProps) {
         </DesignFormField>
 
         {verification.expiresAt && !emailVerified ? (
-          <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+          <div className={cn(
+            "rounded-lg px-3 py-2",
+            isBonusPage
+              ? "border border-white/10 bg-white/5"
+              : "border border-white/10 bg-white/5"
+          )}>
             <p className="text-xs text-slate-400">
               {t("expires").replace(
                 "{time}",
@@ -167,16 +206,37 @@ export function EmailVerification(props: EmailVerificationProps) {
         ) : null}
 
         {verification.error ? (
-          <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 backdrop-blur-sm">
-            <p className="text-sm text-rose-300">{verification.error}</p>
+          <div className={cn(
+            "rounded-xl px-4 py-3 backdrop-blur-sm",
+            isBonusPage
+              ? "border border-white/20 bg-white/5"
+              : "border border-rose-500/30 bg-rose-500/10"
+          )}>
+            <p className={cn(
+              "text-sm",
+              isBonusPage ? "text-white" : "text-rose-300"
+            )}>
+              {verification.error}
+            </p>
           </div>
         ) : null}
 
         {emailVerified ? (
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 backdrop-blur-sm">
+          <div className={cn(
+            "rounded-xl px-4 py-3 backdrop-blur-sm",
+            isBonusPage
+              ? "border border-white/20 bg-white/5"
+              : "border border-emerald-500/30 bg-emerald-500/10"
+          )}>
             <div className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-emerald-300 shrink-0" />
-              <p className="text-sm text-emerald-200">
+              <ShieldCheck className={cn(
+                "h-4 w-4 shrink-0",
+                isBonusPage ? "text-white" : "text-emerald-300"
+              )} />
+              <p className={cn(
+                "text-sm",
+                isBonusPage ? "text-white" : "text-emerald-200"
+              )}>
                 {t("verified").replace(
                   "{time}",
                   new Date(

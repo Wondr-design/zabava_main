@@ -23,12 +23,6 @@ export function HomeHero({ categories }: { categories: HomeCategoryCard[] }) {
 
   return (
     <section className="relative isolate w-full overflow-hidden pt-40 sm:pt-40">
-      {/* Background Gradients */}
-      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-violet-600/20 rounded-full blur-[100px] opacity-50 mix-blend-screen" />
-        <div className="absolute bottom-0 left-1/4 w-[800px] h-[400px] bg-indigo-600/10 rounded-full blur-[80px] opacity-30" />
-      </div>
-
       <div className="mx-auto max-w-[120rem] px-4 pb-20 lg:px-24">
         <motion.div
           className="flex flex-col items-center text-center"
@@ -43,18 +37,18 @@ export function HomeHero({ categories }: { categories: HomeCategoryCard[] }) {
             <MovingBorderButton
               borderRadius="9999px"
               containerClassName="h-auto w-auto"
-              borderClassName="bg-[radial-gradient(violet_40%,transparent_60%)] opacity-[0.8]"
-              className="!border-transparent !bg-[var(--ds-surface-base)] px-4 py-1.5 text-sm font-medium text-violet-200 flex items-center"
+              borderClassName="bg-[radial-gradient(amber_40%,transparent_60%)] opacity-[0.8]"
+              className="!border-transparent !bg-[var(--ds-surface-base)] px-4 py-1.5 text-sm font-medium text-amber-400 flex items-center"
               duration={3000}
             >
-              <Sparkles className="mr-2 h-3.5 w-3.5 text-violet-300" />
+              <Sparkles className="mr-2 h-3.5 w-3.5 text-amber-300" />
               {t("tagline")}
             </MovingBorderButton>
           </motion.div>
 
           <motion.h1
             variants={heroTextVariants}
-            className="max-w-4xl text-balance text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl bg-gradient-to-r from-white via-violet-200 to-purple-200 bg-clip-text text-transparent bg-[length:200%_auto] animate-shine"
+            className="max-w-4xl text-balance text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl bg-gradient-to-r from-white via-amber-300 to-amber-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-shine"
           >
             {t("headline")}
           </motion.h1>

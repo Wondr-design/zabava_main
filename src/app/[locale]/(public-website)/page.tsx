@@ -3,7 +3,6 @@ import { Suspense } from "react";
 import { HomeHero } from "@/site/sections/home-hero";
 import { PartnerLogoMarquee } from "@/site/partners/partner-logo-marquee";
 import { PartnerLogoGrid } from "@/site/partners/partner-logo-grid";
-import { SiteNav } from "@/site/components/site-nav";
 import { getPublicDirectory } from "@/lib/data/site-directory";
 import {
   HomeReviews,
@@ -52,7 +51,6 @@ export default async function HomePage({ params }: HomePageProps) {
 
   return (
     <main className="flex min-h-screen flex-col text-white relative z-10">
-      <SiteNav />
       <HomeHero categories={heroCategoryCards} />
       <PartnerLogoGrid partners={partnerLogos} />
       <HomeReviews {...homeCms.reviews} />

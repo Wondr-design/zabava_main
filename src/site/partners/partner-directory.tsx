@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Search, X, ArrowRight, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LocalizedLink } from "@/components/ui/localized-link";
 import { Input } from "@/components/ui/input";
+import { motion, AnimatePresence } from "framer-motion";
 
 export interface PartnerDirectoryCategory {
   id: string;
@@ -39,6 +41,7 @@ export function PartnerDirectory({ categories, partners }: PartnerDirectoryProps
   const [activeCategory, setActiveCategory] = useState<string>(ALL_KEY);
   const urlQuery = searchParams?.get("q") ?? "";
   const [searchQuery, setSearchQuery] = useState(urlQuery);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   useEffect(() => {
     setSearchQuery(urlQuery);
@@ -76,7 +79,7 @@ export function PartnerDirectory({ categories, partners }: PartnerDirectoryProps
           part.toLowerCase() === normalizedQuery ? (
             <mark
               key={`${text}-${index}`}
-                  className="rounded bg-violet-500/40 px-1 text-white font-medium"
+              className="rounded bg-[var(--ds-accent)]/40 px-1 text-white font-medium"
             >
               {part}
             </mark>
@@ -110,158 +113,295 @@ export function PartnerDirectory({ categories, partners }: PartnerDirectoryProps
     return list.sort((a, b) => a.name.localeCompare(b.name));
   }, [activeCategory, partners, normalizedQuery]);
 
+  const clearSearch = () => {
+    setSearchQuery("");
+  };
+
   return (
-    <div className="mx-auto flex w-full max-w-[120rem] flex-col gap-8 px-4 py-12 sm:gap-10 lg:px-24 lg:py-20">
-      <div className="flex flex-col gap-6">
-        <div className="space-y-2 sm:space-y-3">
-          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl bg-gradient-to-r from-white via-violet-200 to-purple-200 bg-clip-text text-transparent">
+    <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-12 px-4 py-16 sm:gap-16 lg:px-8 lg:py-24">
+      {/* Header Section */}
+      <div className="flex flex-col gap-8">
+        <div className="space-y-4">
+          <h1
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl uppercase tracking-wide leading-tight"
+            style={{ fontFamily: "var(--font-influencer)" }}
+          >
             Explore partners
           </h1>
-          <p className="text-base text-slate-200 leading-relaxed sm:text-lg md:text-xl max-w-2xl">
+          <p className="text-lg sm:text-xl text-foreground/80 leading-relaxed max-w-3xl">
             Browse every Zabava partner and narrow down your search by category.
             Reserve in seconds, generate your QR pass instantly, and start earning rewards.
           </p>
         </div>
-        <div className="flex flex-col gap-4">
-          <div className="relative">
-            <label htmlFor="partner-search" className="sr-only">
-              Search partners
-            </label>
+
+        {/* Search Bar */}
+        <div className="relative group">
+          <div
+            className={cn(
+              "relative flex items-center gap-3 rounded-2xl border transition-all duration-300",
+              "bg-[var(--ds-surface-card)]/50 backdrop-blur-sm",
+              isSearchFocused
+                ? "border-[var(--ds-accent)]/60 shadow-lg shadow-[var(--ds-accent)]/10"
+                : "border-border/30 hover:border-border/50",
+              "focus-within:border-[var(--ds-accent)]/60 focus-within:shadow-lg focus-within:shadow-[var(--ds-accent)]/10"
+            )}
+          >
+            <div className="absolute left-4 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-foreground/40 transition-colors group-focus-within:text-[var(--ds-accent)]" />
+            </div>
             <Input
               id="partner-search"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search by partner name, description, or category"
-              className="h-12 border-white/20 bg-white/10 text-base text-white placeholder:text-slate-400 focus-visible:ring-violet-400 focus-visible:border-violet-400/60 transition-all"
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
+              placeholder="Search by partner name, description, or category..."
+              className={cn(
+                "h-14 pl-12 pr-12 border-0 bg-transparent text-base text-foreground",
+                "placeholder:text-foreground/40",
+                "focus-visible:ring-0 focus-visible:ring-offset-0"
+              )}
             />
+            {searchQuery && (
+              <button
+                onClick={clearSearch}
+                className="absolute right-4 flex items-center justify-center h-8 w-8 rounded-full bg-foreground/10 hover:bg-foreground/20 text-foreground/60 hover:text-foreground transition-colors"
+                aria-label="Clear search"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <button
+        </div>
+
+        {/* Category Filters */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-[var(--ds-accent)]" />
+            <span className="text-sm font-semibold uppercase tracking-wider text-foreground/60">
+              Filter by category
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <motion.button
               type="button"
               onClick={() => setActiveCategory(ALL_KEY)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               className={cn(
-                "rounded-full border px-4 py-2 text-sm font-medium transition min-h-[44px] touch-manipulation",
+                "relative rounded-full border px-5 py-2.5 text-sm font-medium transition-all min-h-[44px] touch-manipulation",
+                "font-[family-name:var(--font-influencer)] uppercase tracking-wide",
                 activeCategory === ALL_KEY
-                  ? "border-violet-400/80 bg-gradient-to-r from-violet-500/30 via-indigo-500/30 to-purple-500/30 text-white shadow-lg shadow-violet-500/20"
-                  : "border-white/20 bg-white/5 text-slate-200 hover:border-violet-300/70 hover:bg-white/10",
+                  ? "border-[var(--ds-accent)]/80 bg-[var(--ds-accent)]/10 text-[var(--ds-accent)] shadow-lg shadow-[var(--ds-accent)]/20"
+                  : "border-border/30 bg-[var(--ds-surface-card)]/50 text-foreground/80 hover:border-[var(--ds-accent)]/40 hover:bg-[var(--ds-accent)]/5",
               )}
             >
               All partners
-            </button>
+              {activeCategory === ALL_KEY && (
+                <motion.div
+                  layoutId="activeCategory"
+                  className="absolute inset-0 rounded-full border-2 border-[var(--ds-accent)]/80"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+            </motion.button>
             {categories.map((category) => (
-              <button
+              <motion.button
                 key={category.id}
                 type="button"
                 onClick={() => setActiveCategory(category.id)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 className={cn(
-                  "rounded-full border px-4 py-2 text-sm font-medium transition min-h-[44px] touch-manipulation whitespace-nowrap",
+                  "relative rounded-full border px-5 py-2.5 text-sm font-medium transition-all min-h-[44px] touch-manipulation whitespace-nowrap",
+                  "font-[family-name:var(--font-influencer)] uppercase tracking-wide",
                   activeCategory === category.id
-                    ? "border-violet-400/80 bg-gradient-to-r from-violet-500/30 via-indigo-500/30 to-purple-500/30 text-white shadow-lg shadow-violet-500/20"
-                    : "border-white/20 bg-white/5 text-slate-200 hover:border-violet-300/70 hover:bg-white/10",
+                    ? "border-[var(--ds-accent)]/80 bg-[var(--ds-accent)]/10 text-[var(--ds-accent)] shadow-lg shadow-[var(--ds-accent)]/20"
+                    : "border-border/30 bg-[var(--ds-surface-card)]/50 text-foreground/80 hover:border-[var(--ds-accent)]/40 hover:bg-[var(--ds-accent)]/5",
                 )}
               >
                 {category.name}
-              </button>
+                {activeCategory === category.id && (
+                  <motion.div
+                    layoutId="activeCategory"
+                    className="absolute inset-0 rounded-full border-2 border-[var(--ds-accent)]/80"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+              </motion.button>
             ))}
           </div>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-slate-300">
-          <span className="text-xs sm:text-sm">
-            Showing <span className="font-semibold text-white">{filteredPartners.length}</span>{" "}
+
+        {/* Results Count */}
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-foreground/60">
+            Showing <span className="font-semibold text-foreground">{filteredPartners.length}</span>{" "}
             {filteredPartners.length === 1 ? "partner" : "partners"}
-            {activeCategory !== ALL_KEY
-              ? ` in ${categories.find((cat) => cat.id === activeCategory)?.name ?? "All"}`
-              : ""}
+            {activeCategory !== ALL_KEY && (
+              <>
+                {" "}in{" "}
+                <span className="font-semibold text-[var(--ds-accent)]">
+                  {categories.find((cat) => cat.id === activeCategory)?.name ?? "All"}
+                </span>
+              </>
+            )}
           </span>
-          <LocalizedLink
-            href="#partner-grid"
-            className="text-xs uppercase tracking-[0.25em] text-violet-300 hover:text-violet-200 transition-colors"
-          >
-            Skip to results
-          </LocalizedLink>
+          {filteredPartners.length > 0 && (
+            <LocalizedLink
+              href="#partner-grid"
+              className="text-xs uppercase tracking-wider text-[var(--ds-accent)]/80 hover:text-[var(--ds-accent)] transition-colors flex items-center gap-1"
+            >
+              Skip to results
+              <ArrowRight className="h-3 w-3" />
+            </LocalizedLink>
+          )}
         </div>
       </div>
 
-      <div
-        id="partner-grid"
-        className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-8 xl:grid-cols-3"
-      >
-        {filteredPartners.map((partner) => (
-          <article
-            key={partner.partnerId}
-            className="group flex h-full flex-col overflow-hidden rounded-3xl border border-white/20 bg-gradient-to-br from-white/10 via-white/5 to-white/5 shadow-lg shadow-black/30 backdrop-blur transition hover:-translate-y-1 hover:border-violet-400/60 hover:shadow-violet-500/20"
+      {/* Partner Grid */}
+      <AnimatePresence mode="wait">
+        {filteredPartners.length > 0 ? (
+          <motion.div
+            key={`${activeCategory}-${normalizedQuery}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            id="partner-grid"
+            className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-8"
           >
-            <div className="relative aspect-[4/3] overflow-hidden">
-              {partner.heroImageUrl ? (
-                <Image
-                  src={partner.heroImageUrl}
-                  alt={partner.name}
-                  fill
-                  className="object-cover transition duration-500 group-hover:scale-105"
-                  sizes="(max-width: 1024px) 100vw, 33vw"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center bg-gradient-to-br from-indigo-500/30 via-slate-800/40 to-slate-900 text-3xl font-semibold text-white/40">
-                  {partner.name.slice(0, 2).toUpperCase()}
-                </div>
-              )}
-              <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-center gap-2 bg-gradient-to-t from-slate-950/90 to-transparent px-4 sm:px-5 pb-3 sm:pb-4 pt-12 sm:pt-14 text-xs uppercase tracking-[0.25em] text-violet-200">
-                {partner.categories.slice(0, 2).map((category) => (
-                  <span key={category.id}>{category.name}</span>
-                ))}
-                {partner.categories.length > 2 ? <span>+{partner.categories.length - 2}</span> : null}
-              </div>
-            </div>
-
-            <div className="flex flex-1 flex-col gap-4 sm:gap-6 p-4 sm:p-6">
-              <div className="flex flex-col gap-2 sm:gap-3">
-                <h2 className="text-lg sm:text-xl font-semibold text-white">
-                  {renderHighlight(partner.name) ?? partner.name}
-                </h2>
-                {partner.description ? (
-                  <p className="text-sm text-slate-200 leading-relaxed line-clamp-3">
-                    {renderHighlight(partner.description) ?? partner.description}
-                  </p>
-                ) : null}
-              </div>
-
-              {partner.highlights && partner.highlights.length > 0 ? (
-                <ul className="space-y-2 text-sm text-slate-200">
-                  {partner.highlights.slice(0, 3).map((highlight) => (
-                    <li key={highlight.id} className="line-clamp-2">
-                      <span className="font-semibold text-slate-100">
-                        {renderHighlight(highlight.title) ?? highlight.title}
+            {filteredPartners.map((partner, index) => (
+              <motion.article
+                key={partner.partnerId}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.4 }}
+                className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border/30 bg-[var(--ds-surface-card)]/50 backdrop-blur-sm transition-all duration-300 hover:border-[var(--ds-accent)]/40 hover:shadow-xl hover:shadow-[var(--ds-accent)]/10 hover:-translate-y-1"
+              >
+                {/* Image Section */}
+                <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-slate-800/50 to-slate-900/50">
+                  {partner.heroImageUrl ? (
+                    <Image
+                      src={partner.heroImageUrl}
+                      alt={partner.name}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      sizes="(max-width: 1024px) 100vw, 33vw"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center bg-gradient-to-br from-[var(--ds-accent)]/20 via-slate-800/40 to-slate-900/50">
+                      <span className="text-4xl font-bold text-foreground/30 uppercase tracking-wider">
+                        {partner.name.slice(0, 2)}
                       </span>
-                      {highlight.description ? ` – ${highlight.description}` : null}
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
+                    </div>
+                  )}
+                  {/* Category Badges */}
+                  <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-center gap-2 bg-gradient-to-t from-slate-950/95 via-slate-950/80 to-transparent px-4 pb-3 pt-8">
+                    {partner.categories.slice(0, 2).map((category) => (
+                      <span
+                        key={category.id}
+                        className="rounded-full bg-[var(--ds-accent)]/20 border border-[var(--ds-accent)]/30 px-2.5 py-1 text-xs font-medium uppercase tracking-wider text-[var(--ds-accent)]"
+                      >
+                        {category.name}
+                      </span>
+                    ))}
+                    {partner.categories.length > 2 && (
+                      <span className="rounded-full bg-foreground/10 border border-border/30 px-2.5 py-1 text-xs font-medium uppercase tracking-wider text-foreground/60">
+                        +{partner.categories.length - 2}
+                      </span>
+                    )}
+                  </div>
+                </div>
 
-              <div className="mt-auto flex flex-col gap-2 sm:gap-3">
-                <LocalizedLink
-                  href={`/partners/${partner.slug}`}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-violet-300/70 px-4 py-2.5 text-sm font-medium text-violet-100 transition hover:-translate-y-0.5 hover:border-violet-200 hover:text-white min-h-[44px] touch-manipulation"
-                >
-                  Learn more
-                </LocalizedLink>
-                {partner.selectedFormId ? (
-                  <LocalizedLink
-                    href={`/partners/${partner.slug}/book`}
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-500 via-indigo-500 to-purple-500 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-500/40 transition hover:from-violet-600 hover:via-indigo-600 hover:to-purple-600 min-h-[44px] touch-manipulation"
-                  >
-                    {partner.ctaPrimaryLabel ?? "Reserve and get QR pass"}
-                  </LocalizedLink>
-                ) : (
-                  <span className="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2.5 text-sm font-medium text-slate-300 min-h-[44px]">
-                    Booking coming soon
-                  </span>
-                )}
-              </div>
+                {/* Content Section */}
+                <div className="flex flex-1 flex-col gap-4 p-6">
+                  <div className="flex flex-col gap-2">
+                    <h2 className="text-xl font-semibold text-foreground leading-tight">
+                      {renderHighlight(partner.name) ?? partner.name}
+                    </h2>
+                    {partner.description && (
+                      <p className="text-sm text-foreground/70 leading-relaxed line-clamp-2">
+                        {renderHighlight(partner.description) ?? partner.description}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Highlights */}
+                  {partner.highlights && partner.highlights.length > 0 && (
+                    <ul className="space-y-1.5 text-sm text-foreground/60">
+                      {partner.highlights.slice(0, 2).map((highlight) => (
+                        <li key={highlight.id} className="flex items-start gap-2 line-clamp-1">
+                          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[var(--ds-accent)] flex-shrink-0" />
+                          <span>
+                            <span className="font-medium text-foreground/80">
+                              {renderHighlight(highlight.title) ?? highlight.title}
+                            </span>
+                            {highlight.description && (
+                              <span className="text-foreground/50">
+                                {" "}– {highlight.description}
+                              </span>
+                            )}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {/* Actions */}
+                  <div className="mt-auto flex flex-col gap-2 pt-2">
+                    <LocalizedLink
+                      href={`/partners/${partner.slug}`}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-border/30 bg-[var(--ds-surface-elevated)]/50 px-4 py-2.5 text-sm font-medium text-foreground transition-all hover:border-[var(--ds-accent)]/40 hover:bg-[var(--ds-accent)]/5 hover:text-[var(--ds-accent)] min-h-[44px] touch-manipulation group/link"
+                    >
+                      Learn more
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover/link:translate-x-1" />
+                    </LocalizedLink>
+                    {partner.selectedFormId ? (
+                      <LocalizedLink
+                        href={`/partners/${partner.slug}/book`}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--ds-accent)] to-[var(--ds-accent-hover)] px-4 py-2.5 text-sm font-medium text-[var(--ds-text-inverse)] shadow-lg shadow-[var(--ds-accent)]/20 transition-all hover:shadow-xl hover:shadow-[var(--ds-accent)]/30 hover:-translate-y-0.5 min-h-[44px] touch-manipulation"
+                      >
+                        {partner.ctaPrimaryLabel ?? "Reserve and get QR pass"}
+                      </LocalizedLink>
+                    ) : (
+                      <span className="inline-flex items-center justify-center gap-2 rounded-xl border border-border/30 bg-[var(--ds-surface-muted)]/50 px-4 py-2.5 text-sm font-medium text-foreground/50 min-h-[44px]">
+                        Booking coming soon
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </motion.article>
+            ))}
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col items-center justify-center py-20 text-center"
+          >
+            <div className="rounded-full bg-[var(--ds-accent)]/10 p-6 mb-6">
+              <Search className="h-12 w-12 text-[var(--ds-accent)]/60" />
             </div>
-          </article>
-        ))}
-      </div>
+            <h3 className="text-xl font-semibold text-foreground mb-2">No partners found</h3>
+            <p className="text-foreground/60 max-w-md">
+              Try adjusting your search or filter criteria to find what you're looking for.
+            </p>
+            {(searchQuery || activeCategory !== ALL_KEY) && (
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setActiveCategory(ALL_KEY);
+                }}
+                className="mt-6 rounded-xl border border-[var(--ds-accent)]/30 bg-[var(--ds-accent)]/10 px-6 py-2.5 text-sm font-medium text-[var(--ds-accent)] hover:bg-[var(--ds-accent)]/20 transition-colors"
+              >
+                Clear all filters
+              </button>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

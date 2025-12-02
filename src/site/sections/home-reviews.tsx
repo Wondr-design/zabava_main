@@ -72,7 +72,7 @@ export function HomeReviews({
               className="flex h-full flex-col rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_20px_50px_rgba(15,15,20,0.4)] backdrop-blur"
             >
               <blockquote className="flex-1 text-lg leading-relaxed text-white/90">
-                “{review.quote}”
+                "{review.quote}"
               </blockquote>
               <figcaption className="mt-4 text-sm text-slate-200/80">
                 <p className="font-semibold text-white">{review.author}</p>

@@ -6,6 +6,7 @@ import { GradualBlurWrapper } from "@/components/gradual-blur-wrapper";
 import { DotGridWrapper } from "@/components/dot-grid-wrapper";
 import { PlasmaWrapper } from "@/components/plasma-wrapper";
 import { BodyThemeClass } from "@/components/body-theme-class";
+import { SiteNav } from "@/site/components/site-nav";
 
 type SiteLayoutProps = {
   children: ReactNode;
@@ -13,14 +14,14 @@ type SiteLayoutProps = {
 
 export default function SiteLayout({ children }: SiteLayoutProps) {
   return (
-    <div
-      className="theme-public min-h-screen"
-      style={{ backgroundColor: "var(--ds-surface-base)" }}
-    >
+    <div className="theme-public min-h-screen">
       <BodyThemeClass className="theme-public" />
       <PlasmaWrapper />
       <DotGridWrapper />
-      {children}
+      <SiteNav />
+      <div className="pt-[120px]">
+        {children}
+      </div>
       <GradualBlurWrapper />
     </div>
   );

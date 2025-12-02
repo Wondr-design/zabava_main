@@ -7,7 +7,6 @@ import type { PartnerAddress, PartnerTicketDetail } from "@/lib/data/partners";
 import { getPartnerBySlug } from "@/lib/data/site-directory";
 import { ensureExternalUrl, formatCategoryLabel } from "@/lib/utils/url";
 import { LocalizedLink } from "@/components/ui/localized-link";
-import { SiteNav } from "@/site/components/site-nav";
 import { PartnerGallery } from "@/site/partners/partner-gallery";
 
 type PartnerPageContext = {
@@ -326,7 +325,6 @@ export default async function PartnerPage({ params }: PartnerPageContext) {
 
   return (
     <main className="flex min-h-screen flex-col text-white">
-      <SiteNav />
       <section className="relative isolate overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(99,102,241,0.25),transparent_60%)]" />
         <div className="mx-auto flex w-full max-w-[120rem] flex-col gap-10 px-4 pb-20 pt-24 lg:px-24">

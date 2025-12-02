@@ -1,5 +1,4 @@
 import { getPublicDirectory } from "@/lib/data/site-directory";
-import { SiteNav } from "@/site/components/site-nav";
 import {
   PartnerDirectory,
   PartnerDirectoryCategory,
@@ -37,7 +36,6 @@ export default async function PartnersDirectoryPage() {
 
   return (
     <main className="flex min-h-screen flex-col text-white">
-      <SiteNav />
       <PartnerDirectory
         categories={directoryCategories}
         partners={directoryPartners}

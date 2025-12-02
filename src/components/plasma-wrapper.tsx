@@ -17,7 +17,7 @@ export function PlasmaWrapper() {
     <div className="fixed inset-0 w-[100dvw] h-[100dvh] -z-50 pointer-events-none overflow-hidden">
       <div className="w-full h-full">
         <Plasma
-          color="#818cf8"
+          color="#fbbf24"
           speed={1}
           direction="forward"
           scale={1}

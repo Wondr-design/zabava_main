@@ -6,7 +6,6 @@ import {
   getPartnerFormById,
 } from "@/lib/data/partner-forms";
 import { getPartnerBySlug } from "@/lib/data/site-directory";
-import { SiteNav } from "@/site/components/site-nav";
 import { PartnerFormRunner } from "@/site/forms/partner-form-runner";
 import { LocalizedLink } from "@/components/ui/localized-link";
 import { getDealWithMeta } from "@/lib/data/flash-deals";
@@ -93,7 +92,6 @@ export default async function PartnerBookingPage({
 
   return (
     <main className="flex min-h-screen flex-col text-white">
-      <SiteNav />
       <section className="bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-20">
         <div className="mx-auto flex w-full max-w-[120rem] flex-col gap-6 px-4 lg:px-24">
           <div className="flex flex-wrap items-center gap-3 text-sm text-indigo-200">

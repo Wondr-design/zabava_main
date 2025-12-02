@@ -8,12 +8,13 @@ import { useTheme } from "next-themes";
 
 import GlassSurface from "@/components/GlassSurface";
 import { cn } from "@/lib/utils";
-import { locales, isLocale } from "@/i18n/config";
+import { locales, isLocale, type Locale } from "@/i18n/config";
 import { useLocale, useTranslations } from "@/i18n/provider";
 import { LocalizedLink } from "@/components/ui/localized-link";
 import { stripLocaleFromPath } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { LanguageSwitcher } from "./language-switcher";
 
 const LOCALE_COOKIE = "zabava_locale";
 
@@ -52,19 +53,21 @@ export function SiteNav() {
     return locales[(currentIndex + 1) % locales.length];
   }, [locale]);
 
-  const handleSwitchLocale = useCallback(() => {
-    const nextLocale = altLocale;
-    const segments = pathname.split("/");
-    if (segments.length > 1 && isLocale(segments[1])) {
-      segments[1] = nextLocale;
-    } else {
-      segments.splice(1, 0, nextLocale);
-    }
-    const nextPath = segments.join("/") || `/${nextLocale}`;
-    document.cookie = `${LOCALE_COOKIE}=${nextLocale}; path=/; max-age=${60 * 60 * 24 * 365}`;
-    router.push(nextPath);
-    router.refresh();
-  }, [altLocale, pathname, router]);
+  const handleSwitchLocale = useCallback(
+    (nextLocale: Locale) => {
+      const segments = pathname.split("/");
+      if (segments.length > 1 && isLocale(segments[1])) {
+        segments[1] = nextLocale;
+      } else {
+        segments.splice(1, 0, nextLocale);
+      }
+      const nextPath = segments.join("/") || `/${nextLocale}`;
+      document.cookie = `${LOCALE_COOKIE}=${nextLocale}; path=/; max-age=${60 * 60 * 24 * 365}`;
+      router.push(nextPath);
+      router.refresh();
+    },
+    [pathname, router]
+  );
 
   return (
     <header className="fixed top-4 inset-x-0 z-50 flex justify-center px-4 transition-all duration-300">
@@ -79,15 +82,7 @@ export function SiteNav() {
         blueOffset={25}
         brightness={60}
         opacity={0.8}
-        blur={11}
-        saturation={1}
         mixBlendMode="screen"
-        borderWidth={0.5}
-        backgroundOpacity={0.1}
-        className={cn(
-          "mx-auto !p-0 shadow-2xl transition-all duration-300",
-          isScrolled ? "opacity-70" : ""
-        )}
       >
         <div className="flex w-full items-center justify-between gap-4 px-6 py-3">
           <LocalizedLink
@@ -134,12 +129,12 @@ export function SiteNav() {
               <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             </button>
 
-            <button
-              onClick={handleSwitchLocale}
-              className="text-xs font-medium uppercase tracking-wider text-slate-300 hover:text-white transition-colors border border-white/10 rounded-full px-3 py-1.5 bg-white/5 hover:bg-white/10"
-            >
-              {locale === primaryLocale ? secondaryLocale : primaryLocale}
-            </button>
+            <LanguageSwitcher
+              size="md"
+              showBadge={true}
+              onLocaleChange={handleSwitchLocale}
+              className="border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
+            />
 
             {/* Mobile Menu Trigger */}
             <Sheet>

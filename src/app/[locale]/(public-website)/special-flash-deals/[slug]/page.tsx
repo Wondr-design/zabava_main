@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { LocalizedLink } from "@/components/ui/localized-link";
 import { getPublicDealBySlug } from "@/lib/data/flash-deals";
 import { getPartnerById } from "@/lib/data/site-directory";
-import { SiteNav } from "@/site/components/site-nav";
 import { getPartnerFormById } from "@/lib/data/partner-forms";
 import { PartnerFormRunner } from "@/site/forms/partner-form-runner";
 
@@ -122,7 +121,6 @@ export default async function SpecialFlashDealDetailPage({
 
   return (
     <main className="flex min-h-screen flex-col text-white">
-      <SiteNav />
       <section className="mx-auto flex w-full max-w-[120rem] flex-1 flex-col gap-10 px-4 py-20 lg:px-24">
         <LocalizedLink
           href="/special-flash-deals"

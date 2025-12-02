@@ -18,8 +18,8 @@ export function DotGridWrapper() {
       <DotGrid
         dotSize={2}
         gap={24}
-        baseColor="#271e37" 
-        activeColor="#f1ff29" 
+        baseColor="#1A160D"
+        activeColor="#fbbf24"
         proximity={70}
         speedTrigger={150}
         shockRadius={80}
