@@ -6,7 +6,16 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { formatDate, formatDateTime } from "@/lib/format/date";
-import { CalendarDays, Clock, Copy, Gift, Loader2 } from "lucide-react";
+import {
+  CalendarDays,
+  Clock,
+  Copy,
+  Gift,
+  Loader2,
+  Search,
+  Ticket,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -24,6 +33,8 @@ import { bonusApi } from "@/lib/web/api-client";
 import type { PartnerFormRecord } from "@/lib/data/partner-forms";
 import { RewardRedemptionRunner } from "@/site/forms/reward-redemption-runner";
 import { QrPreviewCard } from "@/site/components/qr-preview-card";
+import { GlassContentCard } from "@/site/components/glass-content-card";
+import { SiteNav } from "@/site/components/site-nav";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "@/i18n/provider";
 
@@ -668,38 +679,6 @@ export function BonusShareClient({ token }: { token: string }) {
       </main>
     );
   }
-  if (error) {
-    return (
-      <main className="min-h-screen text-white">
-        <section className="flex min-h-[60vh] items-center justify-center px-4">
-          <div className="w-full max-w-2xl space-y-4 rounded-3xl border border-white/10 bg-slate-900/70 p-8 text-center shadow-2xl shadow-black/40">
-            <h1 className="text-2xl font-semibold">
-              {tBonus("secureLink.title")}
-            </h1>
-            <p className="text-sm text-slate-300">{error}</p>
-            <Button asChild variant="secondary">
-              <Link href="/bonus">{tBonus("secureLink.cta")}</Link>
-            </Button>
-          </div>
-        </section>
-      </main>
-    );
-  }
-
-  if (loading || !data || !debug || !linkInfo) {
-    return (
-      <main className="min-h-screen text-white">
-        <section className="flex min-h-[60vh] items-center justify-center px-4">
-          <div className="flex flex-col items-center gap-3 rounded-3xl border border-white/10 bg-slate-900/60 px-8 py-12 shadow-2xl shadow-black/40">
-            <Loader2 className="h-8 w-8 animate-spin text-indigo-300" />
-            <p className="text-sm text-indigo-100">
-              {tBonus("states.loadingRewards")}
-            </p>
-          </div>
-        </section>
-      </main>
-    );
-  }
 
   const visits = data.visits ?? [];
   const pointsHistory = debug.pointsHistory ?? [];
@@ -852,111 +831,101 @@ export function BonusShareClient({ token }: { token: string }) {
   return (
     <main className="space-y-10 text-white">
       <SiteNav />
-      <section className="relative isolate overflow-hidden border-b border-white/10 bg-gradient-to-br from-indigo-700/20 via-slate-950 to-slate-950">
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute left-1/2 top-[-10%] h-64 w-64 -translate-x-1/2 rounded-full bg-indigo-500/25 blur-3xl" />
-          <div className="absolute bottom-0 right-0 h-96 w-96 translate-x-1/3 bg-fuchsia-500/10 blur-3xl" />
-        </div>
+      {/* Main background updated to bg-slate-950 as per design requirements */}
+      <section className="relative isolate overflow-hidden border-b border-white/10 pt-[120px]">
         <div className="relative mx-auto flex max-w-[120rem] flex-col gap-6 px-4 py-20 lg:px-24">
-          <div className="space-y-4">
-            <span className="text-sm font-semibold uppercase tracking-[0.35em] text-indigo-200">
-              Rewards
-            </span>
-            <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-              {tBonus("hero.title")}
-            </h1>
-            <p className="text-base text-slate-200 sm:text-lg">
-              {tBonus("hero.description")}
-            </p>
-          </div>
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,360px)_1fr]">
-            <div className="rounded-[28px] border border-white/15 bg-slate-950/80 p-6 shadow-xl shadow-black/30 backdrop-blur">
-              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-indigo-200/80">
+          <div className="space-y-2 mb-12 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-[0.25em] text-indigo-300 pl-1">
+                Rewards
+              </span>
+              <h1 className="font-[family-name:var(--font-influencer)] text-[80px] uppercase tracking-wide text-white leading-[0.8]">
+                {tBonus("hero.title")}
+              </h1>
+              <p className="text-lg text-slate-400 max-w-2xl mt-2">
+                {tBonus("hero.description")}
+              </p>
+            </div>
+
+            {/* Viewing Info - Top Right */}
+            <div className="text-right">
+              <p className="text-sm font-medium uppercase tracking-widest text-white mb-1">
                 {tBonus("secureLink.viewing")}
               </p>
-              <div className="mt-3 rounded-2xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm font-semibold">
+              <div className="text-3xl font-[family-name:var(--font-influencer)] uppercase text-amber-400 tracking-wide leading-none mb-2">
                 {linkInfo.email}
               </div>
-              {linkExpiryParts ? (
-                <p className="mt-3 text-xs text-slate-400">
+              {linkExpiryParts && (
+                <p className="text-xs font-medium uppercase tracking-wider text-white/70">
                   {tBonus("secureLink.expires")
                     .replace("{date}", linkExpiryParts.date)
                     .replace("{time}", linkExpiryParts.time)}
                 </p>
-              ) : null}
-              <div className="mt-4 flex flex-wrap gap-3">
+              )}
+              <div className="mt-4 flex justify-end">
                 <RefreshButton
                   onRefresh={() => fetchPoints({ silent: false })}
                   disabled={loading || !verifiedEmail}
+                  className="bg-white/10 hover:bg-white/20 border-white/10 text-white"
                 />
               </div>
             </div>
-            <div className="rounded-[28px] border border-white/15 bg-slate-950/80 p-6 shadow-xl shadow-black/30 backdrop-blur">
-              <dl className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
-                  <dt className="text-xs uppercase tracking-[0.3em] text-indigo-200">
-                    {tBonus("points.total")}
-                  </dt>
-                  <dd className="mt-2 text-2xl font-semibold text-white">
-                    {totalPoints.toLocaleString()}
-                  </dd>
+          </div>
+
+          <div className="w-full">
+            {/* Stats Card */}
+            <div className="flex justify-start">
+              <div className="w-auto h-auto rounded-[32px] bg-slate-950/50 backdrop-blur-md border border-white/10 shadow-lg">
+                <div className="p-4">
+                  <div className="flex gap-4">
+                    {/* Total Points */}
+                    <div className="flex flex-col justify-center gap-2 rounded-2xl border border-white/10 bg-slate-950/30 px-6 py-4 min-w-[200px]">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-indigo-200/70">
+                        {tBonus("points.total")}
+                      </span>
+                      <span className="font-[family-name:var(--font-influencer)] text-5xl text-white leading-none tracking-tight">
+                        {totalPoints.toLocaleString()}
+                      </span>
+                    </div>
+                    {/* Available Points */}
+                    <div className="flex flex-col justify-center gap-2 rounded-2xl border border-white/10 bg-slate-950/30 px-6 py-4 min-w-[200px]">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-indigo-200/70">
+                        {tBonus("points.available")}
+                      </span>
+                      <span className="font-[family-name:var(--font-influencer)] text-5xl text-white leading-none tracking-tight">
+                        {availablePoints.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
-                  <dt className="text-xs uppercase tracking-[0.3em] text-indigo-200">
-                    {tBonus("points.available")}
-                  </dt>
-                  <dd className="mt-2 text-2xl font-semibold text-white">
-                    {availablePoints.toLocaleString()}
-                  </dd>
-                </div>
-              </dl>
-              <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/50 p-4">
-                <dt className="text-xs uppercase tracking-[0.3em] text-indigo-200">
-                  {needMore > 0
-                    ? tBonus("points.nextReward")
-                    : tBonus("points.ready")}
-                </dt>
-                <dd className="mt-2 text-2xl font-semibold text-white">
-                  {hasRewardTarget ? nextRewardCost.toLocaleString() : "—"}
-                </dd>
-                <p className="mt-2 text-xs text-slate-400">
-                  {hasRewardTarget
-                    ? needMore > 0
-                      ? tBonus("points.needMore").replace(
-                          "{points}",
-                          needMore.toLocaleString()
-                        )
-                      : tBonus("points.canRedeem")
-                    : tBonus("points.emptyState")}
-                </p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto flex w-full max-w-[120rem] flex-col gap-10 px-4 py-16 lg:px-24">
-        <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-xl shadow-black/20 backdrop-blur">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-1">
-              <h2 className="text-lg font-semibold text-white">
+      <section className="mx-auto flex w-full max-w-[120rem] flex-col gap-10 px-4 py-10 lg:px-24">
+        <div className="space-y-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="space-y-3 max-w-2xl">
+              <h2 className="font-[family-name:var(--font-influencer)] text-[64px] uppercase tracking-wide text-white leading-none">
                 {tBonus("rewards.title")}
               </h2>
-              <p className="text-sm text-slate-300">
+              <p className="text-lg text-slate-300">
                 {tBonus("rewards.description")}
-                <span className="mx-1 font-semibold text-white">
+                <span className="mx-1.5 inline-block font-semibold text-white bg-white/10 px-2 py-0.5 rounded-md">
                   {tBonus("rewards.onePoint")}
                 </span>
                 {tBonus("rewards.forEvery")}
-                <span className="mx-1 font-semibold text-white">
+                <span className="mx-1.5 inline-block font-semibold text-white bg-white/10 px-2 py-0.5 rounded-md">
                   {data.pointRatioCzk?.toLocaleString() ?? "—"} Kč
                 </span>
                 {tBonus("rewards.postfix")}
               </p>
             </div>
-            <div className="flex items-center gap-2 text-sm text-indigo-200">
-              <Gift className="h-5 w-5" />
-              <span>
+            <div className="flex items-center gap-3 bg-slate-900/50 px-4 py-2 rounded-full border border-white/10 backdrop-blur">
+              <Gift className="h-5 w-5 text-amber-400" />
+              <span className="text-sm font-medium text-white">
                 {tBonus("rewards.shown")
                   .replace("{visible}", filteredRewards.length.toString())
                   .replace("{total}", rewards.length.toString())}
@@ -966,49 +935,78 @@ export function BonusShareClient({ token }: { token: string }) {
 
           {rewards.length > 0 ? (
             <>
-              <div className="mt-6 rounded-3xl border border-white/10 bg-slate-950/50 px-4 py-4 text-sm text-slate-200">
-                <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
-                  <div className="space-y-1">
-                    <span className="text-xs uppercase tracking-[0.3em] text-indigo-200">
-                      {tBonus("filters.partnerName")}
-                    </span>
-                    <Input
+              <div className="w-full space-y-8">
+                {/* Search Bar */}
+                <div className="relative max-w-xl">
+                  <div className="relative group">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-white transition-colors" />
+                    <input
+                      type="text"
                       value={partnerQuery}
-                      onChange={(event) => setPartnerQuery(event.target.value)}
+                      onChange={(e) => setPartnerQuery(e.target.value)}
                       placeholder={tBonus("filters.partnerPlaceholder")}
-                      className="bg-slate-950/70 text-white"
+                      className="w-full h-14 pl-12 pr-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-slate-500 focus:outline-none focus:border-white/20 focus:bg-white/10 focus:ring-1 focus:ring-white/20 transition-all"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <span className="text-xs uppercase tracking-[0.3em] text-indigo-200">
-                      {tBonus("filters.ticketType")}
+                </div>
+
+                {/* Ticket Type Tabs */}
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setTicketTypeFilter("all")}
+                    className={cn(
+                      "relative px-5 py-2.5 rounded-full text-sm font-medium transition-colors",
+                      ticketTypeFilter === "all"
+                        ? "text-slate-950"
+                        : "text-slate-300 hover:text-white hover:bg-white/5"
+                    )}
+                  >
+                    {ticketTypeFilter === "all" && (
+                      <motion.div
+                        layoutId="activeTab"
+                        className="absolute inset-0 bg-white rounded-full"
+                        transition={{
+                          type: "spring",
+                          bounce: 0.2,
+                          duration: 0.6,
+                        }}
+                      />
+                    )}
+                    <span className="relative z-10">
+                      {tBonus("filters.allTicketTypes")}
                     </span>
-                    <Select
-                      value={ticketTypeFilter}
-                      onValueChange={(value) => setTicketTypeFilter(value)}
+                  </button>
+
+                  {ticketTypeOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => setTicketTypeFilter(option.value)}
+                      className={cn(
+                        "relative px-5 py-2.5 rounded-full text-sm font-medium transition-colors",
+                        ticketTypeFilter === option.value
+                          ? "text-slate-950"
+                          : "text-slate-300 hover:text-white hover:bg-white/5"
+                      )}
                     >
-                      <SelectTrigger className="bg-slate-950/70 text-white">
-                        <SelectValue
-                          placeholder={tBonus("filters.ticketPlaceholder")}
+                      {ticketTypeFilter === option.value && (
+                        <motion.div
+                          layoutId="activeTab"
+                          className="absolute inset-0 bg-white rounded-full"
+                          transition={{
+                            type: "spring",
+                            bounce: 0.2,
+                            duration: 0.6,
+                          }}
                         />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-900 text-white">
-                        <SelectItem value="all">
-                          {tBonus("filters.allTicketTypes")}
-                        </SelectItem>
-                        {ticketTypeOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      )}
+                      <span className="relative z-10">{option.label}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
               {filteredRewards.length > 0 ? (
-                <ul className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <ul className="mt-10 grid gap-x-8 gap-y-12 md:grid-cols-2 xl:grid-cols-3">
                   {filteredRewards.map((reward) => {
                     // Calculate actual minimum cost (accounting for partner-specific costs and ticket points)
                     let displayCost = reward.pointsCost || 0;
@@ -1046,23 +1044,6 @@ export function BonusShareClient({ token }: { token: string }) {
                     displayCost =
                       minCost > 0 ? minCost : reward.pointsCost || 0;
 
-                    // Check if reward has variable pricing (different costs for different partners/ticket types)
-                    const hasVariablePricing =
-                      (reward.partnerConfigs &&
-                        reward.partnerConfigs.size > 0 &&
-                        Array.from(reward.partnerConfigs.values()).some((c) =>
-                          (c.tickets ?? []).some(
-                            (ticket) =>
-                              typeof ticket.points === "number" &&
-                              ticket.points !== reward.pointsCost
-                          )
-                        )) ||
-                      (reward.ticketPoints &&
-                        reward.ticketPoints.length > 0 &&
-                        reward.ticketPoints.some(
-                          (tp) => tp.points !== reward.pointsCost
-                        ));
-
                     const limitStatus = reward.limitStatus ?? "available";
                     const limitBlocked = limitStatus !== "available";
                     const rewardAvailableFlag =
@@ -1071,471 +1052,255 @@ export function BonusShareClient({ token }: { token: string }) {
                       rewardAvailableFlag &&
                       reward.canRedeem !== false &&
                       availablePoints >= displayCost;
-                    const diff = Math.max(0, displayCost - availablePoints);
                     const partnerNames = reward.partnerNames ?? [];
                     const primaryPartner = partnerNames[0] ?? "—";
-                    const partnerInitials = primaryPartner
-                      .split(/\s+/)
-                      .map((segment) => segment.charAt(0))
-                      .join("")
-                      .slice(0, 2)
-                      .toUpperCase();
-
-                    const formattedNextAvailable =
-                      reward.nextRedeemAt &&
-                      !Number.isNaN(Date.parse(reward.nextRedeemAt))
-                        ? formatDateTime(reward.nextRedeemAt)
-                        : null;
-                    const limitMessage = (() => {
-                      if (!limitBlocked) return null;
-                      switch (limitStatus) {
-                        case "daily_exhausted":
-                          return "Daily limit reached";
-                        case "monthly_exhausted":
-                          return "Monthly limit reached";
-                        case "window_exhausted":
-                          return "All redemptions claimed";
-                        default:
-                          return "Temporarily unavailable";
-                      }
-                    })();
-
-                    // Compute availability tags
-                    const now = new Date();
-                    const validFrom = reward.validFrom
-                      ? new Date(reward.validFrom)
-                      : null;
-                    const validUntil = reward.validUntil
-                      ? new Date(reward.validUntil)
-                      : null;
-                    const isCurrentlyAvailable = validFrom
-                      ? now >= validFrom
-                      : true;
-                    const isExpired = validUntil ? now > validUntil : false;
-                    const willBeAvailable = validFrom && !isCurrentlyAvailable;
-                    const availabilityTags: Array<{
-                      label: string;
-                      className: string;
-                    }> = [];
-
-                    if (isExpired) {
-                      availabilityTags.push({
-                        label: "Expired",
-                        className:
-                          "border-rose-400/40 bg-rose-500/15 text-rose-200",
-                      });
-                    } else if (!rewardAvailableFlag) {
-                      if (reward.showAvailabilityDate && validFrom) {
-                        availabilityTags.push({
-                          label: `Available ${formatDate(validFrom)}`,
-                          className:
-                            "border-amber-400/40 bg-amber-500/15 text-amber-200",
-                        });
-                      } else {
-                        availabilityTags.push({
-                          label: "Coming soon",
-                          className:
-                            "border-amber-400/40 bg-amber-500/15 text-amber-200",
-                        });
-                      }
-                    } else if (
-                      willBeAvailable &&
-                      reward.showAvailabilityDate &&
-                      validFrom
-                    ) {
-                      availabilityTags.push({
-                        label: `Available ${formatDate(validFrom)}`,
-                        className:
-                          "border-violet-400/40 bg-violet-500/15 text-violet-200",
-                      });
-                    }
-                    if (validUntil && !isExpired) {
-                      availabilityTags.push({
-                        label: `Expires ${formatDate(validUntil)}`,
-                        className:
-                          "border-slate-400/40 bg-slate-500/15 text-slate-200",
-                      });
-                    }
 
                     // Use primary image (imageUrl) first, then fall back to first hero image
                     const heroImageUrl =
                       reward.imageUrl ?? reward.heroImages?.[0] ?? null;
 
                     return (
-                      <li
-                        key={reward.id}
-                        className="group flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-slate-950/70 shadow-xl shadow-black/20 transition hover:border-violet-400/60 hover:shadow-violet-500/20"
-                      >
-                        {/* Hero Image */}
-                        {heroImageUrl ? (
-                          <div className="relative aspect-[4/3] overflow-hidden bg-slate-900">
-                            <Image
-                              src={heroImageUrl}
-                              alt={reward.name}
-                              fill
-                              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-                              className="object-cover transition duration-500 group-hover:scale-105"
-                            />
-                            {/* Points Badge Overlay */}
-                            <div className="absolute right-3 top-3">
-                              <span className="rounded-full border border-white/20 bg-black/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-white backdrop-blur-md shadow-lg">
-                                {hasVariablePricing ? "From " : ""}
-                                {displayCost.toLocaleString()} pts
-                              </span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="relative aspect-[4/3] flex items-center justify-center bg-gradient-to-br from-violet-500/20 via-indigo-500/20 to-purple-500/20">
-                            <div className="absolute right-3 top-3">
-                              <span className="rounded-full border border-white/20 bg-black/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-white backdrop-blur-md shadow-lg">
-                                {displayCost.toLocaleString()} pts
-                              </span>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Card Content */}
-                        <div className="flex flex-1 flex-col p-4 space-y-3">
-                          {/* Partner Logo & Name */}
-                          <div className="flex items-center gap-3">
-                            {reward.partnerLogoUrl ? (
-                              <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-white/10 bg-slate-900/60">
-                                <Image
-                                  src={reward.partnerLogoUrl}
-                                  alt={`${primaryPartner} logo`}
-                                  fill
-                                  sizes="40px"
-                                  className="object-cover"
-                                />
-                              </div>
-                            ) : (
-                              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-slate-900/60 text-xs font-semibold uppercase">
-                                {partnerInitials || "??"}
-                              </div>
-                            )}
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-200 truncate">
-                                {primaryPartner}
-                              </p>
-                              {partnerNames.length > 1 ? (
-                                <p className="text-[10px] text-slate-400 truncate">
-                                  {partnerNames.slice(1).join(", ")}
-                                </p>
-                              ) : null}
-                            </div>
-                          </div>
-
-                          {/* Reward Name & Category */}
-                          <div>
-                            <h3 className="text-lg font-bold text-white leading-tight mb-1">
-                              {reward.name}
-                            </h3>
-                            <p className="text-xs text-slate-400">
-                              {reward.category ?? tBonus("filters.all")}
-                            </p>
-                          </div>
-
-                          {reward.ticketPoints &&
-                          reward.ticketPoints.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                              {reward.ticketPoints.map((tp) => (
-                                <span
-                                  key={`${reward.id}-${tp.value}`}
-                                  className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/90"
-                                >
-                                  {tp.label}: {tp.points} pts
-                                </span>
-                              ))}
-                            </div>
-                          ) : null}
-
-                          {/* Description */}
-                          {reward.description ? (
-                            <p className="text-sm text-slate-300 line-clamp-2 leading-relaxed">
-                              {reward.description}
-                            </p>
-                          ) : null}
-
-                          {/* Availability Tags & Other Tags */}
-                          <div className="flex flex-wrap gap-2">
-                            {availabilityTags.map((tag, idx) => (
-                              <span
-                                key={`availability-${idx}`}
-                                className={cn(
-                                  "rounded-full border px-2.5 py-1 text-xs font-medium uppercase tracking-[0.15em]",
-                                  tag.className
-                                )}
-                              >
-                                {tag.label}
-                              </span>
-                            ))}
-                            {reward.transportIncluded ? (
-                              <span className="rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2.5 py-1 text-xs font-medium uppercase tracking-[0.15em] text-emerald-100">
-                                Transport included
-                              </span>
-                            ) : null}
-                            {Array.isArray(reward.tags) &&
-                            reward.tags.length > 0
-                              ? reward.tags.slice(0, 3).map((tag) => (
-                                  <span
-                                    key={`${reward.id}-${tag}`}
-                                    className="rounded-full border border-violet-400/30 bg-violet-600/20 px-2.5 py-1 text-xs font-medium uppercase tracking-[0.15em] text-violet-200"
-                                  >
-                                    #{tag}
-                                  </span>
-                                ))
-                              : null}
-                          </div>
-
-                          {limitBlocked ? (
-                            <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-amber-50">
-                              <p className="text-xs font-semibold uppercase tracking-[0.18em]">
-                                {limitMessage}
-                              </p>
-                              <p className="text-xs text-amber-100/80">
-                                {formattedNextAvailable
-                                  ? `Try again after ${formattedNextAvailable}.`
-                                  : "Please check back later."}
-                              </p>
-                            </div>
-                          ) : null}
-
-                          {/* Points Needed Message */}
-                          {!canRedeem && diff > 0 && rewardAvailableFlag ? (
-                            <p className="text-xs text-amber-200">
-                              {tBonus("rewards.needMore").replace(
-                                "{points}",
-                                diff.toLocaleString()
-                              )}
-                            </p>
-                          ) : null}
-
-                          {/* Action Button & Status */}
-                          <div className="mt-auto flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between pt-2">
-                            {limitBlocked ? (
-                              <span className="w-full rounded-full border border-white/15 bg-white/10 px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-slate-200">
-                                Unavailable
-                              </span>
-                            ) : (
-                              <>
-                                <Button
-                                  type="button"
-                                  disabled={!canRedeem || loading}
-                                  onClick={() => openRedeem(reward.id)}
-                                  className="w-full sm:w-auto bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-slate-950 hover:from-amber-300 hover:via-amber-400 hover:to-amber-300 disabled:cursor-not-allowed disabled:from-slate-700 disabled:via-slate-700 disabled:to-slate-700 disabled:text-slate-300 font-semibold shadow-lg shadow-amber-500/20 transition"
-                                >
-                                  {rewardAvailableFlag
-                                    ? tBonus("rewards.redeem")
-                                    : "Coming soon"}
-                                </Button>
-                                <span
-                                  className={cn(
-                                    "rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-center",
-                                    canRedeem
-                                      ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-200"
-                                      : "border-white/15 bg-white/10 text-slate-200"
-                                  )}
-                                >
-                                  {canRedeem
-                                    ? tBonus("rewards.readyLabel")
-                                    : tBonus("rewards.lockedLabel")}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
+                      <li key={reward.id}>
+                        <GlassContentCard
+                          reward={{
+                            id: reward.id,
+                            imageUrl: heroImageUrl,
+                            pointsCost: displayCost,
+                            partnerName: primaryPartner,
+                            name: reward.name,
+                            category: reward.category,
+                            partnerLogoUrl: reward.partnerLogoUrl,
+                            limitStatus: limitStatus,
+                            canRedeem: canRedeem,
+                            isAvailable: rewardAvailableFlag,
+                            onRedeem: () => openRedeem(reward.id),
+                            loading: loading,
+                          }}
+                        />
                       </li>
                     );
                   })}
                 </ul>
               ) : (
-                <p className="mt-6 rounded-2xl border border-white/10 bg-slate-950/50 p-4 text-sm text-slate-300">
-                  {tBonus("rewards.noMatches")}
-                </p>
+                <div className="mt-10 flex flex-col items-center justify-center rounded-3xl border border-white/10 bg-slate-950/30 p-12 text-center">
+                  <div className="w-16 h-16 rounded-full bg-slate-900 flex items-center justify-center mb-4">
+                    <Search className="w-8 h-8 text-slate-500" />
+                  </div>
+                  <h3 className="text-lg font-medium text-white mb-2">
+                    {tBonus("rewards.noMatches")}
+                  </h3>
+                  <p className="text-slate-400 max-w-xs">
+                    Try adjusting your filters or search for a different
+                    partner.
+                  </p>
+                </div>
               )}
             </>
           ) : (
-            <p className="mt-6 text-sm text-slate-300">
-              {tBonus("rewards.noneAvailable")}
-            </p>
+            <div className="mt-10 flex flex-col items-center justify-center rounded-3xl border border-white/10 bg-slate-950/30 p-12 text-center">
+              <p className="text-lg text-slate-300">
+                {tBonus("rewards.noneAvailable")}
+              </p>
+            </div>
           )}
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-12 pt-10 border-t border-white/10">
           {pointsHistory.length > 0 ? (
-            <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-xl shadow-black/20 backdrop-blur">
-              <h2 className="text-lg font-semibold text-white">
-                {tBonus("history.pointsTitle")}
-              </h2>
-              <div className="mt-4 overflow-auto rounded-2xl border border-white/10">
-                <table className="min-w-full divide-y divide-white/10 text-sm">
-                  <thead className="bg-slate-900/80 text-slate-300">
-                    <tr>
-                      <th className="px-4 py-3 text-left font-medium">
-                        {tBonus("history.when")}
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium">
-                        {tBonus("history.type")}
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium">
-                        {tBonus("history.points")}
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium">
-                        {tBonus("history.partner")}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {pointsHistory.map((entry) => (
-                      <tr
-                        key={entry.id}
-                        className="bg-slate-950/40 text-slate-200"
-                      >
-                        <td className="px-4 py-3">
-                          {renderDateTime(entry.created_at)}
-                        </td>
-                        <td className="px-4 py-3 capitalize">
-                          {entry.type || "—"}
-                        </td>
-                        <td className="px-4 py-3">
-                          {(entry.points ?? 0).toLocaleString()}
-                        </td>
-                        <td className="px-4 py-3">
-                          {entry.partner_name || entry.partner_id || "—"}
-                        </td>
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-1 bg-indigo-500 rounded-full"></div>
+                <h2 className="text-2xl font-bold text-white">
+                  {tBonus("history.pointsTitle")}
+                </h2>
+              </div>
+
+              <div className="w-full rounded-3xl bg-slate-950/50 backdrop-blur-md border border-white/10 shadow-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm text-left">
+                    <thead className="text-xs text-indigo-200 uppercase bg-white/5 tracking-wider font-semibold">
+                      <tr>
+                        <th className="px-6 py-4 rounded-tl-3xl">
+                          {tBonus("history.when")}
+                        </th>
+                        <th className="px-6 py-4">{tBonus("history.type")}</th>
+                        <th className="px-6 py-4">
+                          {tBonus("history.points")}
+                        </th>
+                        <th className="px-6 py-4 rounded-tr-3xl">
+                          {tBonus("history.partner")}
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {pointsHistory.map((entry) => (
+                        <tr
+                          key={entry.id}
+                          className="hover:bg-white/5 transition-colors"
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {renderDateTime(entry.created_at)}
+                          </td>
+                          <td className="px-6 py-4 capitalize">
+                            {entry.type || "—"}
+                          </td>
+                          <td className="px-6 py-4 font-medium text-white">
+                            {(entry.points ?? 0).toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 text-slate-300">
+                            {entry.partner_name || entry.partner_id || "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           ) : null}
 
           {redemptions.length > 0 ? (
-            <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-xl shadow-black/20 backdrop-blur">
-              <h2 className="text-lg font-semibold text-white">
-                {tBonus("redemptions.title")}
-              </h2>
-              <div className="mt-4 overflow-auto rounded-2xl border border-white/10">
-                <table className="min-w-full divide-y divide-white/10 text-sm">
-                  <thead className="bg-slate-900/80 text-slate-300">
-                    <tr>
-                      <th className="px-4 py-3 text-left font-medium">
-                        {tBonus("redemptions.code")}
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium">
-                        {tBonus("redemptions.status")}
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium">
-                        {tBonus("redemptions.created")}
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium">
-                        {tBonus("redemptions.used")}
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium">
-                        {tBonus("redemptions.expires")}
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium">
-                        {tBonus("redemptions.actions")}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {redemptions.map((entry) => (
-                      <tr
-                        key={entry.code}
-                        className="bg-slate-950/40 text-slate-200"
-                      >
-                        <td className="px-4 py-3 font-mono text-xs">
-                          {entry.code}
-                        </td>
-                        <td className="px-4 py-3 capitalize">
-                          {entry.status ?? "—"}
-                        </td>
-                        <td className="px-4 py-3">
-                          {renderDateTime(entry.created_at)}
-                        </td>
-                        <td className="px-4 py-3">
-                          {renderDateTime(entry.used_at)}
-                        </td>
-                        <td className="px-4 py-3">
-                          {renderDateTime(entry.expires_at)}
-                        </td>
-                        <td className="px-4 py-3">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleCopy(entry.code ?? "")}
-                            className="flex items-center gap-2 text-indigo-200"
-                          >
-                            <Copy className="h-4 w-4" />
-                            {tBonus("actions.copy")}
-                          </Button>
-                        </td>
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-1 bg-amber-500 rounded-full"></div>
+                <h2 className="text-2xl font-bold text-white">
+                  {tBonus("redemptions.title")}
+                </h2>
+              </div>
+
+              <div className="w-full rounded-3xl bg-slate-950/50 backdrop-blur-md border border-white/10 shadow-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm text-left">
+                    <thead className="text-xs text-indigo-200 uppercase bg-white/5 tracking-wider font-semibold">
+                      <tr>
+                        <th className="px-6 py-4 rounded-tl-3xl">
+                          {tBonus("redemptions.code")}
+                        </th>
+                        <th className="px-6 py-4">
+                          {tBonus("redemptions.status")}
+                        </th>
+                        <th className="px-6 py-4">
+                          {tBonus("redemptions.created")}
+                        </th>
+                        <th className="px-6 py-4">
+                          {tBonus("redemptions.used")}
+                        </th>
+                        <th className="px-6 py-4">
+                          {tBonus("redemptions.expires")}
+                        </th>
+                        <th className="px-6 py-4 rounded-tr-3xl">
+                          {tBonus("redemptions.actions")}
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {redemptions.map((entry) => (
+                        <tr
+                          key={entry.code}
+                          className="hover:bg-white/5 transition-colors"
+                        >
+                          <td className="px-6 py-4 font-mono text-xs text-amber-300">
+                            {entry.code}
+                          </td>
+                          <td className="px-6 py-4 capitalize">
+                            <span
+                              className={cn(
+                                "px-2 py-1 rounded-full text-xs font-medium",
+                                entry.status === "applied"
+                                  ? "bg-green-500/20 text-green-300"
+                                  : "bg-slate-700/50 text-slate-300"
+                              )}
+                            >
+                              {entry.status ?? "—"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            {renderDateTime(entry.created_at)}
+                          </td>
+                          <td className="px-6 py-4">
+                            {renderDateTime(entry.used_at)}
+                          </td>
+                          <td className="px-6 py-4">
+                            {renderDateTime(entry.expires_at)}
+                          </td>
+                          <td className="px-6 py-4">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleCopy(entry.code ?? "")}
+                              className="flex items-center gap-2 text-indigo-200 hover:text-white hover:bg-indigo-500/20"
+                            >
+                              <Copy className="h-4 w-4" />
+                              {tBonus("actions.copy")}
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           ) : null}
 
           {visits.length > 0 ? (
-            <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-xl shadow-black/20 backdrop-blur">
-              <h2 className="text-lg font-semibold text-white">
-                {tBonus("visits.title")}
-              </h2>
-              <div className="mt-4 overflow-auto rounded-2xl border border-white/10">
-                <table className="min-w-full divide-y divide-white/10 text-sm">
-                  <thead className="bg-slate-900/80 text-slate-300">
-                    <tr>
-                      <th className="px-4 py-3 text-left font-medium">
-                        {tBonus("visits.partner")}
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium">
-                        {tBonus("visits.status")}
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium">
-                        {tBonus("visits.points")}
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium">
-                        {tBonus("visits.created")}
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium">
-                        {tBonus("visits.visited")}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {visits.map((visit, index) => (
-                      <tr
-                        key={`${visit.partnerId}-${index}`}
-                        className="bg-slate-950/40 text-slate-200"
-                      >
-                        <td className="px-4 py-3">
-                          {visit.partner ?? visit.partnerId ?? "—"}
-                        </td>
-                        <td className="px-4 py-3 capitalize">
-                          {visit.status ?? "—"}
-                        </td>
-                        <td className="px-4 py-3">
-                          {(
-                            visit.pointsEarned ??
-                            visit.estimatedPoints ??
-                            0
-                          ).toLocaleString()}
-                        </td>
-                        <td className="px-4 py-3">
-                          {renderDateTime(visit.createdAt)}
-                        </td>
-                        <td className="px-4 py-3">
-                          {renderDateTime(visit.visitedAt)}
-                        </td>
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-1 bg-fuchsia-500 rounded-full"></div>
+                <h2 className="text-2xl font-bold text-white">
+                  {tBonus("visits.title")}
+                </h2>
+              </div>
+
+              <div className="w-full rounded-3xl bg-slate-950/50 backdrop-blur-md border border-white/10 shadow-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm text-left">
+                    <thead className="text-xs text-indigo-200 uppercase bg-white/5 tracking-wider font-semibold">
+                      <tr>
+                        <th className="px-6 py-4 rounded-tl-3xl">
+                          {tBonus("visits.partner")}
+                        </th>
+                        <th className="px-6 py-4">{tBonus("visits.status")}</th>
+                        <th className="px-6 py-4">{tBonus("visits.points")}</th>
+                        <th className="px-6 py-4">
+                          {tBonus("visits.created")}
+                        </th>
+                        <th className="px-6 py-4 rounded-tr-3xl">
+                          {tBonus("visits.visited")}
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {visits.map((visit, index) => (
+                        <tr
+                          key={`${visit.partnerId}-${index}`}
+                          className="hover:bg-white/5 transition-colors"
+                        >
+                          <td className="px-6 py-4 font-medium text-white">
+                            {visit.partner ?? visit.partnerId ?? "—"}
+                          </td>
+                          <td className="px-6 py-4 capitalize text-slate-300">
+                            {visit.status ?? "—"}
+                          </td>
+                          <td className="px-6 py-4 text-indigo-300 font-medium">
+                            {(
+                              visit.pointsEarned ??
+                              visit.estimatedPoints ??
+                              0
+                            ).toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 text-slate-400">
+                            {renderDateTime(visit.createdAt)}
+                          </td>
+                          <td className="px-6 py-4 text-slate-400">
+                            {renderDateTime(visit.visitedAt)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           ) : null}
@@ -1547,8 +1312,8 @@ export function BonusShareClient({ token }: { token: string }) {
         onOpenChange={(open) => !open && closeRedeem()}
       >
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-slate-950/80 backdrop-blur" />
-          <Dialog.Content className="fixed inset-0 m-auto h-fit max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-3xl border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-black/40">
+          <Dialog.Overlay className="fixed inset-0 bg-slate-950/80 backdrop-blur z-50" />
+          <Dialog.Content className="fixed inset-0 m-auto h-fit max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-3xl border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-black/40 z-50 outline-none">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-semibold text-white">

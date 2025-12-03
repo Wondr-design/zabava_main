@@ -153,7 +153,7 @@ export default function BonusPage() {
     <main className="min-h-screen text-white">
       <section className="relative isolate overflow-hidden min-h-[calc(100vh-80px)] flex items-center justify-center">
         <div className="relative mx-auto max-w-[120rem] w-full px-4">
-          <div className="max-w-5xl mx-auto space-y-12">
+          <div className="max-w-5xl mx-auto space-y-5">
             {/* Header Section */}
             <div className="space-y-6 sm:space-y-8 text-center">
               <GlassSurface
@@ -165,8 +165,8 @@ export default function BonusPage() {
                 <Sparkles className="mr-3 h-3.5 w-3.5 text-amber-300" />
                 Rewards
               </GlassSurface>
-              <div className="space-y-5 pt-8">
-                <h1 className="font-[family-name:var(--font-influencer)] text-[128px] uppercase tracking-wide text-white leading-[64px]">
+              <div className="space-y-1 pt-5">
+                <h1 className="font-[family-name:var(--font-influencer)] text-[128px] uppercase tracking-wide text-white leading-[0.8] sm:leading-[64px]">
                   {tBonus("hero.title")}
                 </h1>
                 <p className="text-base text-slate-200 leading-relaxed sm:text-lg md:text-xl">
@@ -176,7 +176,7 @@ export default function BonusPage() {
             </div>
 
             {/* Verification & Secure Snapshot Section */}
-            <div className="w-full pt-12 max-w-4xl mx-auto">
+            <div className="w-full pt-1 sm:pt-12 max-w-4xl mx-auto">
               <GlassSurface
                 width="100%"
                 height="auto"
@@ -199,7 +199,7 @@ export default function BonusPage() {
                       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                       exit={{ opacity: 0, y: -20, filter: "blur(10px)" }}
                       transition={{ duration: 0.4 }}
-                      className="p-8 sm:p-10"
+                      className="w-full p-5 sm:p-10"
                     >
                       {/* Header */}
                       <div className="space-y-3 mb-8">
@@ -217,7 +217,7 @@ export default function BonusPage() {
                           <label className="block text-[0.7rem] font-bold uppercase tracking-[0.35em] text-white">
                             {tVerification("emailLabel")}
                           </label>
-                          <div className="flex gap-3">
+                          <div className="flex flex-col sm:flex-row gap-3">
                             <input
                               type="email"
                               value={inputEmail}
@@ -228,7 +228,7 @@ export default function BonusPage() {
                               }
                               placeholder={tVerification("emailPlaceholder")}
                               autoComplete="email"
-                              className="flex-1 h-12 bg-white/10 border border-white/20 rounded-xl px-4 text-white placeholder:text-slate-400 focus:border-white/40 focus:ring-2 focus:ring-white/20 focus:outline-none transition-all disabled:opacity-50"
+                              className="w-full sm:flex-1 h-12 bg-white/10 border border-white/20 rounded-xl px-4 text-white placeholder:text-slate-400 focus:border-white/40 focus:ring-2 focus:ring-white/20 focus:outline-none transition-all disabled:opacity-50"
                             />
                             <Button
                               type="button"
@@ -238,7 +238,7 @@ export default function BonusPage() {
                                 !inputEmail.trim() ||
                                 Boolean(verification.verifiedAt)
                               }
-                              className="h-12 px-6 rounded-xl bg-white text-slate-950 hover:bg-slate-100 shadow-lg shadow-black/20 font-medium disabled:opacity-50"
+                              className="w-full sm:w-auto h-12 px-6 rounded-xl bg-white text-slate-950 hover:bg-slate-100 shadow-lg shadow-black/20 font-medium disabled:opacity-50"
                             >
                               {verification.requesting ? (
                                 <>
@@ -272,7 +272,7 @@ export default function BonusPage() {
                             {tVerification("codeLabel")}
                           </label>
                           <div className="flex flex-col gap-3">
-                            <div className="flex justify-center items-center gap-4 w-full">
+                            <div className="flex justify-center items-center gap-2 w-full">
                               <InputOTP
                                 maxLength={6}
                                 value={inputCode}
@@ -282,27 +282,29 @@ export default function BonusPage() {
                                   Boolean(verification.verifiedAt) ||
                                   !verification.email
                                 }
-                                containerClassName="gap-4 w-full justify-center"
+                                containerClassName="gap-2 w-full justify-center"
                               >
-                                <InputOTPGroup className="gap-2">
+                                <InputOTPGroup className="gap-2 sm:gap-2 flex-1 justify-end">
                                   {Array.from({ length: 3 }).map((_, i) => (
                                     <InputOTPSlot
                                       key={i}
                                       index={i}
                                       className={cn(
-                                        "h-16 w-14 text-white bg-white/10 rounded-xl",
+                                        "h-12 w-full max-w-[3.5rem] sm:h-16 sm:max-w-[3.5rem] text-white bg-white/10 rounded-xl flex-1",
                                         "data-[active=true]:bg-white/20 data-[active=true]:ring-2 data-[active=true]:ring-white/40",
                                         "!border-0 border-none"
                                       )}
                                     />
                                   ))}
-                                  <InputOTPSeparator className="text-white text-xl mx-1" />
+                                </InputOTPGroup>
+                                <InputOTPSeparator className="text-white text-xl mx-1 hidden sm:block" />
+                                <InputOTPGroup className="gap-2 sm:gap-2 flex-1 justify-start">
                                   {Array.from({ length: 3 }).map((_, i) => (
                                     <InputOTPSlot
                                       key={i + 3}
                                       index={i + 3}
                                       className={cn(
-                                        "h-16 w-14 text-white bg-white/10 rounded-xl",
+                                        "h-12 w-full max-w-[3.5rem] sm:h-16 sm:max-w-[3.5rem] text-white bg-white/10 rounded-xl flex-1",
                                         "data-[active=true]:bg-white/20 data-[active=true]:ring-2 data-[active=true]:ring-white/40",
                                         "!border-0 border-none"
                                       )}
@@ -371,7 +373,7 @@ export default function BonusPage() {
                       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                       exit={{ opacity: 0, y: -20, filter: "blur(10px)" }}
                       transition={{ duration: 0.4 }}
-                      className="space-y-6 p-8 sm:p-10"
+                      className="w-full space-y-6 p-5 sm:p-10"
                     >
                       {/* Header with Actions */}
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

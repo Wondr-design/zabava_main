@@ -70,117 +70,119 @@ export function SiteNav() {
   );
 
   return (
-    <header className="fixed top-4 inset-x-0 z-50 flex justify-center px-4 transition-all duration-300">
-      <GlassSurface
-        width="auto"
-        height="auto"
-        borderRadius={50}
-        displace={15}
-        distortionScale={-150}
-        redOffset={5}
-        greenOffset={15}
-        blueOffset={25}
-        brightness={60}
-        opacity={0.8}
-        mixBlendMode="screen"
-      >
-        <div className="flex w-full items-center justify-between gap-4 px-6 py-3">
-          <LocalizedLink
-            href="/"
-            className="text-xl font-bold tracking-tight text-white transition hover:opacity-80 ml-2"
-            aria-label="Zabava home"
-          >
-            Zabava
-          </LocalizedLink>
-
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => {
-              const targetHref = item.href;
-              const isActive =
-                targetHref === "/"
-                  ? normalizedPath === "/"
-                  : normalizedPath === targetHref ||
-                    normalizedPath.startsWith(`${targetHref}/`);
-              return (
-                <LocalizedLink
-                  key={item.href}
-                  href={targetHref}
-                  className={cn(
-                    "px-4 py-2 text-sm font-medium rounded-full transition-colors whitespace-nowrap",
-                    isActive
-                      ? "bg-white/10 text-white"
-                      : "text-slate-300 hover:bg-white/5 hover:text-white"
-                  )}
-                >
-                  {item.label}
-                </LocalizedLink>
-              );
-            })}
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="relative flex items-center justify-center text-slate-300 hover:text-white transition-colors border border-white/10 rounded-full h-[30px] w-[30px] bg-white/5 hover:bg-white/10"
-              aria-label="Toggle theme"
+    <header className="fixed top-4 inset-x-0 z-50 flex justify-center px-4 md:px-5 transition-all duration-300">
+      <div className="w-full lg:w-auto">
+        <GlassSurface
+          width="100%"
+          height="auto"
+          borderRadius={50}
+          displace={15}
+          distortionScale={-150}
+          redOffset={5}
+          greenOffset={15}
+          blueOffset={25}
+          brightness={60}
+          opacity={0.8}
+          mixBlendMode="screen"
+        >
+          <div className="flex w-full items-center justify-between gap-4 px-6 py-2">
+            <LocalizedLink
+              href="/"
+              className="text-xl font-bold tracking-tight text-white transition hover:opacity-80 ml-2"
+              aria-label="Zabava home"
             >
-              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            </button>
+              Zabava
+            </LocalizedLink>
 
-            <LanguageSwitcher
-              size="md"
-              showBadge={true}
-              onLocaleChange={handleSwitchLocale}
-              className="border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
-            />
+            {/* Desktop Nav */}
+            <nav className="hidden md:flex items-center gap-1">
+              {navItems.map((item) => {
+                const targetHref = item.href;
+                const isActive =
+                  targetHref === "/"
+                    ? normalizedPath === "/"
+                    : normalizedPath === targetHref ||
+                      normalizedPath.startsWith(`${targetHref}/`);
+                return (
+                  <LocalizedLink
+                    key={item.href}
+                    href={targetHref}
+                    className={cn(
+                      "px-4 py-2 text-sm font-medium rounded-full transition-colors whitespace-nowrap",
+                      isActive
+                        ? "bg-white/10 text-white"
+                        : "text-slate-300 hover:bg-white/5 hover:text-white"
+                    )}
+                  >
+                    {item.label}
+                  </LocalizedLink>
+                );
+              })}
+            </nav>
 
-            {/* Mobile Menu Trigger */}
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="md:hidden text-white hover:bg-white/10 rounded-full h-8 w-8"
-                >
-                  <Menu className="h-5 w-5" />
-                  <span className="sr-only">Toggle menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent
-                side="right"
-                className="w-[300px] bg-slate-950 border-l border-white/10 text-white p-0"
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="relative flex items-center justify-center text-slate-300 hover:text-white transition-colors border border-white/10 rounded-full h-[30px] w-[30px] bg-white/5 hover:bg-white/10"
+                aria-label="Toggle theme"
               >
-                <div className="flex flex-col gap-2 p-6 mt-10">
-                  {navItems.map((item) => {
-                    const targetHref = item.href;
-                    const isActive =
-                      targetHref === "/"
-                        ? normalizedPath === "/"
-                        : normalizedPath === targetHref ||
-                          normalizedPath.startsWith(`${targetHref}/`);
-                    return (
-                      <LocalizedLink
-                        key={item.href}
-                        href={targetHref}
-                        className={cn(
-                          "px-4 py-3 text-lg font-medium rounded-xl transition-colors",
-                          isActive
-                            ? "bg-white/10 text-white"
-                            : "text-slate-300 hover:bg-white/5 hover:text-white"
-                        )}
-                      >
-                        {item.label}
-                      </LocalizedLink>
-                    );
-                  })}
-                </div>
-              </SheetContent>
-            </Sheet>
+                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              </button>
+
+              <LanguageSwitcher
+                size="md"
+                showBadge={true}
+                onLocaleChange={handleSwitchLocale}
+                className="border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
+              />
+
+              {/* Mobile Menu Trigger */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="md:hidden text-white hover:bg-white/10 rounded-full h-8 w-8"
+                  >
+                    <Menu className="h-5 w-5" />
+                    <span className="sr-only">Toggle menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent
+                  side="right"
+                  className="w-[300px] bg-slate-950 border-l border-white/10 text-white p-0"
+                >
+                  <div className="flex flex-col gap-2 p-6 mt-10">
+                    {navItems.map((item) => {
+                      const targetHref = item.href;
+                      const isActive =
+                        targetHref === "/"
+                          ? normalizedPath === "/"
+                          : normalizedPath === targetHref ||
+                            normalizedPath.startsWith(`${targetHref}/`);
+                      return (
+                        <LocalizedLink
+                          key={item.href}
+                          href={targetHref}
+                          className={cn(
+                            "px-4 py-3 text-lg font-medium rounded-xl transition-colors",
+                            isActive
+                              ? "bg-white/10 text-white"
+                              : "text-slate-300 hover:bg-white/5 hover:text-white"
+                          )}
+                        >
+                          {item.label}
+                        </LocalizedLink>
+                      );
+                    })}
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
-        </div>
-      </GlassSurface>
+        </GlassSurface>
+      </div>
     </header>
   );
 }

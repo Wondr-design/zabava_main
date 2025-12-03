@@ -34,7 +34,10 @@ interface PartnerDirectoryProps {
 
 const ALL_KEY = "all";
 
-export function PartnerDirectory({ categories, partners }: PartnerDirectoryProps) {
+export function PartnerDirectory({
+  categories,
+  partners,
+}: PartnerDirectoryProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -96,7 +99,9 @@ export function PartnerDirectory({ categories, partners }: PartnerDirectoryProps
       const matchesCategory =
         activeCategory === ALL_KEY
           ? true
-          : partner.categories.some((category) => category.id === activeCategory);
+          : partner.categories.some(
+              (category) => category.id === activeCategory
+            );
       if (!matchesCategory) return false;
       if (!normalizedQuery) return true;
       const haystack = [
@@ -130,7 +135,8 @@ export function PartnerDirectory({ categories, partners }: PartnerDirectoryProps
           </h1>
           <p className="text-lg sm:text-xl text-foreground/80 leading-relaxed max-w-3xl">
             Browse every Zabava partner and narrow down your search by category.
-            Reserve in seconds, generate your QR pass instantly, and start earning rewards.
+            Reserve in seconds, generate your QR pass instantly, and start
+            earning rewards.
           </p>
         </div>
 
@@ -193,7 +199,7 @@ export function PartnerDirectory({ categories, partners }: PartnerDirectoryProps
                 "uppercase tracking-wide",
                 activeCategory === ALL_KEY
                   ? "border-[var(--ds-accent)]/80 bg-[var(--ds-accent)]/10 text-[var(--ds-accent)] shadow-lg shadow-[var(--ds-accent)]/20"
-                  : "border-border/30 bg-[var(--ds-surface-card)]/50 text-foreground/80 hover:border-[var(--ds-accent)]/40 hover:bg-[var(--ds-accent)]/5",
+                  : "border-border/30 bg-[var(--ds-surface-card)]/50 text-foreground/80 hover:border-[var(--ds-accent)]/40 hover:bg-[var(--ds-accent)]/5"
               )}
             >
               All partners
@@ -217,7 +223,7 @@ export function PartnerDirectory({ categories, partners }: PartnerDirectoryProps
                   "uppercase tracking-wide",
                   activeCategory === category.id
                     ? "border-[var(--ds-accent)]/80 bg-[var(--ds-accent)]/10 text-[var(--ds-accent)] shadow-lg shadow-[var(--ds-accent)]/20"
-                    : "border-border/30 bg-[var(--ds-surface-card)]/50 text-foreground/80 hover:border-[var(--ds-accent)]/40 hover:bg-[var(--ds-accent)]/5",
+                    : "border-border/30 bg-[var(--ds-surface-card)]/50 text-foreground/80 hover:border-[var(--ds-accent)]/40 hover:bg-[var(--ds-accent)]/5"
                 )}
               >
                 {category.name}
@@ -236,13 +242,18 @@ export function PartnerDirectory({ categories, partners }: PartnerDirectoryProps
         {/* Results Count */}
         <div className="flex items-center justify-between text-sm">
           <span className="text-foreground/60">
-            Showing <span className="font-semibold text-foreground">{filteredPartners.length}</span>{" "}
+            Showing{" "}
+            <span className="font-semibold text-foreground">
+              {filteredPartners.length}
+            </span>{" "}
             {filteredPartners.length === 1 ? "partner" : "partners"}
             {activeCategory !== ALL_KEY && (
               <>
-                {" "}in{" "}
+                {" "}
+                in{" "}
                 <span className="font-semibold text-[var(--ds-accent)]">
-                  {categories.find((cat) => cat.id === activeCategory)?.name ?? "All"}
+                  {categories.find((cat) => cat.id === activeCategory)?.name ??
+                    "All"}
                 </span>
               </>
             )}
@@ -322,7 +333,8 @@ export function PartnerDirectory({ categories, partners }: PartnerDirectoryProps
                     </h2>
                     {partner.description && (
                       <p className="text-sm text-foreground/70 leading-relaxed line-clamp-2">
-                        {renderHighlight(partner.description) ?? partner.description}
+                        {renderHighlight(partner.description) ??
+                          partner.description}
                       </p>
                     )}
                   </div>
@@ -331,15 +343,20 @@ export function PartnerDirectory({ categories, partners }: PartnerDirectoryProps
                   {partner.highlights && partner.highlights.length > 0 && (
                     <ul className="space-y-1.5 text-sm text-foreground/60">
                       {partner.highlights.slice(0, 2).map((highlight) => (
-                        <li key={highlight.id} className="flex items-start gap-2 line-clamp-1">
+                        <li
+                          key={highlight.id}
+                          className="flex items-start gap-2 line-clamp-1"
+                        >
                           <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[var(--ds-accent)] flex-shrink-0" />
                           <span>
                             <span className="font-medium text-foreground/80">
-                              {renderHighlight(highlight.title) ?? highlight.title}
+                              {renderHighlight(highlight.title) ??
+                                highlight.title}
                             </span>
                             {highlight.description && (
                               <span className="text-foreground/50">
-                                {" "}– {highlight.description}
+                                {" "}
+                                – {highlight.description}
                               </span>
                             )}
                           </span>
@@ -384,9 +401,12 @@ export function PartnerDirectory({ categories, partners }: PartnerDirectoryProps
             <div className="rounded-full bg-[var(--ds-accent)]/10 p-6 mb-6">
               <Search className="h-12 w-12 text-[var(--ds-accent)]/60" />
             </div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">No partners found</h3>
+            <h3 className="text-xl font-semibold text-foreground mb-2">
+              No partners found
+            </h3>
             <p className="text-foreground/60 max-w-md">
-              Try adjusting your search or filter criteria to find what you're looking for.
+              Try adjusting your search or filter criteria to find what you're
+              looking for.
             </p>
             {(searchQuery || activeCategory !== ALL_KEY) && (
               <button

@@ -19,7 +19,7 @@ export default function SiteLayout({ children }: SiteLayoutProps) {
       <PlasmaWrapper />
       <DotGridWrapper />
       <SiteNav />
-      <div className="pt-[120px]">
+      <div className="pt-[120px] px-4 md:px-5">
         {children}
       </div>
       <GradualBlurWrapper />
