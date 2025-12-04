@@ -44,7 +44,7 @@ export const DesignRadioCard = React.forwardRef<
     <RadioGroupPrimitive.Item
       ref={ref}
       className={cn(
-        "flex min-w-[200px] flex-1 cursor-pointer flex-col gap-2 rounded-3xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4 text-left shadow-[var(--ds-shadow-soft)] transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--ds-surface-base)] data-[state=checked]:border-[color:var(--ds-primary)] data-[state=checked]:shadow-[0_18px_36px_rgba(123,119,85,0.18)]",
+        "flex min-w-[200px] flex-1 cursor-pointer flex-col gap-2 rounded-3xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4 text-left shadow-none transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--ds-surface-base)] data-[state=checked]:border-[color:var(--ds-primary)] data-[state=checked]:shadow-none",
         className,
       )}
       {...props}

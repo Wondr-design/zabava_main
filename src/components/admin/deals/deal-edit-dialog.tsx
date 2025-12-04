@@ -453,7 +453,7 @@ export function DealEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !submitting && onOpenChange(next)}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto rounded-3xl border border-border bg-background px-0 py-0 text-foreground shadow-xl sm:max-w-3xl">
+      <DialogContent className="max-h-[85vh] overflow-y-auto rounded-3xl border border-border bg-background px-0 py-0 text-foreground shadow-none sm:max-w-3xl">
         <form onSubmit={handleSubmit} className="flex flex-col">
           <div className="space-y-6 px-6 pt-6">
             <DialogHeader className="text-left space-y-2">
@@ -891,7 +891,7 @@ function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-4 rounded-2xl border border-border bg-card p-5 shadow-sm">
+    <section className="space-y-4 rounded-2xl border border-border bg-card p-5 shadow-none">
       <header className="space-y-1">
         <h3 className="text-sm font-semibold text-foreground">{title}</h3>
         {description ? (

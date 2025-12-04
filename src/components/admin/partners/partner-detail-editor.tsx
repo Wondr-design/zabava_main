@@ -473,8 +473,8 @@ function CollapsibleSection({
   return (
     <Card
       className={cn(
-        "border border-slate-200 bg-card shadow-sm transition-shadow dark:border-slate-800 dark:bg-slate-900",
-        open ? "shadow-md" : "shadow-sm",
+        "border border-slate-200 bg-card shadow-none transition-shadow dark:border-slate-800 dark:bg-slate-900",
+        open ? "shadow-none" : "shadow-none",
         "!gap-0 overflow-hidden py-0"
       )}
       data-state={open ? "open" : "closed"}
@@ -566,8 +566,8 @@ function SortableSectionCard({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "max-w-full rounded-xl border border-slate-200 bg-background shadow-sm transition hover:shadow-md focus-within:ring-2 focus-within:ring-primary/40 dark:border-slate-700",
-        isDragging ? "ring-2 ring-primary/40 shadow-lg" : ""
+        "max-w-full rounded-xl border border-slate-200 bg-background shadow-none transition hover:shadow-none focus-within:ring-2 focus-within:ring-primary/40 dark:border-slate-700",
+        isDragging ? "ring-2 ring-primary/40 shadow-none" : ""
       )}
       {...attributes}
     >

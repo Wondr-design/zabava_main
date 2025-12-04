@@ -13,7 +13,7 @@ import {
   DrawerFooter,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import "../../../styles/theme-staff.css";
+import "../../../styles/theme-darkmatter.css";
 import { LogOut, Menu, X } from "lucide-react";
 import { LocalizedLink } from "@/components/ui/localized-link";
 import { useLocalizedRouter } from "@/i18n/use-localized-router";
@@ -103,8 +103,8 @@ export default function StaffLayout({ children }: { children: ReactNode }) {
   if (isAuthRoute) {
     return (
       <>
-        <BodyThemeClass className="theme-staff" />
-        <div className="theme-staff flex min-h-screen items-center justify-center bg-[color:var(--ds-surface-base)] text-[color:var(--ds-text-strong)]">
+        <BodyThemeClass className="theme-darkmatter" />
+        <div className="theme-darkmatter flex min-h-screen items-center justify-center bg-[color:var(--ds-surface-base)] text-[color:var(--ds-text-strong)]">
           <div className="w-full max-w-md px-4">{children}</div>
         </div>
       </>
@@ -113,8 +113,8 @@ export default function StaffLayout({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <BodyThemeClass className="theme-staff" />
-      <div className="theme-staff min-h-screen bg-[color:var(--ds-surface-base)] text-[color:var(--ds-text-strong)]">
+      <BodyThemeClass className="theme-darkmatter" />
+      <div className="theme-darkmatter min-h-screen bg-[color:var(--ds-surface-base)] text-[color:var(--ds-text-strong)]">
       <header className="sticky top-0 z-10 border-b border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-base)]/95 backdrop-blur-sm shadow-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <LocalizedLink
@@ -163,7 +163,7 @@ export default function StaffLayout({ children }: { children: ReactNode }) {
                     )}
                   </DesignButton>
                 </DrawerTrigger>
-                <DrawerContent className="theme-staff bg-[color:var(--ds-surface-base)] text-[color:var(--ds-text-strong)]">
+                <DrawerContent className="theme-darkmatter bg-[color:var(--ds-surface-base)] text-[color:var(--ds-text-strong)]">
                   <DrawerHeader className="space-y-2">
                     <DrawerTitle>Staff Console</DrawerTitle>
                     <DrawerDescription className="text-[color:var(--ds-text-muted)]">

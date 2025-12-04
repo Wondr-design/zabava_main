@@ -10,15 +10,15 @@ const statusVariants = cva(
     variants: {
       tone: {
         neutral:
-          "border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] text-[color:var(--ds-text-muted)] shadow-[0_6px_14px_rgba(208,198,174,0.3)]",
+          "border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] text-[color:var(--ds-text-muted)] shadow-none",
         success:
-          "border-transparent bg-[color:var(--ds-success)] text-[color:var(--ds-text-strong)] shadow-[0_8px_18px_rgba(167,193,154,0.32)]",
+          "border-transparent bg-[color:var(--ds-success)] text-[color:var(--ds-text-strong)] shadow-none",
         warning:
-          "border-transparent bg-[color:var(--ds-warning)] text-[color:var(--ds-text-strong)] shadow-[0_8px_18px_rgba(240,207,160,0.32)]",
+          "border-transparent bg-[color:var(--ds-warning)] text-[color:var(--ds-text-strong)] shadow-none",
         danger:
-          "border-transparent bg-[color:var(--ds-danger)] text-[color:var(--ds-text-inverse)] shadow-[0_8px_18px_rgba(212,154,136,0.32)]",
+          "border-transparent bg-[color:var(--ds-danger)] text-[color:var(--ds-text-inverse)] shadow-none",
         primary:
-          "border-transparent bg-[color:var(--ds-primary)] text-[color:var(--ds-primary-foreground)] shadow-[0_8px_18px_rgba(111,102,75,0.3)]",
+          "border-transparent bg-[color:var(--ds-primary)] text-[color:var(--ds-primary-foreground)] shadow-none",
       },
       size: {
         sm: "text-[11px] px-2.5 py-1",

@@ -52,7 +52,7 @@ export const DesignInput = React.forwardRef<HTMLInputElement, DesignInputProps>(
           ref={ref}
           type={resolvedType}
           className={cn(
-            "h-12 w-full rounded-[999px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] px-5 text-sm text-[color:var(--ds-text-strong)] placeholder:text-[color:var(--ds-text-subtle)] shadow-[0_8px_20px_rgba(201,189,164,0.25)] transition-colors focus-visible:border-[color:var(--ds-focus-ring)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--ds-surface-base)] disabled:cursor-not-allowed disabled:opacity-50",
+            "h-12 w-full rounded-[999px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] px-5 text-sm text-[color:var(--ds-text-strong)] placeholder:text-[color:var(--ds-text-subtle)] shadow-none transition-colors focus-visible:border-[color:var(--ds-focus-ring)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--ds-surface-base)] disabled:cursor-not-allowed disabled:opacity-50",
             leadingIcon && "pl-11",
             (trailingIcon || shouldToggle) && "pr-11",
             className,

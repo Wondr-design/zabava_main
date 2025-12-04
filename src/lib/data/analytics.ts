@@ -60,12 +60,29 @@ export async function fetchDashboardMetrics(): Promise<DashboardMetrics> {
 
   for (const res of [totalRes, pendingRes, visitedRes, todayRes, partnersRes]) {
     if (res.error) {
-      throw new Error(res.error.message);
+      // Return default metrics on error instead of crashing
+      console.error("Error fetching dashboard metrics:", res.error.message);
+      return {
+        totalVisits: 0,
+        pendingVisits: 0,
+        visitedVisits: 0,
+        todaysVisits: 0,
+        activePartners: 0,
+        totalPoints: 0,
+      };
     }
   }
 
   if (pointsRes.error) {
-    throw new Error(pointsRes.error.message);
+    console.error("Error fetching points metrics:", pointsRes.error.message);
+    return {
+      totalVisits: totalRes.count ?? 0,
+      pendingVisits: pendingRes.count ?? 0,
+      visitedVisits: visitedRes.count ?? 0,
+      todaysVisits: todayRes.count ?? 0,
+      activePartners: partnersRes.count ?? 0,
+      totalPoints: 0,
+    };
   }
 
   type PointsRow = { points: number | null; type: string | null };

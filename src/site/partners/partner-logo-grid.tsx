@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import React, { useMemo } from "react";
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import { LocalizedLink } from "@/components/ui/localized-link";
 import { useTranslations } from "@/i18n/provider";
+import { LogoLoop, type LogoItem } from "@/components/LogoLoop";
 
 export interface PartnerLogo {
   partnerId: string;
@@ -19,49 +20,85 @@ interface PartnerLogoGridProps {
 }
 
 export function PartnerLogoGrid({ partners }: PartnerLogoGridProps) {
-  const [pausedRow, setPausedRow] = useState<string | null>(null);
   const t = useTranslations("home.featured");
-  
+
   if (partners.length === 0) return null;
 
   // Split partners into two rows
   const firstRowPartners = partners.slice(0, Math.ceil(partners.length / 2));
   const secondRowPartners = partners.slice(Math.ceil(partners.length / 2));
 
-  // Create duplicates for seamless scroll
-  const createMarqueeItems = (items: PartnerLogo[]) => {
-    return [...items, ...items, ...items];
+  // Create a map of partner names to slugs for easy lookup
+  const partnerSlugMap = useMemo(() => {
+    const map = new Map<string, string>();
+    partners.forEach((partner) => {
+      map.set(partner.name, partner.slug);
+    });
+    return map;
+  }, [partners]);
+
+  // Convert partners to LogoItem format for LogoLoop
+  const convertToLogoItems = (partnerList: PartnerLogo[]): LogoItem[] => {
+    return partnerList.map((partner) => {
+      const imageUrl = partner.logoUrl || partner.heroImageUrl;
+
+      if (imageUrl) {
+        return {
+          src: imageUrl,
+          alt: partner.name,
+          title: partner.name,
+        };
+      } else {
+        return {
+          node: (
+            <div className="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 rounded-2xl border border-white/10 flex items-center justify-center overflow-hidden transition-all hover:border-white/20">
+              <span className="text-sm font-medium text-white/60 text-center">
+                {partner.name.slice(0, 2).toUpperCase()}
+              </span>
+            </div>
+          ),
+          title: partner.name,
+          ariaLabel: partner.name,
+        };
+      }
+    });
   };
 
-  const firstRowMarquee = createMarqueeItems(firstRowPartners);
-  const secondRowMarquee = createMarqueeItems(secondRowPartners);
+  const firstRowLogos = useMemo(
+    () => convertToLogoItems(firstRowPartners),
+    [firstRowPartners]
+  );
+  const secondRowLogos = useMemo(
+    () => convertToLogoItems(secondRowPartners),
+    [secondRowPartners]
+  );
 
-  const LogoCard = ({ partner, rowId }: { partner: PartnerLogo; rowId: string }) => {
-    const imageUrl = partner.logoUrl || partner.heroImageUrl;
+  // Custom render function for logos with images - wraps in LocalizedLink
+  const renderLogoItem = (item: LogoItem, key: React.Key) => {
+    const isNodeItem = "node" in item;
+    const partnerName = item.title || (item as any).ariaLabel || "";
+    const partnerSlug = partnerSlugMap.get(partnerName) || "";
+    const linkHref = partnerSlug ? `/partners/${partnerSlug}` : "#";
+
+    if (isNodeItem) {
+      return (
+        <LocalizedLink href={linkHref} className="flex-shrink-0">
+          {item.node}
+        </LocalizedLink>
+      );
+    }
 
     return (
-      <LocalizedLink
-        href={`/partners/${partner.slug}`}
-        className="flex-shrink-0 mx-3"
-        onMouseEnter={() => setPausedRow(rowId)}
-        onMouseLeave={() => setPausedRow(null)}
-      >
+      <LocalizedLink href={linkHref} className="flex-shrink-0">
         <div className="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 rounded-2xl border border-white/10 flex items-center justify-center overflow-hidden transition-all hover:border-white/20">
-          {imageUrl ? (
-            <div className="relative w-full h-full">
-              <Image
-                src={imageUrl}
-                alt={partner.name}
-                fill
-                className="object-contain object-center p-2"
-                sizes="(min-width: 1024px) 112px, (min-width: 640px) 96px, 80px"
-              />
-            </div>
-          ) : (
-            <span className="text-sm font-medium text-white/60 text-center">
-              {partner.name.slice(0, 2).toUpperCase()}
-            </span>
-          )}
+          <Image
+            src={item.src}
+            alt={item.alt || ""}
+            width={112}
+            height={112}
+            className="object-contain object-center p-2"
+            sizes="(min-width: 1024px) 112px, (min-width: 640px) 96px, 80px"
+          />
         </div>
       </LocalizedLink>
     );
@@ -69,12 +106,12 @@ export function PartnerLogoGrid({ partners }: PartnerLogoGridProps) {
 
   return (
     <section className="relative overflow-hidden py-20">
-      <div className="mx-auto max-w-[120rem] px-4 lg:px-24">
+      <div className="mx-auto max-w-[120rem] px-0 lg:px-0">
         {/* Header */}
         <div className="mb-12 flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
           <div className="flex flex-col gap-2">
             <h2 className="font-[family-name:var(--font-influencer)] text-5xl uppercase tracking-wide text-white sm:text-6xl">
-              Meet our <span className="text-lime-400">top-tier</span>
+              Meet our <span className="text-[var(--ds-accent)]">top-tier</span>
             </h2>
             <h2 className="font-[family-name:var(--font-influencer)] text-5xl uppercase tracking-wide text-white sm:text-6xl">
               customers
@@ -92,47 +129,39 @@ export function PartnerLogoGrid({ partners }: PartnerLogoGridProps) {
           </LocalizedLink>
         </div>
 
-        {/* Logo Marquee */}
-        <div className="relative">
-          {/* First Row - Scrolling Right */}
-          {firstRowPartners.length > 0 && (
-            <div className="relative flex overflow-hidden mb-6">
-              {/* Left Gradient */}
-              <div className="absolute left-0 top-0 bottom-0 w-32 z-10 bg-gradient-to-r from-slate-950 to-transparent pointer-events-none" />
-              {/* Right Gradient */}
-              <div className="absolute right-0 top-0 bottom-0 w-32 z-10 bg-gradient-to-l from-slate-950 to-transparent pointer-events-none" />
-              <div
-                className="flex animate-scroll-right whitespace-nowrap"
-                style={{
-                  animationPlayState: pausedRow === "first" ? "paused" : "running",
-                  width: "max-content",
-                }}
-              >
-                {firstRowMarquee.map((partner, index) => (
-                  <LogoCard key={`first-${partner.partnerId}-${index}`} partner={partner} rowId="first" />
-                ))}
-              </div>
+        {/* Logo Loops */}
+        <div className="relative space-y-6">
+          {/* First Row - Moving Left */}
+          {firstRowLogos.length > 0 && (
+            <div className="relative">
+              <LogoLoop
+                logos={firstRowLogos}
+                direction="left"
+                speed={20}
+                logoHeight={112}
+                gap={24}
+                pauseOnHover={true}
+                fadeOut={true}
+                renderItem={renderLogoItem}
+                className="w-full"
+              />
             </div>
           )}
 
-          {/* Second Row - Scrolling Left */}
-          {secondRowPartners.length > 0 && (
-            <div className="relative flex overflow-hidden">
-              {/* Left Gradient */}
-              <div className="absolute left-0 top-0 bottom-0 w-32 z-10 bg-gradient-to-r from-slate-950 to-transparent pointer-events-none" />
-              {/* Right Gradient */}
-              <div className="absolute right-0 top-0 bottom-0 w-32 z-10 bg-gradient-to-l from-slate-950 to-transparent pointer-events-none" />
-              <div
-                className="flex animate-scroll-left whitespace-nowrap"
-                style={{
-                  animationPlayState: pausedRow === "second" ? "paused" : "running",
-                  width: "max-content",
-                }}
-              >
-                {secondRowMarquee.map((partner, index) => (
-                  <LogoCard key={`second-${partner.partnerId}-${index}`} partner={partner} rowId="second" />
-                ))}
-              </div>
+          {/* Second Row - Moving Right */}
+          {secondRowLogos.length > 0 && (
+            <div className="relative">
+              <LogoLoop
+                logos={secondRowLogos}
+                direction="right"
+                speed={20}
+                logoHeight={112}
+                gap={24}
+                pauseOnHover={true}
+                fadeOut={true}
+                renderItem={renderLogoItem}
+                className="w-full"
+              />
             </div>
           )}
         </div>

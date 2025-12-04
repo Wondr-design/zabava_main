@@ -10,17 +10,17 @@ const designButtonVariants = cva(
     variants: {
       variant: {
         primary:
-          "bg-[color:var(--ds-primary)] text-[color:var(--ds-primary-foreground)] border-transparent shadow-[0_14px_28px_rgba(111,102,75,0.24)] hover:bg-[color-mix(in srgb,var(--ds-primary) 94%,#000)]",
+          "bg-[color:var(--ds-primary)] text-[color:var(--ds-primary-foreground)] border-transparent shadow-none hover:bg-[color-mix(in srgb,var(--ds-primary) 94%,#000)]",
         secondary:
-          "bg-[color:var(--ds-secondary)] text-[color:var(--ds-secondary-foreground)] border-transparent shadow-[0_10px_24px_rgba(208,198,174,0.35)] hover:bg-[color-mix(in srgb,var(--ds-secondary) 95%,#000)]",
+          "bg-[color:var(--ds-secondary)] text-[color:var(--ds-secondary-foreground)] border-transparent shadow-none hover:bg-[color-mix(in srgb,var(--ds-secondary) 95%,#000)]",
         tonal:
-          "bg-[color:var(--ds-surface-muted)] text-[color:var(--ds-text-strong)] border border-[color:var(--ds-border-subtle)] shadow-[0_8px_18px_rgba(219,209,190,0.25)] hover:bg-[color-mix(in srgb,var(--ds-surface-muted) 96%,#000)]",
+          "bg-[color:var(--ds-surface-muted)] text-[color:var(--ds-text-strong)] border border-[color:var(--ds-border-subtle)] shadow-none hover:bg-[color-mix(in srgb,var(--ds-surface-muted) 96%,#000)]",
         ghost:
           "border-transparent bg-transparent text-[color:var(--ds-text-muted)] hover:bg-[color:var(--ds-surface-muted)] hover:text-[color:var(--ds-text-strong)]",
         outline:
-          "bg-transparent text-[color:var(--ds-text-strong)] border-[color:var(--ds-border-strong)] hover:border-[color-mix(in srgb,var(--ds-border-strong) 80%,#000)] hover:bg-[color:var(--ds-surface-muted)]",
+          "bg-transparent text-[color:var(--ds-text-strong)] border-[color:var(--ds-border-strong)] hover:border-[color-mix(in srgb,var(--ds-border-strong) 80%,#000)] hover:bg-[color:var(--ds-surface-muted)] shadow-none",
         destructive:
-          "bg-[color:var(--ds-danger)] text-[color:var(--ds-text-inverse)] border-transparent shadow-[0_14px_30px_rgba(212,154,136,0.25)] hover:bg-[color-mix(in srgb,var(--ds-danger) 90%,#000)] focus-visible:ring-[color:var(--ds-danger)]/40",
+          "bg-[color:var(--ds-danger)] text-[color:var(--ds-text-inverse)] border-transparent shadow-none hover:bg-[color-mix(in srgb,var(--ds-danger) 90%,#000)] focus-visible:ring-[color:var(--ds-danger)]/40",
       },
       size: {
         md: "h-12 px-7",

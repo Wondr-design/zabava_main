@@ -1427,7 +1427,7 @@ function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-none">
       <div className="space-y-1">
         <h2 className="text-lg font-semibold text-foreground">{title}</h2>
         {description ? (

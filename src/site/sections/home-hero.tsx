@@ -23,7 +23,7 @@ export function HomeHero({ categories }: { categories: HomeCategoryCard[] }) {
 
   return (
     <section className="relative isolate w-full overflow-hidden pt-40 sm:pt-40">
-      <div className="mx-auto max-w-[120rem] px-4 pb-20 lg:px-24">
+      <div className="mx-auto max-w-[120rem] px-0 pb-20 lg:px-0">
         <motion.div
           className="flex flex-col items-center text-center"
           initial="hidden"

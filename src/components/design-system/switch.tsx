@@ -23,7 +23,7 @@ export const DesignSwitch = React.forwardRef<
     >
       <SwitchPrimitive.Thumb
         className={cn(
-          "pointer-events-none block size-5 translate-x-[2px] rounded-full bg-[color:var(--ds-surface-card)] shadow-[0_2px_4px_rgba(0,0,0,0.08)] transition-transform duration-200 ease-out data-[state=checked]:translate-x-[calc(100%-2px)] data-[state=checked]:bg-[color:var(--ds-primary-foreground)]",
+          "pointer-events-none block size-5 translate-x-[2px] rounded-full bg-[color:var(--ds-surface-card)] shadow-none transition-transform duration-200 ease-out data-[state=checked]:translate-x-[calc(100%-2px)] data-[state=checked]:bg-[color:var(--ds-primary-foreground)]",
         )}
       />
     </SwitchPrimitive.Root>

@@ -99,7 +99,7 @@ function HeroBlock({
   return (
     <section
       className={cn(
-        "rounded-3xl border border-[color:var(--ds-border-subtle)] px-6 py-10 shadow-[0_24px_60px_rgba(47,46,40,0.12)] sm:px-10",
+        "rounded-3xl border border-[color:var(--ds-border-subtle)] px-6 py-10 shadow-none sm:px-10",
         toneClass,
         align === "center" ? "text-center" : "text-left"
       )}
@@ -118,7 +118,7 @@ function HeroBlock({
       {ctaLabel && ctaHref ? (
         <a
           href={ctaHref}
-          className="mt-6 inline-flex items-center rounded-full bg-[color:var(--ds-primary)] px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-[color:var(--ds-primary-strong)]"
+          className="mt-6 inline-flex items-center rounded-full bg-[color:var(--ds-primary)] px-5 py-2 text-sm font-semibold text-white shadow-none transition hover:bg-[color:var(--ds-primary-strong)]"
         >
           {ctaLabel}
         </a>
@@ -204,7 +204,7 @@ function CtaBannerBlock({
   ctaHref?: string;
 }) {
   return (
-    <section className="rounded-3xl border border-[color:var(--ds-border-strong)] bg-gradient-to-r from-indigo-600 to-violet-600 p-6 text-white shadow-xl">
+    <section className="rounded-3xl border border-[color:var(--ds-border-strong)] bg-gradient-to-r from-indigo-600 to-violet-600 p-6 text-white shadow-none">
       {eyebrow ? (
         <p className="text-xs uppercase tracking-[0.4em] text-white/70">
           {eyebrow}
@@ -220,7 +220,7 @@ function CtaBannerBlock({
         {ctaLabel && ctaHref ? (
           <a
             href={ctaHref}
-            className="inline-flex items-center rounded-full bg-white/90 px-5 py-2 text-sm font-semibold text-indigo-700 shadow-md transition hover:bg-white"
+            className="inline-flex items-center rounded-full bg-white/90 px-5 py-2 text-sm font-semibold text-indigo-700 shadow-none transition hover:bg-white"
           >
             {ctaLabel}
           </a>
@@ -251,7 +251,7 @@ function ReviewsBlock({
         {items.map((item, index) => (
           <div
             key={`${item.author}-${index}`}
-            className="space-y-3 rounded-2xl border border-[color:var(--ds-border-muted)] bg-white/70 p-4 shadow-sm"
+            className="space-y-3 rounded-2xl border border-[color:var(--ds-border-muted)] bg-white/70 p-4 shadow-none"
           >
             <p className="text-base italic text-[color:var(--ds-text-strong)]">
               “{item.quote}”
@@ -336,7 +336,7 @@ function LinkCollectionBlock({
                 key={`${item.label}-${index}`}
                 href={item.href}
                 className={cn(
-                  "flex flex-col rounded-2xl px-4 py-3 text-sm font-semibold shadow-sm transition hover:opacity-90",
+                  "flex flex-col rounded-2xl px-4 py-3 text-sm font-semibold shadow-none transition hover:opacity-90",
                   variantClass,
                 )}
               >

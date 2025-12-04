@@ -34,7 +34,7 @@ export function CopyCodeClient({ code }: CopyCodeClientProps) {
 
   if (!code) {
     return (
-      <div className="w-full max-w-lg rounded-3xl border border-[#e4dfd1] bg-white p-10 text-center shadow-[0_24px_60px_rgba(47,46,40,0.12)]">
+      <div className="w-full max-w-lg rounded-3xl border border-[#e4dfd1] bg-white p-10 text-center shadow-none">
         <p className="text-sm text-[#8d8a7a]">
           This page needs a verification code. Please open the link directly from your email.
         </p>
@@ -43,7 +43,7 @@ export function CopyCodeClient({ code }: CopyCodeClientProps) {
   }
 
   return (
-    <div className="w-full max-w-lg rounded-3xl border border-[#e4dfd1] bg-white p-10 text-center shadow-[0_24px_60px_rgba(47,46,40,0.12)]">
+    <div className="w-full max-w-lg rounded-3xl border border-[#e4dfd1] bg-white p-10 text-center shadow-none">
       <p className="text-xs font-semibold uppercase tracking-[0.4em] text-[#8d8a7a]">
         Verification code
       </p>

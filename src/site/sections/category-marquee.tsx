@@ -36,13 +36,15 @@ export function CategoryMarquee({ categories }: CategoryMarqueeProps) {
     return (
       <LocalizedLink
         href={`/categories/${category.slug}`}
-        className="block flex-shrink-0 mx-3 w-[320px] h-[500px]"
+        className="block flex-shrink-0 w-[320px] h-[500px]"
       >
         <CardSpotlight
           radius={350}
           color="rgb(255, 191, 0)"
           className="relative h-full w-full overflow-hidden rounded-3xl group !p-0 bg-transparent border-transparent"
         >
+          {/* Blurred Border */}
+          <div className="absolute inset-0 rounded-3xl border border-white/20 backdrop-blur-[2px] z-[5] pointer-events-none shadow-[0_0_20px_rgba(255,255,255,0.1)]" />
           {/* Background: Media or Solid Color */}
           <div className="absolute inset-0 z-0">
             {hasMedia ? (
@@ -121,42 +123,44 @@ export function CategoryMarquee({ categories }: CategoryMarqueeProps) {
   };
 
   return (
-    <section className="relative py-16 sm:py-20">
-      <div className="mx-auto max-w-[120rem] px-4 lg:px-24">
-        {/* Header */}
+    <>
+      {/* Header - Keep within page margins */}
+      <div className="mx-auto max-w-[120rem] px-4 md:px-5">
         <div className="mb-12 text-center">
-          <h2 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
-            Explore <span className="text-lime-300">Categories</span>
+          <h2 className="font-[family-name:var(--font-influencer)] text-[64px] uppercase tracking-wide text-white leading-[0.8]">
+            Explore <span className="text-[var(--ds-accent)]">Categories</span>
           </h2>
         </div>
-
-        {/* Marquee Container */}
-        <div
-          className="relative overflow-hidden"
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-        >
-          {/* Left Gradient */}
-          <div className="absolute left-0 top-0 z-20 h-full w-32 bg-gradient-to-r from-slate-950 to-transparent pointer-events-none" />
-          {/* Right Gradient */}
-          <div className="absolute right-0 top-0 z-20 h-full w-32 bg-gradient-to-l from-slate-950 to-transparent pointer-events-none" />
-
-          <div
-            className="flex animate-scroll-right whitespace-nowrap"
-            style={{
-              animationPlayState: isPaused ? "paused" : "running",
-              width: "max-content",
-            }}
-          >
-            {marqueeItems.map((category, index) => (
-              <CategoryCard
-                key={`${category.id}-${index}`}
-                category={category}
-              />
-            ))}
-          </div>
-        </div>
       </div>
-    </section>
+
+      {/* Marquee Container - Break out of page margins, full width */}
+      <section
+        className="relative w-screen -mx-4 md:-mx-5 overflow-hidden"
+        style={{
+          paddingLeft: 0,
+          paddingRight: 0,
+          maskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)",
+          WebkitMaskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)",
+        }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        <div
+          className="flex gap-6 animate-scroll-right whitespace-nowrap"
+          style={{
+            animationPlayState: isPaused ? "paused" : "running",
+            width: "max-content",
+            marginLeft: 0,
+            marginRight: 0,
+            paddingLeft: 0,
+            paddingRight: 0,
+          }}
+        >
+          {marqueeItems.map((category, index) => (
+            <CategoryCard key={`${category.id}-${index}`} category={category} />
+          ))}
+        </div>
+      </section>
+    </>
   );
 }

@@ -47,7 +47,9 @@ export function HomeFaq({
             {eyebrow}
           </p>
         ) : null}
-        <h2 className="text-3xl font-semibold">{title}</h2>
+        <h2 className="font-[family-name:var(--font-influencer)] text-[48px] uppercase tracking-wide text-white leading-[0.8]">
+          {title}
+        </h2>
         {description ? (
           <p className="text-base text-slate-200/80">{description}</p>
         ) : null}

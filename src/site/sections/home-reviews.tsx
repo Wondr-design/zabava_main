@@ -55,7 +55,9 @@ export function HomeReviews({
             {eyebrow}
           </p>
         ) : null}
-        <h2 className="text-3xl font-semibold">{title}</h2>
+        <h2 className="font-[family-name:var(--font-influencer)] text-[48px] uppercase tracking-wide text-white leading-[0.8]">
+          {title}
+        </h2>
         {description ? (
           <p className="text-base text-slate-200/80">{description}</p>
         ) : null}
@@ -66,18 +68,54 @@ export function HomeReviews({
             layout === "grid" ? "md:grid-cols-3" : "grid-cols-1"
           }`}
         >
-          {safeItems.map((review) => (
+          {safeItems.map((review, index) => (
             <figure
               key={`${review.author}-${review.quote.slice(0, 12)}`}
-              className="flex h-full flex-col rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_20px_50px_rgba(15,15,20,0.4)] backdrop-blur"
+              className="group relative flex h-full flex-col rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md p-8 shadow-lg transition-all duration-300 hover:border-white/20 hover:shadow-xl hover:shadow-black/20"
             >
-              <blockquote className="flex-1 text-lg leading-relaxed text-white/90">
-                "{review.quote}"
-              </blockquote>
-              <figcaption className="mt-4 text-sm text-slate-200/80">
-                <p className="font-semibold text-white">{review.author}</p>
-                {review.role ? <p>{review.role}</p> : null}
-              </figcaption>
+              {/* Quote Icon */}
+              <div className="absolute top-6 right-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                <svg
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  className="text-white"
+                >
+                  <path
+                    d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"
+                    fill="currentColor"
+                  />
+                  <path
+                    d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 flex flex-col">
+                <blockquote className="flex-1 text-lg leading-relaxed text-white/95 mb-6 relative z-10">
+                  <span className="text-2xl leading-none text-white/40 mr-1">
+                    "
+                  </span>
+                  {review.quote}
+                  <span className="text-2xl leading-none text-white/40 ml-1">
+                    "
+                  </span>
+                </blockquote>
+
+                <figcaption className="mt-auto pt-6 border-t border-white/10">
+                  <p className="font-semibold text-white text-base mb-1">
+                    {review.author}
+                  </p>
+                  {review.role ? (
+                    <p className="text-sm text-slate-300/80">{review.role}</p>
+                  ) : null}
+                </figcaption>
+              </div>
             </figure>
           ))}
         </div>

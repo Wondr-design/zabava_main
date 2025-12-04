@@ -5,7 +5,7 @@ import React, { ReactNode, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Search } from "lucide-react";
 
-import "@/styles/theme-admin.css";
+import "@/styles/theme-darkmatter.css";
 
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { getSupabaseBrowser } from "@/lib/realtime/client";
@@ -189,8 +189,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
   if (isAuthRoute) {
     return (
       <>
-        <BodyThemeClass className="theme-admin" />
-        <div className="theme-admin flex min-h-screen items-center justify-center bg-background text-foreground">
+        <BodyThemeClass className="theme-darkmatter" />
+        <div className="theme-darkmatter flex min-h-screen items-center justify-center bg-background text-foreground">
           {children}
         </div>
       </>
@@ -199,8 +199,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <BodyThemeClass className="theme-admin" />
-      <div className="theme-admin min-h-screen overflow-x-hidden bg-background text-foreground">
+      <BodyThemeClass className="theme-darkmatter" />
+      <div className="theme-darkmatter min-h-screen overflow-x-hidden bg-background text-foreground">
         <aside className="bg-card lg:fixed lg:inset-y-0 lg:left-0 lg:w-[280px] lg:border-r lg:shadow-sm">
         <div className="flex h-full flex-col gap-6 overflow-y-auto px-5 py-6">
           <div className="space-y-3">

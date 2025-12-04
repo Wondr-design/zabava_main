@@ -1047,7 +1047,7 @@ export function StaffVisitEditor({
                       className={cn(
                         "flex flex-col gap-3 rounded-2xl border px-4 py-4 text-left transition",
                         isSelected
-                          ? "border-[color:var(--ds-primary)] bg-[color:var(--ds-primary)]/10 shadow-[0_12px_30px_rgba(47,46,40,0.15)]"
+                          ? "border-[color:var(--ds-primary)] bg-[color:var(--ds-primary)]/10 shadow-none"
                           : "border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] hover:border-[color:var(--ds-primary)]/50"
                       )}
                     >

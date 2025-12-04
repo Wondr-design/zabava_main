@@ -24,7 +24,7 @@ export const MediaCard = React.forwardRef<HTMLDivElement, MediaCardProps>(
       <SurfaceCard
         ref={ref}
         className={cn(
-          "group flex h-full flex-col gap-4 rounded-[28px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4 transition-shadow duration-200 hover:shadow-[0_18px_40px_rgba(47,46,40,0.15)]",
+          "group flex h-full flex-col gap-4 rounded-[28px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4 transition-shadow duration-200 hover:shadow-none",
           className,
         )}
         {...props}

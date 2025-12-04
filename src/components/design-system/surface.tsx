@@ -12,11 +12,11 @@ const surfaceClassMap: Record<NonNullable<SurfaceProps["variant"]>, string> = {
   base: "bg-[color:var(--ds-surface-base)] text-[color:var(--ds-text-strong)]",
   muted:
     "bg-[color:var(--ds-surface-muted)] text-[color:var(--ds-text-strong)] border border-[color:var(--ds-border-subtle)]",
-  card: "bg-[color:var(--ds-surface-card)] text-[color:var(--ds-text-strong)] shadow-[var(--ds-shadow-soft)] border border-[color:var(--ds-border-subtle)]",
+  card: "bg-[color:var(--ds-surface-card)] text-[color:var(--ds-text-strong)] shadow-none border border-[color:var(--ds-border-subtle)]",
   elevated:
-    "bg-[color:var(--ds-surface-elevated)] text-[color:var(--ds-text-strong)] shadow-[var(--ds-shadow-soft)] border border-[color:var(--ds-border-subtle)]",
+    "bg-[color:var(--ds-surface-elevated)] text-[color:var(--ds-text-strong)] shadow-none border border-[color:var(--ds-border-subtle)]",
   popover:
-    "bg-[color:var(--ds-surface-popover)] text-[color:var(--ds-text-strong)] shadow-[var(--ds-shadow-popover)] border border-[color:var(--ds-border-subtle)]",
+    "bg-[color:var(--ds-surface-popover)] text-[color:var(--ds-text-strong)] shadow-none border border-[color:var(--ds-border-subtle)]",
 };
 
 export const Surface = React.forwardRef<HTMLDivElement, SurfaceProps>(

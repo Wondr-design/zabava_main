@@ -21,7 +21,7 @@ export const DesignSelectTrigger = React.forwardRef<
   <SelectTrigger
     ref={ref}
     className={cn(
-      "h-12 w-full rounded-[999px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] px-5 text-sm text-[color:var(--ds-text-strong)] placeholder:text-[color:var(--ds-text-subtle)] shadow-[0_8px_20px_rgba(201,189,164,0.25)] transition-colors focus:outline-none focus:ring-2 focus:ring-[color:var(--ds-focus-ring)] focus:ring-offset-2 focus:ring-offset-[color:var(--ds-surface-base)] data-[placeholder]:text-[color:var(--ds-text-subtle)]",
+      "h-12 w-full rounded-[999px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] px-5 text-sm text-[color:var(--ds-text-strong)] placeholder:text-[color:var(--ds-text-subtle)] shadow-none transition-colors focus:outline-none focus:ring-2 focus:ring-[color:var(--ds-focus-ring)] focus:ring-offset-2 focus:ring-offset-[color:var(--ds-surface-base)] data-[placeholder]:text-[color:var(--ds-text-subtle)]",
       className,
     )}
     {...props}

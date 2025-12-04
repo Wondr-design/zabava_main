@@ -404,7 +404,7 @@ export function SubmissionsTable(props: {
                 markVisited(row.submission);
               }}
               disabled={!row.canMarkVisited || actingId === row.rowKey}
-              className="inline-flex items-center justify-center rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm shadow-emerald-300/40 transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-emerald-500/50 disabled:text-emerald-100"
+              className="inline-flex items-center justify-center rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white shadow-none transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-emerald-500/50 disabled:text-emerald-100"
             >
               {actingId === row.rowKey ? "Saving…" : "Mark visited"}
             </button>
@@ -425,7 +425,7 @@ export function SubmissionsTable(props: {
         columns={columns}
         toolbar={
           <button
-            className="rounded-full bg-[color:var(--ds-primary)] px-4 py-2 text-xs font-semibold text-[color:var(--ds-primary-foreground)] shadow-[0_8px_24px_rgba(98,86,58,0.18)] transition hover:bg-[color-mix(in srgb,var(--ds-primary) 92%,#000)]"
+            className="rounded-full bg-[color:var(--ds-primary)] px-4 py-2 text-xs font-semibold text-[color:var(--ds-primary-foreground)] shadow-none transition hover:bg-[color-mix(in srgb,var(--ds-primary) 92%,#000)]"
             onClick={() => {
               setActingId(null);
               onRefresh();
