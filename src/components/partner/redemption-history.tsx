@@ -1,4 +1,13 @@
-import { StatusPill, SurfaceCard } from "@/components/design-system";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import type { RedemptionHistoryItem } from "@/lib/data/redemptions";
 import { cn } from "@/lib/utils";
 
@@ -47,103 +56,110 @@ export function RedemptionHistoryCard({
     <div className={cn("space-y-4", className)}>
       {showHeader ? (
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-[color:var(--ds-text-strong)]">
+          <h2 className="text-sm font-semibold text-foreground">
             {title}
           </h2>
-          <span className="text-xs text-[color:var(--ds-text-muted)]">
+          <span className="text-xs text-muted-foreground">
             Showing {items.length.toLocaleString()} entr
             {items.length === 1 ? "y" : "ies"}
           </span>
         </div>
       ) : null}
       {items.length === 0 ? (
-        <SurfaceCard className="rounded-2xl border-dashed border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] p-4 text-sm text-[color:var(--ds-text-muted)]">
-          {emptyLabel}
-        </SurfaceCard>
+        <Card className="border-dashed">
+          <CardContent className="p-4 text-sm text-muted-foreground">
+            {emptyLabel}
+          </CardContent>
+        </Card>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)]">
-          <table className="min-w-full divide-y divide-[color:var(--ds-border-subtle)] text-sm text-[color:var(--ds-text-strong)]">
-            <thead className="bg-[color:var(--ds-surface-muted)] text-xs uppercase tracking-[0.2em] text-[color:var(--ds-text-subtle)]">
-              <tr>
-                <th className="px-3 py-2 text-left font-semibold">Code</th>
-                <th className="px-3 py-2 text-left font-semibold">Reward</th>
-                <th className="px-3 py-2 text-left font-semibold">User</th>
-                <th className="px-3 py-2 text-left font-semibold">Handled By</th>
-                <th className="px-3 py-2 text-left font-semibold">Processed</th>
-                <th className="px-3 py-2 text-left font-semibold">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[color:var(--ds-border-subtle)]">
+        <div className="overflow-x-auto rounded-lg border border-border">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted">
+                <TableHead className="text-xs uppercase tracking-widest font-semibold">Code</TableHead>
+                <TableHead className="text-xs uppercase tracking-widest font-semibold">Reward</TableHead>
+                <TableHead className="text-xs uppercase tracking-widest font-semibold">User</TableHead>
+                <TableHead className="text-xs uppercase tracking-widest font-semibold">Handled By</TableHead>
+                <TableHead className="text-xs uppercase tracking-widest font-semibold">Processed</TableHead>
+                <TableHead className="text-xs uppercase tracking-widest font-semibold">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {items.map((item) => {
                 const highlighted =
                   highlightStaffId &&
                   item.processedBy?.staffId &&
                   item.processedBy.staffId === highlightStaffId;
                 return (
-                  <tr
+                  <TableRow
                     key={item.code}
                     className={cn(
-                      "bg-[color:var(--ds-surface-card)]",
-                      highlighted && "bg-[color:var(--ds-success)]/10",
+                      highlighted && "bg-green-500/10",
                     )}
                   >
-                    <td className="px-3 py-2 font-mono text-xs">
+                    <TableCell className="font-mono text-xs">
                       {item.code}
-                    </td>
-                    <td className="px-3 py-2">
+                    </TableCell>
+                    <TableCell>
                       <div className="font-medium">
                         {item.rewardName || item.rewardId || "Unknown reward"}
                       </div>
-                      <div className="text-xs text-[color:var(--ds-text-muted)]">
+                      <div className="text-xs text-muted-foreground">
                         {typeof item.pointsCost === "number"
                           ? `${item.pointsCost.toLocaleString()} pts`
                           : "—"}
                       </div>
-                    </td>
-                    <td className="px-3 py-2">
+                    </TableCell>
+                    <TableCell>
                       <div>{item.email}</div>
-                      <div className="text-xs text-[color:var(--ds-text-muted)]">
+                      <div className="text-xs text-muted-foreground">
                         {item.partnerId || "—"}
                       </div>
-                    </td>
-                    <td className="px-3 py-2">
+                    </TableCell>
+                    <TableCell>
                       <div className="flex items-center gap-2">
                         <span>{formatHandledBy(item)}</span>
                         {highlighted ? (
-                          <StatusPill tone="success" size="sm">
+                          <Badge className="bg-green-500/20 text-green-600 border-green-500/30">
                             You
-                          </StatusPill>
+                          </Badge>
                         ) : null}
                       </div>
                       {item.processedBy?.email &&
                       item.processedBy.email !== item.email ? (
-                        <div className="text-xs text-[color:var(--ds-text-muted)]">
+                        <div className="text-xs text-muted-foreground">
                           {item.processedBy.email}
                         </div>
                       ) : null}
-                    </td>
-                    <td className="px-3 py-2 text-[color:var(--ds-text-muted)]">
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
                       {formatDate(item.processedAt)}
-                    </td>
-                    <td className="px-3 py-2">
-                      <StatusPill
-                        tone={
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
                           item.status === "used"
-                            ? "success"
+                            ? "default"
                             : item.status === "rejected"
-                            ? "danger"
-                            : "warning"
+                            ? "destructive"
+                            : "secondary"
                         }
-                        size="sm"
+                        className={
+                          item.status === "used"
+                            ? "bg-green-500/20 text-green-600 border-green-500/30"
+                            : item.status === "rejected"
+                            ? ""
+                            : "bg-amber-500/20 text-amber-600 border-amber-500/30"
+                        }
                       >
                         {item.status}
-                      </StatusPill>
-                    </td>
-                  </tr>
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>

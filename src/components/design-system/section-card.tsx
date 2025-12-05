@@ -21,22 +21,22 @@ export const SectionCard = React.forwardRef<HTMLDivElement, SectionCardProps>(
       <SurfaceCard
         ref={ref}
         className={cn(
-          "flex flex-col gap-7 rounded-[36px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-8 shadow-[var(--ds-shadow-soft)]",
-          bleed && "xl:p-8",
+          "flex flex-col gap-6 rounded-lg border border-border bg-card p-6",
+          bleed && "xl:p-6",
           className,
         )}
         {...props}
       >
         {(title || description || actions) && (
           <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               {title ? (
-                <h2 className="text-lg font-semibold text-[color:var(--ds-text-strong)] sm:text-xl">
+                <h2 className="text-lg font-semibold text-foreground">
                   {title}
                 </h2>
               ) : null}
               {description ? (
-                <p className="text-sm text-[color:var(--ds-text-muted)]">{description}</p>
+                <p className="text-sm text-muted-foreground">{description}</p>
               ) : null}
             </div>
             {actions ? (
@@ -45,10 +45,10 @@ export const SectionCard = React.forwardRef<HTMLDivElement, SectionCardProps>(
           </header>
         )}
 
-        <div className="flex-1 space-y-5">{children}</div>
+        <div className="flex-1 space-y-4">{children}</div>
 
         {footer ? (
-          <footer className="pt-4 text-sm text-[color:var(--ds-text-muted)]">
+          <footer className="pt-4 text-sm text-muted-foreground">
             {footer}
           </footer>
         ) : null}

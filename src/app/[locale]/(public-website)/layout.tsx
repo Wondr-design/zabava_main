@@ -1,12 +1,10 @@
 import type { ReactNode } from "react";
 
-import "@/styles/theme-public.css";
+import "@/styles/theme-public-premium.css";
 
-import { GradualBlurWrapper } from "@/components/gradual-blur-wrapper";
-import { DotGridWrapper } from "@/components/dot-grid-wrapper";
-import { PlasmaWrapper } from "@/components/plasma-wrapper";
 import { BodyThemeClass } from "@/components/body-theme-class";
-import { SiteNav } from "@/site/components/site-nav";
+import { PremiumNav } from "@/site/components/premium-nav";
+import { PremiumLoader } from "@/site/components/premium-loader";
 
 type SiteLayoutProps = {
   children: ReactNode;
@@ -14,15 +12,13 @@ type SiteLayoutProps = {
 
 export default function SiteLayout({ children }: SiteLayoutProps) {
   return (
-    <div className="theme-public min-h-screen">
-      <BodyThemeClass className="theme-public" />
-      <PlasmaWrapper />
-      <DotGridWrapper />
-      <SiteNav />
-      <div className="pt-[120px] px-4 md:px-5">
+    <div className="theme-public-premium min-h-screen bg-white">
+      <BodyThemeClass className="theme-public-premium" />
+      <PremiumLoader />
+      <PremiumNav />
+      <div className="pt-0">
         {children}
       </div>
-      <GradualBlurWrapper />
     </div>
   );
 }

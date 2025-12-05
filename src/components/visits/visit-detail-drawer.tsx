@@ -18,17 +18,17 @@ import {
 } from "@/lib/services/visit-links";
 import { visitApi } from "@/lib/web/api-client";
 import {
-  DesignDialog,
-  DesignDialogContent,
-  DesignDialogHeader,
-  DesignDialogTitle,
-  DesignDialogDescription,
-  DesignDialogBody,
-  DesignDialogClose,
-  DesignButton,
-  StatusPill,
-  SurfaceCard,
-} from "@/components/design-system";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   X,
   Copy,
@@ -108,8 +108,8 @@ export function VisitDetailDrawer({
     typeof payload.visitors === "number"
       ? (payload.visitors as number)
       : typeof payload.minVisitors === "number"
-      ? (payload.minVisitors as number)
-      : null;
+        ? (payload.minVisitors as number)
+        : null;
   const flashDealId =
     typeof payload.dealId === "string" ? (payload.dealId as string) : null;
   const flashActualVisitors =
@@ -175,18 +175,25 @@ export function VisitDetailDrawer({
   })();
 
   const disableQrActions = qrExpired && !isVisited;
-  const qrImageSrc = qrExpired ? qrPreviewUrl : qrPreviewUrl ?? qrUrl;
+  const qrImageSrc = qrExpired ? qrPreviewUrl : (qrPreviewUrl ?? qrUrl);
   const qrLinkHref = qrExpired
-    ? qrPreviewUrl ?? undefined
-    : qrPreviewUrl ?? qrUrl ?? undefined;
+    ? (qrPreviewUrl ?? undefined)
+    : (qrPreviewUrl ?? qrUrl ?? undefined);
   const additional = visit ? deriveVisitAdditional(visit) : [];
 
-  const statusTone =
+  const statusVariant =
     visit?.status === "visited"
-      ? "success"
+      ? "default"
       : visit?.status === "cancelled"
-      ? "danger"
-      : "warning";
+        ? "destructive"
+        : "secondary";
+
+  const statusClassName =
+    visit?.status === "visited"
+      ? "bg-emerald-500 text-white"
+      : visit?.status === "cancelled"
+        ? ""
+        : "bg-amber-500 text-white";
 
   const summaryEntries: InfoRowItem[] = [
     {
@@ -279,57 +286,49 @@ export function VisitDetailDrawer({
   ].filter(Boolean) as InfoRowItem[];
 
   return (
-    <DesignDialog open={open} onOpenChange={onOpenChange}>
-      <DesignDialogContent
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
         className={cn(
           "max-h-[90vh] w-[min(980px,95vw)] max-w-full overflow-hidden p-0 flex flex-col",
           "min-w-0"
         )}
       >
-        <DesignDialogHeader className="border-b border-[color:var(--ds-border-subtle)] pb-6 min-w-0">
+        <DialogHeader className="border-b border-border pb-6 min-w-0">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 space-y-2 min-w-0">
-              <DesignDialogTitle className="text-2xl">
-                Visit Details
-              </DesignDialogTitle>
-              <DesignDialogDescription className="flex flex-wrap items-center gap-2 text-[color:var(--ds-text-muted)]">
+              <DialogTitle className="text-2xl">Visit Details</DialogTitle>
+              <DialogDescription className="flex flex-wrap items-center gap-2 text-muted-foreground">
                 <span className="truncate">
                   {normalized?.partnerName ?? visit?.partner_id ?? ""}
                 </span>
                 {visit?.created_at ? (
-                  <span className="text-xs text-[color:var(--ds-text-subtle)]">
+                  <span className="text-xs text-muted-foreground">
                     • {formatDateTime(visit.created_at)}
                   </span>
                 ) : null}
-              </DesignDialogDescription>
+              </DialogDescription>
               {visit && (
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <StatusPill tone={statusTone} size="sm">
+                  <Badge variant={statusVariant} className={statusClassName}>
                     {visit.status || "pending"}
-                  </StatusPill>
-                  {isFlashDeal && (
-                    <StatusPill tone="primary" size="sm">
-                      Flash Deal
-                    </StatusPill>
-                  )}
+                  </Badge>
+                  {isFlashDeal && <Badge variant="default">Flash Deal</Badge>}
                   {visit.qr_type === "bonus" && (
-                    <StatusPill tone="primary" size="sm">
-                      Reward
-                    </StatusPill>
+                    <Badge variant="default">Reward</Badge>
                   )}
                 </div>
               )}
             </div>
-            <DesignDialogClose asChild>
-              <DesignButton variant="ghost" size="icon" className="shrink-0">
+            <DialogClose asChild>
+              <Button variant="ghost" size="icon" className="shrink-0">
                 <X className="h-5 w-5" aria-hidden />
                 <span className="sr-only">Close</span>
-              </DesignButton>
-            </DesignDialogClose>
+              </Button>
+            </DialogClose>
           </div>
-        </DesignDialogHeader>
+        </DialogHeader>
 
-        <DesignDialogBody className="max-h-[calc(90vh-200px)] overflow-y-auto py-6 overflow-x-hidden w-full">
+        <div className="max-h-[calc(90vh-200px)] overflow-y-auto py-6 overflow-x-hidden w-full">
           {visit ? (
             <div className="space-y-6 min-w-0 w-full">
               <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
@@ -367,11 +366,11 @@ export function VisitDetailDrawer({
 
                   {visit.visit_notes ? (
                     <DataGroup title="Internal notes">
-                      <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
-                        <p className="text-sm text-[color:var(--ds-text-strong)] whitespace-pre-wrap">
+                      <Card className="rounded-2xl border border-border bg-card p-4">
+                        <p className="text-sm text-foreground whitespace-pre-wrap">
                           {visit.visit_notes}
                         </p>
-                      </SurfaceCard>
+                      </Card>
                     </DataGroup>
                   ) : null}
 
@@ -381,22 +380,23 @@ export function VisitDetailDrawer({
                       {flashDealRequiredVisitors &&
                         flashActualVisitors !== null &&
                         flashActualVisitors < flashDealRequiredVisitors && (
-                          <SurfaceCard className="mt-3 border-[color:var(--ds-warning)]/40 bg-[color:var(--ds-warning)]/10 p-3">
+                          <Card className="mt-3 border-amber-500/40 bg-amber-500/10 p-3">
                             <div className="flex items-start gap-2">
                               <AlertCircle
-                                className="h-4 w-4 shrink-0 text-[color:var(--ds-warning)] mt-0.5"
+                                className="h-4 w-4 shrink-0 text-amber-600 mt-0.5"
                                 aria-hidden
                               />
                               <div className="flex-1 space-y-1">
-                                <p className="text-sm font-semibold text-[color:var(--ds-warning)]">
+                                <p className="text-sm font-semibold text-amber-600">
                                   Fewer visitors than required
                                 </p>
-                                <p className="text-xs text-[color:var(--ds-text-muted)]">
-                                  Staff should reject the QR if the full group is not present.
+                                <p className="text-xs text-muted-foreground">
+                                  Staff should reject the QR if the full group
+                                  is not present.
                                 </p>
                               </div>
                             </div>
-                          </SurfaceCard>
+                          </Card>
                         )}
                     </DataGroup>
                   )}
@@ -404,38 +404,38 @@ export function VisitDetailDrawer({
                   <DataGroup title="Loyalty & history">
                     <InfoGrid items={loyaltyEntries} />
                     {history?.length ? (
-                      <SurfaceCard className="mt-3 space-y-2 p-3">
-                        <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[color:var(--ds-text-subtle)]">
+                      <Card className="mt-3 space-y-2 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
                           Recent point events
                         </p>
                         <div className="space-y-2">
                           {history.slice(0, 5).map((entry) => (
                             <div
                               key={entry.id}
-                              className="flex items-center justify-between gap-3 rounded-lg border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] px-3 py-2"
+                              className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted px-3 py-2"
                             >
                               <div className="flex items-center gap-2">
                                 <Gift
-                                  className="h-4 w-4 text-[color:var(--ds-primary)]"
+                                  className="h-4 w-4 text-primary"
                                   aria-hidden
                                 />
-                                <span className="text-sm font-medium capitalize text-[color:var(--ds-text-strong)]">
+                                <span className="text-sm font-medium capitalize text-foreground">
                                   {entry.type}
                                 </span>
                               </div>
                               <div className="flex items-center gap-3 text-sm">
-                                <span className="font-semibold text-[color:var(--ds-text-strong)]">
+                                <span className="font-semibold text-foreground">
                                   {entry.points > 0 ? "+" : ""}
                                   {entry.points}
                                 </span>
-                                <span className="text-xs text-[color:var(--ds-text-muted)]">
+                                <span className="text-xs text-muted-foreground">
                                   {formatDateTime(entry.created_at)}
                                 </span>
                               </div>
                             </div>
                           ))}
                         </div>
-                      </SurfaceCard>
+                      </Card>
                     ) : null}
                   </DataGroup>
 
@@ -443,14 +443,14 @@ export function VisitDetailDrawer({
                     <DataGroup title="Additional data">
                       <div className="space-y-2">
                         {additional.map((entry) => (
-                          <SurfaceCard
+                          <Card
                             key={`${entry.label}-${entry.value}`}
                             className="p-3"
                           >
                             <div className="flex items-start gap-3">
-                              <Info className="h-4 w-4 text-[color:var(--ds-text-muted)] mt-0.5" />
+                              <Info className="h-4 w-4 text-muted-foreground mt-0.5" />
                               <div className="flex-1 min-w-0">
-                                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[color:var(--ds-text-subtle)] mb-1">
+                                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1">
                                   {entry.label}
                                 </p>
                                 {entry.isLink && entry.href ? (
@@ -458,18 +458,18 @@ export function VisitDetailDrawer({
                                     href={entry.href}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="text-sm text-[color:var(--ds-primary)] underline-offset-2 hover:underline break-words"
+                                    className="text-sm text-primary underline-offset-2 hover:underline break-words"
                                   >
                                     {entry.displayValue ?? entry.value}
                                   </a>
                                 ) : (
-                                  <p className="text-sm text-[color:var(--ds-text-strong)] break-words">
+                                  <p className="text-sm text-foreground break-words">
                                     {entry.value}
                                   </p>
                                 )}
                               </div>
                             </div>
-                          </SurfaceCard>
+                          </Card>
                         ))}
                       </div>
                     </DataGroup>
@@ -480,24 +480,30 @@ export function VisitDetailDrawer({
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Info
-                className="h-12 w-12 text-[color:var(--ds-text-subtle)] mb-4"
+                className="h-12 w-12 text-muted-foreground mb-4"
                 aria-hidden
               />
-              <p className="text-sm text-[color:var(--ds-text-muted)]">
+              <p className="text-sm text-muted-foreground">
                 Select a visit from the table to view details.
               </p>
             </div>
           )}
-        </DesignDialogBody>
-      </DesignDialogContent>
-    </DesignDialog>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
-function DataGroup({ title, children }: { title: string; children: React.ReactNode }) {
+function DataGroup({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ds-text-strong)]">
+      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
         <span>{title}</span>
       </div>
       {children}
@@ -519,17 +525,15 @@ function InfoRow({ label, value, icon: Icon, href }: InfoRowItem) {
   const content = (
     <div className="flex items-start gap-3">
       {Icon && (
-        <span className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-md bg-[color:var(--ds-primary)]/10">
-          <Icon className="h-4 w-4 text-[color:var(--ds-primary)]" aria-hidden />
+        <span className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-md bg-primary/10">
+          <Icon className="h-4 w-4 text-primary" aria-hidden />
         </span>
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[color:var(--ds-text-subtle)] mb-1">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1">
           {label}
         </p>
-        <div className="text-sm text-[color:var(--ds-text-strong)] break-words">
-          {value}
-        </div>
+        <div className="text-sm text-foreground break-words">{value}</div>
       </div>
     </div>
   );
@@ -540,16 +544,14 @@ function InfoRow({ label, value, icon: Icon, href }: InfoRowItem) {
         href={href}
         target="_blank"
         rel="noreferrer"
-        className="rounded-xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] px-3 py-2 hover:border-[color:var(--ds-primary)]/40 transition"
+        className="rounded-xl border border-border bg-muted px-3 py-2 hover:border-primary/40 transition"
       >
         {content}
       </a>
     );
   }
 
-  return (
-    <SurfaceCard className="p-3">{content}</SurfaceCard>
-  );
+  return <Card className="p-3">{content}</Card>;
 }
 
 function QrPanel({
@@ -580,19 +582,20 @@ function QrPanel({
   onCopyVerify: () => void;
 }) {
   return (
-    <SurfaceCard className="flex flex-col gap-4 rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
-      <div className="flex items-center justify-center rounded-xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] p-4">
+    <Card className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4">
+      <div className="flex items-center justify-center rounded-xl border border-border bg-muted p-4">
         {qrImageSrc ? (
           <img
             src={qrImageSrc}
             alt="QR code"
-            className="h-60 w-60 rounded-xl border border-[color:var(--ds-border-subtle)] bg-white p-3 shadow-sm"
+            className="h-60 w-60 rounded-xl border border-border bg-white p-3 shadow-sm"
           />
         ) : (
           <div className="flex flex-col items-center gap-3 text-center">
-            <QrCode className="h-12 w-12 text-[color:var(--ds-text-subtle)]" aria-hidden />
-            <p className="text-xs text-[color:var(--ds-text-muted)]">
-              QR code not available yet. It will be generated once the visit is processed.
+            <QrCode className="h-12 w-12 text-muted-foreground" aria-hidden />
+            <p className="text-xs text-muted-foreground">
+              QR code not available yet. It will be generated once the visit is
+              processed.
             </p>
           </div>
         )}
@@ -619,47 +622,45 @@ function QrPanel({
         )}
       </div>
 
-      <SurfaceCard
+      <Card
         className={cn(
           "p-3",
           qrExpired
-            ? "border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10"
-            : "border-[color:var(--ds-primary)]/40 bg-[color:var(--ds-primary)]/5"
+            ? "border-destructive/40 bg-destructive/10"
+            : "border-primary/40 bg-primary/5"
         )}
       >
         <div className="flex items-start gap-2">
           {qrExpired ? (
             <AlertCircle
-              className="h-4 w-4 shrink-0 text-[color:var(--ds-danger)] mt-0.5"
+              className="h-4 w-4 shrink-0 text-destructive mt-0.5"
               aria-hidden
             />
           ) : (
             <Info
-              className="h-4 w-4 shrink-0 text-[color:var(--ds-primary)] mt-0.5"
+              className="h-4 w-4 shrink-0 text-primary mt-0.5"
               aria-hidden
             />
           )}
           <p
             className={cn(
               "text-xs",
-              qrExpired
-                ? "text-[color:var(--ds-danger)]"
-                : "text-[color:var(--ds-text-muted)]"
+              qrExpired ? "text-destructive" : "text-muted-foreground"
             )}
           >
             {qrExpiryMessage}
           </p>
         </div>
-      </SurfaceCard>
+      </Card>
       {qrPreviewLoading && (
-        <p className="text-xs text-[color:var(--ds-text-muted)]">Refreshing QR preview…</p>
+        <p className="text-xs text-muted-foreground">Refreshing QR preview…</p>
       )}
       {qrPreviewError && (
-        <SurfaceCard className="border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10 p-3">
-          <p className="text-xs text-[color:var(--ds-danger)]">{qrPreviewError}</p>
-        </SurfaceCard>
+        <Card className="border-destructive/40 bg-destructive/10 p-3">
+          <p className="text-xs text-destructive">{qrPreviewError}</p>
+        </Card>
       )}
-    </SurfaceCard>
+    </Card>
   );
 }
 
@@ -678,7 +679,7 @@ function ActionRow({
 }) {
   return (
     <div className="space-y-1">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[color:var(--ds-text-subtle)]">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
         {label}
       </p>
       <div className="flex gap-2">
@@ -686,24 +687,31 @@ function ActionRow({
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex flex-1 items-center gap-2 rounded-xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] px-3 py-2 text-sm text-[color:var(--ds-text-strong)] transition hover:border-[color:var(--ds-primary)]/40"
+          className="flex flex-1 items-center gap-2 rounded-xl border border-border bg-muted px-3 py-2 text-sm text-foreground transition hover:border-primary/40"
           title={href}
         >
           <span className="truncate">{display}</span>
-          <ExternalLink className="h-4 w-4 shrink-0 text-[color:var(--ds-text-muted)]" aria-hidden />
+          <ExternalLink
+            className="h-4 w-4 shrink-0 text-muted-foreground"
+            aria-hidden
+          />
         </a>
-        <DesignButton
-          variant="tonal"
+        <Button
+          variant="secondary"
           size="sm"
           onClick={() => {
             if (disabled) return;
             onCopy();
           }}
           disabled={disabled}
-          title={disabled ? "QR expired — request a new registration" : `Copy ${label.toLowerCase()}`}
+          title={
+            disabled
+              ? "QR expired — request a new registration"
+              : `Copy ${label.toLowerCase()}`
+          }
         >
           <Copy className="h-4 w-4" aria-hidden />
-        </DesignButton>
+        </Button>
       </div>
     </div>
   );

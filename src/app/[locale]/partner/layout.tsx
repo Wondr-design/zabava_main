@@ -3,7 +3,7 @@
 import { ReactNode, useMemo } from "react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { usePathname } from "next/navigation";
-import "../../../styles/theme-darkmatter.css";
+import "../../../styles/theme-vercel.css";
 import { LocalizedLink } from "@/components/ui/localized-link";
 import { useLocale } from "@/i18n/provider";
 import { buildLocalizedPath } from "@/i18n/routing";
@@ -20,8 +20,8 @@ export default function PartnerLayout({ children }: { children: ReactNode }) {
   if (isAuthRoute) {
     return (
       <>
-        <BodyThemeClass className="theme-darkmatter" />
-        <div className="theme-darkmatter flex min-h-screen items-center justify-center bg-background text-foreground">
+        <BodyThemeClass className="theme-vercel" />
+        <div className="theme-vercel flex min-h-screen items-center justify-center bg-background text-foreground">
           <div className="w-full max-w-md px-4">{children}</div>
         </div>
       </>
@@ -30,8 +30,8 @@ export default function PartnerLayout({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <BodyThemeClass className="theme-darkmatter" />
-      <div className="theme-darkmatter min-h-screen bg-background text-foreground">
+      <BodyThemeClass className="theme-vercel" />
+      <div className="theme-vercel min-h-screen bg-background text-foreground">
         <header className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-sm shadow-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">

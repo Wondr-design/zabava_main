@@ -3,13 +3,11 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocalizedRouter } from "@/i18n/use-localized-router";
-import {
-  DesignButton,
-  DesignFormField,
-  DesignInput,
-  SurfaceCard,
-  StatusPill,
-} from "@/components/design-system";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { EmailVerification } from "@/site/components/email-verification";
 
 function StaffSignupInner() {
@@ -105,7 +103,7 @@ function StaffSignupInner() {
   }
 
   return (
-    <SurfaceCard className="space-y-6 rounded-3xl border border-[color:var(--ds-border-subtle)] p-6 shadow-[var(--ds-shadow-soft)]">
+    <Card className="space-y-6 rounded-lg p-6">
       <EmailVerification
         key={verificationKey}
         type="staff_signup"
@@ -114,24 +112,26 @@ function StaffSignupInner() {
       />
 
       {presetToken ? (
-        <div className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] px-4 py-3 text-sm text-[color:var(--ds-text-muted)]">
+        <div className="rounded-lg border border-border bg-muted px-4 py-3 text-sm text-muted-foreground">
           Invite detected. Complete the steps below to activate your staff access.
         </div>
       ) : (
-        <div className="rounded-2xl border border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10 px-4 py-3 text-sm text-[color:var(--ds-danger)]">
-          We couldn’t find an invite token. Open the signup link directly from your invite email.
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>
+            We couldn&apos;t find an invite token. Open the signup link directly from your invite email.
+          </AlertDescription>
+        </Alert>
       )}
 
       {emailVerified ? (
-        <div className="flex flex-col gap-3 rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] px-4 py-3 text-sm text-[color:var(--ds-text-muted)] sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted px-4 py-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <span>
             Verified email:{" "}
-            <span className="font-semibold text-[color:var(--ds-text-strong)]">
+            <span className="font-semibold text-foreground">
               {verifiedEmail}
             </span>
           </span>
-          <DesignButton
+          <Button
             type="button"
             variant="ghost"
             size="sm"
@@ -139,45 +139,43 @@ function StaffSignupInner() {
             className="self-start sm:self-auto"
           >
             Use a different email
-          </DesignButton>
+          </Button>
         </div>
       ) : (
-        <p className="rounded-2xl border border-dashed border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)]/60 px-4 py-3 text-sm text-[color:var(--ds-text-muted)]">
+        <p className="rounded-lg border border-dashed border-border bg-muted/60 px-4 py-3 text-sm text-muted-foreground">
           Verify your email with a one-time code to continue.
         </p>
       )}
 
       <form onSubmit={onSubmit} className="space-y-5">
         <header className="space-y-2">
-          <h1 className="text-xl font-semibold text-[color:var(--ds-text-strong)]">
+          <h1 className="text-xl font-semibold text-foreground">
             Create your staff account
           </h1>
-          <p className="text-sm text-[color:var(--ds-text-muted)]">
+          <p className="text-sm text-muted-foreground">
             Complete your invite by confirming the email and choosing a secure password.
           </p>
         </header>
         {error ? (
-          <StatusPill tone="danger" className="w-full justify-center">
-            {error}
-          </StatusPill>
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         ) : null}
-        <DesignFormField label="Full name">
-          <DesignInput
+        <div className="space-y-2">
+          <Label htmlFor="name">Full name</Label>
+          <Input
+            id="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Jane Doe"
           />
-        </DesignFormField>
-        <DesignFormField
-          label="Email"
-          required
-          helper={
-            emailVerified
-              ? "Verified via the emailed code."
-              : "Complete the verification step above to populate this field."
-          }
-        >
-          <DesignInput
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="email">
+            Email <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="email"
             type="email"
             value={email}
             readOnly
@@ -185,10 +183,19 @@ function StaffSignupInner() {
             autoComplete="email"
             placeholder="Verify your email above to continue"
           />
-        </DesignFormField>
+          <p className="text-xs text-muted-foreground">
+            {emailVerified
+              ? "Verified via the emailed code."
+              : "Complete the verification step above to populate this field."}
+          </p>
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <DesignFormField label="Password" required className="sm:col-span-1">
-            <DesignInput
+          <div className="space-y-2">
+            <Label htmlFor="password">
+              Password <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -196,26 +203,30 @@ function StaffSignupInner() {
               autoComplete="new-password"
               placeholder="At least 8 characters"
             />
-          </DesignFormField>
-          <DesignFormField label="Confirm password" required className="sm:col-span-1">
-            <DesignInput
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirm-password">
+              Confirm password <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="confirm-password"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               autoComplete="new-password"
               placeholder="Re-enter password"
             />
-          </DesignFormField>
+          </div>
         </div>
-        <DesignButton
+        <Button
           type="submit"
           className="w-full"
           disabled={submitting || !emailVerified}
         >
           {submitting ? "Creating account…" : "Create account"}
-        </DesignButton>
+        </Button>
       </form>
-    </SurfaceCard>
+    </Card>
   );
 }
 
@@ -223,9 +234,9 @@ export default function StaffSignupPage() {
   return (
     <Suspense
       fallback={
-        <SurfaceCard className="rounded-3xl border border-[color:var(--ds-border-subtle)] p-6 text-[color:var(--ds-text-muted)]">
+        <Card className="rounded-lg p-6 text-muted-foreground">
           Loading…
-        </SurfaceCard>
+        </Card>
       }
     >
       <StaffSignupInner />

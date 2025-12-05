@@ -1,16 +1,19 @@
 "use client";
 
-import { SectionCard } from "@/components/design-system";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function StaffSettingsPage() {
   return (
-    <SectionCard
-      title="Staff settings"
-      description="Settings are currently handled by administrators."
-    >
-      <p className="text-sm text-[color:var(--ds-text-muted)]">
-        Please contact an administrator if you need to update your profile or access rights.
-      </p>
-    </SectionCard>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Staff settings</CardTitle>
+        <CardDescription>Settings are currently handled by administrators.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground">
+          Please contact an administrator if you need to update your profile or access rights.
+        </p>
+      </CardContent>
+    </Card>
   );
 }

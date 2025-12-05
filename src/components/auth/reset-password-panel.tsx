@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 
-import {
-  DesignButton,
-  DesignFormField,
-  DesignInput,
-  StatusPill,
-} from "@/components/design-system";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { EmailVerification } from "@/site/components/email-verification";
 import { cn } from "@/lib/utils";
 
@@ -119,76 +118,81 @@ export function ResetPasswordPanel(props: ResetPasswordPanelProps) {
   }
 
   return (
-    <div
-      className={cn(
-        "space-y-4 rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)]/80 p-4",
-        className,
-      )}
-    >
-      <div className="space-y-1">
-        <h3 className="text-base font-semibold text-[color:var(--ds-text-strong)]">
-          Forgot your password?
-        </h3>
-        <p className="text-sm text-[color:var(--ds-text-muted)]">
-          Verify your email to receive a reset code. Once verified, you can set a new password.
-        </p>
-      </div>
+    <Card className={cn("", className)}>
+      <CardContent className="space-y-4 p-4">
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold text-foreground">
+            Forgot your password?
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Verify your email to receive a reset code. Once verified, you can set a new password.
+          </p>
+        </div>
 
-      {error ? (
-        <StatusPill tone="danger">{error}</StatusPill>
-      ) : null}
-      {success ? (
-        <StatusPill tone="success">{success}</StatusPill>
-      ) : null}
+        {error ? (
+          <Badge variant="destructive" className="w-full justify-start py-2 px-3">{error}</Badge>
+        ) : null}
+        {success ? (
+          <Badge variant="outline" className="w-full justify-start py-2 px-3 border-green-500 text-green-600 bg-green-500/10">{success}</Badge>
+        ) : null}
 
-      <EmailVerification
-        key={verificationKey}
-        type={RESET_VERIFICATION_TYPE[role]}
-        onVerified={handleVerified}
-      />
+        <EmailVerification
+          key={verificationKey}
+          type={RESET_VERIFICATION_TYPE[role]}
+          onVerified={handleVerified}
+        />
 
-      {verifiedEmail ? (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <DesignFormField label="New password" required>
-            <DesignInput
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="Minimum 8 characters"
-              autoComplete="new-password"
-            />
-          </DesignFormField>
-          <DesignFormField label="Confirm password" required>
-            <DesignInput
-              type="password"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              placeholder="Re-enter new password"
-              autoComplete="new-password"
-            />
-          </DesignFormField>
-          <div className="flex flex-wrap items-center gap-3">
-            <DesignButton
-              type="submit"
-              disabled={submitting}
-            >
-              {submitting ? "Updating…" : "Update password"}
-            </DesignButton>
-            <DesignButton
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={resetFlow}
-            >
-              Start over
-            </DesignButton>
-          </div>
-        </form>
-      ) : (
-        <p className="rounded-xl border border-dashed border-[color:var(--ds-border-subtle)] px-3 py-2 text-sm text-[color:var(--ds-text-muted)]">
-          After verifying your email, you will be prompted to choose a new password.
-        </p>
-      )}
-    </div>
+        {verifiedEmail ? (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-password">
+                New password <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Minimum 8 characters"
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">
+                Confirm password <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                placeholder="Re-enter new password"
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="submit"
+                disabled={submitting}
+              >
+                {submitting ? "Updating…" : "Update password"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={resetFlow}
+              >
+                Start over
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <p className="rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted-foreground">
+            After verifying your email, you will be prompted to choose a new password.
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 }

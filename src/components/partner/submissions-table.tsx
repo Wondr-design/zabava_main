@@ -337,7 +337,7 @@ export function SubmissionsTable(props: {
         id: "email",
         header: "Email",
         accessor: (row) => (
-          <div className="font-medium text-[color:var(--ds-text-strong)]">
+          <div className="font-medium text-foreground">
             {row.emailDisplay}
           </div>
         ),
@@ -425,7 +425,7 @@ export function SubmissionsTable(props: {
         columns={columns}
         toolbar={
           <button
-            className="rounded-full bg-[color:var(--ds-primary)] px-4 py-2 text-xs font-semibold text-[color:var(--ds-primary-foreground)] shadow-none transition hover:bg-[color-mix(in srgb,var(--ds-primary) 92%,#000)]"
+            className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-none transition hover:bg-primary/90"
             onClick={() => {
               setActingId(null);
               onRefresh();
@@ -440,7 +440,7 @@ export function SubmissionsTable(props: {
         }
         rowClassName={(row) =>
           row.isPendingExpired
-            ? "border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10"
+            ? "border-destructive/40 bg-destructive/10"
             : undefined
         }
       />
@@ -579,7 +579,7 @@ function SubmissionDialog(props: {
   return (
     <DesignDialog open={!!item} onOpenChange={onOpenChange}>
       <DesignDialogContent className="max-h-[90vh] w-[min(800px,95vw)] overflow-hidden p-0">
-        <DesignDialogHeader className="border-b border-[color:var(--ds-border-subtle)] pb-6">
+        <DesignDialogHeader className="border-b border-border pb-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 space-y-2">
               <DesignDialogTitle className="text-2xl">
@@ -670,20 +670,20 @@ function SubmissionDialog(props: {
               {(qrUrl || verifyUrl) && (
                 <Section title="QR Code & Verification">
                   <div className="grid gap-6 lg:grid-cols-[280px,1fr]">
-                    <div className="flex items-center justify-center rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] p-6">
+                    <div className="flex items-center justify-center rounded-lg border border-border bg-muted p-6">
                       {qrImageSrc ? (
                         <img
                           src={qrImageSrc}
                           alt="QR code"
-                          className="h-56 w-56 rounded-xl border border-[color:var(--ds-border-subtle)] bg-white p-3 shadow-sm"
+                          className="h-56 w-56 rounded-lg border border-border bg-white p-3 shadow-sm"
                         />
                       ) : (
                         <div className="flex flex-col items-center gap-3 text-center">
                           <QrCode
-                            className="h-12 w-12 text-[color:var(--ds-text-subtle)]"
+                            className="h-12 w-12 text-muted-foreground"
                             aria-hidden
                           />
-                          <p className="text-xs text-[color:var(--ds-text-muted)]">
+                          <p className="text-xs text-muted-foreground">
                             QR code not available yet.
                           </p>
                         </div>
@@ -692,7 +692,7 @@ function SubmissionDialog(props: {
                     <div className="space-y-4">
                       {qrUrl && (
                         <div className="space-y-2">
-                          <label className="text-xs font-semibold uppercase tracking-[0.15em] text-[color:var(--ds-text-subtle)]">
+                          <label className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
                             QR Link
                           </label>
                           <div className="flex gap-2">
@@ -700,14 +700,14 @@ function SubmissionDialog(props: {
                               href={qrLinkHref}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex flex-1 items-center gap-2 rounded-xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] px-4 py-3 text-sm text-[color:var(--ds-text-strong)] transition hover:bg-[color:var(--ds-surface-muted)]"
+                              className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground transition hover:bg-muted"
                               title={qrUrl}
                             >
                               <span className="truncate">
                                 {qrDisplay ?? qrUrl}
                               </span>
                               <ExternalLink
-                                className="h-4 w-4 shrink-0 text-[color:var(--ds-text-muted)]"
+                                className="h-4 w-4 shrink-0 text-muted-foreground"
                                 aria-hidden
                               />
                             </a>
@@ -737,7 +737,7 @@ function SubmissionDialog(props: {
                       )}
                       {verifyUrl && (
                         <div className="space-y-2">
-                          <label className="text-xs font-semibold uppercase tracking-[0.15em] text-[color:var(--ds-text-subtle)]">
+                          <label className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
                             Verify Link
                           </label>
                           <div className="flex gap-2">
@@ -745,7 +745,7 @@ function SubmissionDialog(props: {
                               href={verifyUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex flex-1 items-center gap-2 rounded-xl border border-[color:var(--ds-primary)]/30 bg-[color:var(--ds-primary)]/5 px-4 py-3 text-sm text-[color:var(--ds-primary)] transition hover:bg-[color:var(--ds-primary)]/10"
+                              className="flex flex-1 items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-primary transition hover:bg-primary/10"
                               title={verifyUrl}
                             >
                               <span className="truncate">
@@ -782,19 +782,19 @@ function SubmissionDialog(props: {
                         className={cn(
                           "p-3",
                           qrExpired
-                            ? "border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10"
-                            : "border-[color:var(--ds-primary)]/40 bg-[color:var(--ds-primary)]/5"
+                            ? "border-destructive/40 bg-destructive/10"
+                            : "border-primary/40 bg-primary/5"
                         )}
                       >
                         <div className="flex items-start gap-2">
                           {qrExpired ? (
                             <AlertCircle
-                              className="h-4 w-4 shrink-0 text-[color:var(--ds-danger)] mt-0.5"
+                              className="h-4 w-4 shrink-0 text-destructive mt-0.5"
                               aria-hidden
                             />
                           ) : (
                             <Info
-                              className="h-4 w-4 shrink-0 text-[color:var(--ds-primary)] mt-0.5"
+                              className="h-4 w-4 shrink-0 text-primary mt-0.5"
                               aria-hidden
                             />
                           )}
@@ -802,8 +802,8 @@ function SubmissionDialog(props: {
                             className={cn(
                               "text-xs",
                               qrExpired
-                                ? "text-[color:var(--ds-danger)]"
-                                : "text-[color:var(--ds-text-muted)]"
+                                ? "text-destructive"
+                                : "text-muted-foreground"
                             )}
                           >
                             {qrExpiryMessage}
@@ -811,13 +811,13 @@ function SubmissionDialog(props: {
                         </div>
                       </SurfaceCard>
                       {qrPreviewLoading && (
-                        <p className="text-xs text-[color:var(--ds-text-muted)]">
+                        <p className="text-xs text-muted-foreground">
                           Refreshing QR preview…
                         </p>
                       )}
                       {qrPreviewError && (
-                        <SurfaceCard className="border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10 p-3">
-                          <p className="text-xs text-[color:var(--ds-danger)]">
+                        <SurfaceCard className="border-destructive/40 bg-destructive/10 p-3">
+                          <p className="text-xs text-destructive">
                             {qrPreviewError}
                           </p>
                         </SurfaceCard>
@@ -870,7 +870,7 @@ function SubmissionDialog(props: {
               {item?.visitNotes ? (
                 <Section title="Internal notes">
                   <SurfaceCard className="p-4">
-                    <p className="whitespace-pre-wrap text-sm text-[color:var(--ds-text-strong)]">
+                    <p className="whitespace-pre-wrap text-sm text-foreground">
                       {item.visitNotes}
                     </p>
                   </SurfaceCard>
@@ -886,7 +886,7 @@ function SubmissionDialog(props: {
                     <div className="grid gap-4 sm:grid-cols-2">
                       {additions.map((entry) => (
                         <SurfaceCard key={entry.label} className="p-4">
-                          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[color:var(--ds-text-subtle)] mb-2">
+                          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-2">
                             {entry.label}
                           </p>
                           {entry.isLink ? (
@@ -894,13 +894,13 @@ function SubmissionDialog(props: {
                               href={entry.href ?? entry.value}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-2 text-sm text-[color:var(--ds-primary)] underline underline-offset-2 transition hover:text-[color:var(--ds-primary)]/80"
+                              className="inline-flex items-center gap-2 text-sm text-primary underline underline-offset-2 transition hover:text-primary/80"
                             >
                               {entry.displayValue ?? entry.value}
                               <ExternalLink className="h-3 w-3" aria-hidden />
                             </a>
                           ) : (
-                            <p className="text-sm text-[color:var(--ds-text-strong)]">
+                            <p className="text-sm text-foreground">
                               {entry.value}
                             </p>
                           )}
@@ -914,10 +914,10 @@ function SubmissionDialog(props: {
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Info
-                className="h-12 w-12 text-[color:var(--ds-text-subtle)] mb-4"
+                className="h-12 w-12 text-muted-foreground mb-4"
                 aria-hidden
               />
-              <p className="text-sm text-[color:var(--ds-text-muted)]">
+              <p className="text-sm text-muted-foreground">
                 Select a visit from the table to view details.
               </p>
             </div>
@@ -937,7 +937,7 @@ function Section({
 }) {
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-[color:var(--ds-text-subtle)]">
+      <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
         {title}
       </h3>
       {children}
@@ -961,18 +961,18 @@ function InfoField({
     <SurfaceCard className="p-4">
       <div className="flex items-start gap-3">
         {Icon && (
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[color:var(--ds-primary)]/10">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
             <Icon
-              className="h-4 w-4 text-[color:var(--ds-primary)]"
+              className="h-4 w-4 text-primary"
               aria-hidden
             />
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[color:var(--ds-text-subtle)] mb-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1">
             {label}
           </p>
-          <p className="text-sm text-[color:var(--ds-text-strong)] break-words">
+          <p className="text-sm text-foreground break-words">
             {value}
           </p>
         </div>

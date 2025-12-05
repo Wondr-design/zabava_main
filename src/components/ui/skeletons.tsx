@@ -53,11 +53,11 @@ export function TableSkeleton({
   showHeader?: boolean;
 }) {
   return (
-    <div className="rounded-lg border border-[color:var(--ds-border-subtle)] overflow-hidden">
+    <div className="rounded-lg border border-border overflow-hidden">
       <table className="w-full">
         {showHeader && (
           <thead>
-            <tr className="border-b border-[color:var(--ds-border-subtle)]">
+            <tr className="border-b border-border">
               {showCheckbox && (
                 <th className="px-4 py-3 text-left">
                   <BaseSkeleton className="h-4 w-4 rounded" />
@@ -103,7 +103,7 @@ export function CardSkeleton({
   return (
     <div
       className={cn(
-        "rounded-lg border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-6",
+        "rounded-lg border border-border bg-card p-6",
         className
       )}
     >
@@ -146,7 +146,7 @@ export function StatsGridSkeleton({
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="rounded-xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-6"
+          className="rounded-lg border border-border bg-card p-6"
         >
           <div className="flex items-start justify-between">
             <div className="flex-1 space-y-2">
@@ -225,7 +225,7 @@ export function ListItemSkeleton({
   return (
     <div
       className={cn(
-        "flex items-center gap-4 rounded-lg border border-[color:var(--ds-border-subtle)] p-4",
+        "flex items-center gap-4 rounded-lg border border-border p-4",
         className
       )}
     >
@@ -317,7 +317,7 @@ export function FilterBarSkeleton({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-end gap-4 rounded-lg border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4",
+        "flex flex-wrap items-end gap-4 rounded-lg border border-border bg-card p-4",
         className
       )}
     >

@@ -2,12 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import {
-  DesignButton,
-  DesignFormField,
-  DesignInput,
-  SurfaceCard,
-} from "@/components/design-system";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ResetPasswordPanel } from "@/components/auth/reset-password-panel";
 import { LocalizedLink } from "@/components/ui/localized-link";
 import { useLocalizedRouter } from "@/i18n/use-localized-router";
@@ -132,137 +131,151 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="flex min-h-[60vh] items-center justify-center bg-[color:var(--ds-surface-base)] px-6 py-12">
-      <SurfaceCard className="w-full max-w-2xl space-y-6 rounded-3xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-8 shadow-[var(--ds-shadow-soft)]">
-        <header className="space-y-1">
-          <h1 className="text-2xl font-semibold text-[color:var(--ds-text-strong)]">
-            Admin login
-          </h1>
-          <p className="text-sm text-[color:var(--ds-text-muted)]">
-            Sign in to the Zabava control centre.
-          </p>
-        </header>
+    <div className="flex min-h-[60vh] items-center justify-center bg-background px-6 py-12">
+      <Card className="w-full max-w-2xl">
+        <CardContent className="space-y-6 p-8">
+          <header className="space-y-1">
+            <h1 className="text-2xl font-semibold text-foreground">
+              Admin login
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Sign in to the Zabava control centre.
+            </p>
+          </header>
 
-        {error ? (
-          <SurfaceCard className="rounded-2xl border border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10 px-4 py-3 text-sm text-[color:var(--ds-danger)]">
-            {error}
-          </SurfaceCard>
-        ) : null}
+          {error ? (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : null}
 
-        {notice ? (
-          <SurfaceCard className="rounded-2xl border border-[color:var(--ds-success)]/40 bg-[color:var(--ds-success)]/10 px-4 py-3 text-sm text-[color:var(--ds-success)]">
-            {notice}
-          </SurfaceCard>
-        ) : null}
+          {notice ? (
+            <Alert className="border-green-500/40 bg-green-500/10 text-green-600">
+              <AlertDescription>{notice}</AlertDescription>
+            </Alert>
+          ) : null}
 
-        <form onSubmit={onSubmit} className="space-y-5">
-          <DesignFormField label="Email" required>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <DesignInput
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                autoComplete="email"
-                placeholder="admin@example.com"
-                disabled={codeRequesting}
-              />
-              <DesignButton
-                type="button"
-                variant="secondary"
-                onClick={handleRequestCode}
-                disabled={codeRequesting || !normalizedEmail.length}
-              >
-                {codeRequesting ? "Sending…" : "Send code"}
-              </DesignButton>
+          <form onSubmit={onSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="email">
+                Email <span className="text-destructive">*</span>
+              </Label>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  autoComplete="email"
+                  placeholder="admin@example.com"
+                  disabled={codeRequesting}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleRequestCode}
+                  disabled={codeRequesting || !normalizedEmail.length}
+                >
+                  {codeRequesting ? "Sending…" : "Send code"}
+                </Button>
+              </div>
+              {verificationError ? (
+                <p className="text-xs text-destructive mt-2">
+                  {verificationError}
+                </p>
+              ) : null}
+              {expiresAt && !isEmailVerified ? (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Code expires at {new Date(expiresAt).toLocaleTimeString()}
+                </p>
+              ) : null}
+              {isEmailVerified ? (
+                <p className="text-xs text-green-600 mt-1">
+                  Email verified.
+                </p>
+              ) : null}
             </div>
-            {verificationError ? (
-              <p className="text-xs text-[color:var(--ds-danger)] mt-2">
-                {verificationError}
-              </p>
-            ) : null}
-            {expiresAt && !isEmailVerified ? (
-              <p className="text-xs text-[color:var(--ds-text-muted)] mt-1">
-                Code expires at {new Date(expiresAt).toLocaleTimeString()}
-              </p>
-            ) : null}
-            {isEmailVerified ? (
-              <p className="text-xs text-[color:var(--ds-success)] mt-1">
-                Email verified.
-              </p>
-            ) : null}
-          </DesignFormField>
 
-          <DesignFormField label="Verification code" required>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <DesignInput
-                type="text"
-                inputMode="numeric"
-                value={codeInput}
-                onChange={(event) => setCodeInput(event.target.value)}
-                placeholder="Enter the code"
-                maxLength={8}
-                disabled={isEmailVerified}
-              />
-              <DesignButton
-                type="button"
-                variant="secondary"
-                onClick={handleVerifyCode}
-                disabled={
-                  isEmailVerified ||
-                  codeVerifying ||
-                  !codeInput.trim() ||
-                  !normalizedEmail.length
-                }
-              >
-                {codeVerifying ? "Verifying…" : isEmailVerified ? "Verified" : "Verify"}
-              </DesignButton>
+            <div className="space-y-2">
+              <Label htmlFor="code">
+                Verification code <span className="text-destructive">*</span>
+              </Label>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Input
+                  id="code"
+                  type="text"
+                  inputMode="numeric"
+                  value={codeInput}
+                  onChange={(event) => setCodeInput(event.target.value)}
+                  placeholder="Enter the code"
+                  maxLength={8}
+                  disabled={isEmailVerified}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleVerifyCode}
+                  disabled={
+                    isEmailVerified ||
+                    codeVerifying ||
+                    !codeInput.trim() ||
+                    !normalizedEmail.length
+                  }
+                >
+                  {codeVerifying ? "Verifying…" : isEmailVerified ? "Verified" : "Verify"}
+                </Button>
+              </div>
             </div>
-          </DesignFormField>
 
-          <DesignFormField label="Password" required>
-            <DesignInput
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete="current-password"
-              placeholder="Enter your password"
-            />
-          </DesignFormField>
+            <div className="space-y-2">
+              <Label htmlFor="password">
+                Password <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="current-password"
+                placeholder="Enter your password"
+              />
+            </div>
 
-          <DesignButton type="submit" disabled={submitting} className="w-full">
-            {submitting ? "Signing in…" : "Sign in"}
-          </DesignButton>
-        </form>
+            <Button type="submit" disabled={submitting} className="w-full">
+              {submitting ? "Signing in…" : "Sign in"}
+            </Button>
+          </form>
 
-        <button
-          type="button"
-          onClick={() => {
-            setShowReset((prev) => !prev);
-            setError("");
-          }}
-          className="text-sm font-medium text-[color:var(--ds-primary)] underline-offset-4 hover:underline"
-        >
-          {showReset ? "Hide password reset" : "Forgot password?"}
-        </button>
-
-        {showReset ? (
-          <ResetPasswordPanel
-            role="admin"
-            onSuccess={handleResetSuccess}
-            className="mt-2"
-          />
-        ) : null}
-
-        <p className="text-sm text-[color:var(--ds-text-muted)]">
-          Need an account?{" "}
-          <LocalizedLink
-            href="/admin/signup"
-            className="font-medium text-[color:var(--ds-primary)] underline-offset-4 hover:underline"
+          <button
+            type="button"
+            onClick={() => {
+              setShowReset((prev) => !prev);
+              setError("");
+            }}
+            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
           >
-            Create one
-          </LocalizedLink>
-        </p>
-      </SurfaceCard>
+            {showReset ? "Hide password reset" : "Forgot password?"}
+          </button>
+
+          {showReset ? (
+            <ResetPasswordPanel
+              role="admin"
+              onSuccess={handleResetSuccess}
+              className="mt-2"
+            />
+          ) : null}
+
+          <p className="text-sm text-muted-foreground">
+            Need an account?{" "}
+            <LocalizedLink
+              href="/admin/signup"
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
+              Create one
+            </LocalizedLink>
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

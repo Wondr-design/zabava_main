@@ -1,9 +1,7 @@
 "use client";
 
-import {
-  StatusPill,
-  SurfaceCard,
-} from "@/components/design-system";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import type { DashboardMetrics } from "@/lib/data/analytics";
 import {
   TicketPercent,
@@ -73,52 +71,63 @@ export function StatsGrid({ metrics }: StatsGridProps) {
       {items.map((item) => {
         const Icon = item.icon;
         return (
-          <SurfaceCard
+          <Card
             key={item.label}
-            className="group relative space-y-3 rounded-3xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-6 transition-all duration-200 hover:border-[color:var(--ds-primary)]/30 hover:shadow-md"
+            className="group relative space-y-3 rounded-lg border border-border bg-card p-6 transition-all duration-200 hover:bg-accent/50"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div
-                  className={`flex h-11 w-11 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-110 ${
+                  className={`flex h-10 w-10 items-center justify-center rounded-lg transition-transform duration-200 group-hover:scale-105 ${
                     item.tone === "primary"
-                      ? "bg-[color:var(--ds-primary)]/10"
+                      ? "bg-primary/10"
                       : item.tone === "success"
-                        ? "bg-[color:var(--ds-success)]/10"
+                        ? "bg-emerald-500/10"
                         : item.tone === "warning"
-                          ? "bg-[color:var(--ds-warning)]/10"
-                          : "bg-[color:var(--ds-danger)]/10"
+                          ? "bg-amber-500/10"
+                          : "bg-destructive/10"
                   }`}
                 >
                   <Icon
                     className={`h-5 w-5 ${
                       item.tone === "primary"
-                        ? "text-[color:var(--ds-primary)]"
+                        ? "text-primary"
                         : item.tone === "success"
-                          ? "text-[color:var(--ds-success)]"
+                          ? "text-emerald-600 dark:text-emerald-400"
                           : item.tone === "warning"
-                            ? "text-[color:var(--ds-warning)]"
-                            : "text-[color:var(--ds-danger)]"
+                            ? "text-amber-600 dark:text-amber-400"
+                            : "text-destructive"
                     }`}
                     aria-hidden
                   />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[color:var(--ds-text-subtle)]">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     {item.label}
                   </p>
-                  <p className="mt-1 text-2xl font-bold text-[color:var(--ds-text-strong)] sm:text-3xl">
+                  <p className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
                     {item.value}
                   </p>
                 </div>
               </div>
             </div>
             <div className="pt-1">
-              <StatusPill tone={item.tone} size="sm" className="text-xs">
+              <Badge
+                variant="secondary"
+                className={
+                  item.tone === "primary"
+                    ? "bg-primary/10 text-primary border-primary/20"
+                    : item.tone === "success"
+                    ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                    : item.tone === "warning"
+                    ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                    : "bg-destructive/10 text-destructive border-destructive/20"
+                }
+              >
                 {item.helper}
-              </StatusPill>
+              </Badge>
             </div>
-          </SurfaceCard>
+          </Card>
         );
       })}
     </div>

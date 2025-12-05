@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
-import { DesignButton, SurfaceCard } from "@/components/design-system";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 type QrScannerProps = {
   open: boolean;
@@ -156,65 +157,67 @@ export function StaffQrScanner(props: QrScannerProps) {
   if (!open) return null;
 
   return (
-    <div className="theme-staff fixed inset-0 z-50 flex items-center justify-center bg-[color:var(--ds-overlay)] px-4 py-8 backdrop-blur-sm">
-      <SurfaceCard className="relative w-full max-w-xl space-y-4 p-6">
-        <DesignButton
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="absolute right-4 top-4"
-          aria-label="Close scanner"
-          onClick={() => {
-            stopStream();
-            onClose();
-          }}
-        >
-          <X className="size-4" />
-        </DesignButton>
-
-        <div className="space-y-2">
-          <h2 className="text-lg font-semibold text-[color:var(--ds-text-strong)]">
-            Scan visitor QR code
-          </h2>
-          <p className="text-sm text-[color:var(--ds-text-muted)]">
-            Align the QR code inside the frame. When detected, you&apos;ll jump straight to the visit check-in screen.
-          </p>
-        </div>
-
-        <div className="overflow-hidden rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] shadow-[var(--ds-shadow-soft)]">
-          <video
-            ref={videoRef}
-            playsInline
-            autoPlay
-            muted
-            className="h-72 w-full bg-black object-cover"
-          />
-        </div>
-
-        {requestingCamera ? (
-          <p className="text-sm text-[color:var(--ds-text-muted)]">
-            Requesting camera permission…
-          </p>
-        ) : null}
-
-        {error ? (
-          <p className="text-sm text-[color:var(--ds-danger)]">{error}</p>
-        ) : null}
-
-        <div className="flex items-center justify-end gap-3">
-          <DesignButton
+    <div className="theme-vercel fixed inset-0 z-50 flex items-center justify-center bg-background/80 px-4 py-8 backdrop-blur-sm">
+      <Card className="relative w-full max-w-xl">
+        <CardContent className="space-y-4 p-6">
+          <Button
             type="button"
-            variant="tonal"
-            size="sm"
+            variant="ghost"
+            size="icon"
+            className="absolute right-4 top-4"
+            aria-label="Close scanner"
             onClick={() => {
               stopStream();
               onClose();
             }}
           >
-            Cancel
-          </DesignButton>
-        </div>
-      </SurfaceCard>
+            <X className="size-4" />
+          </Button>
+
+          <div className="space-y-2">
+            <h2 className="text-lg font-semibold text-foreground">
+              Scan visitor QR code
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Align the QR code inside the frame. When detected, you&apos;ll jump straight to the visit check-in screen.
+            </p>
+          </div>
+
+          <div className="overflow-hidden rounded-lg border border-border bg-muted">
+            <video
+              ref={videoRef}
+              playsInline
+              autoPlay
+              muted
+              className="h-72 w-full bg-black object-cover"
+            />
+          </div>
+
+          {requestingCamera ? (
+            <p className="text-sm text-muted-foreground">
+              Requesting camera permission…
+            </p>
+          ) : null}
+
+          {error ? (
+            <p className="text-sm text-destructive">{error}</p>
+          ) : null}
+
+          <div className="flex items-center justify-end gap-3">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                stopStream();
+                onClose();
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

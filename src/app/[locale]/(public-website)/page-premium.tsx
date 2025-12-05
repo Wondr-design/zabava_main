@@ -11,7 +11,7 @@ interface HomePageProps {
   params: Promise<{ locale: string }>;
 }
 
-export default async function HomePage({ params }: HomePageProps) {
+export default async function PremiumHomePage({ params }: HomePageProps) {
   const { partners } = await getPublicDirectory();
 
   const partnerLogos = partners.map((partner) => ({
@@ -46,3 +46,4 @@ export default async function HomePage({ params }: HomePageProps) {
     </main>
   );
 }
+

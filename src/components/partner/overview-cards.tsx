@@ -13,7 +13,7 @@ import {
   Bar,
 } from "recharts";
 import { formatCurrencyCZK } from "@/lib/format/currency";
-import { SurfaceCard } from "@/components/design-system";
+import { Card, CardContent } from "@/components/ui/card";
 
 export type OverviewMetrics = {
   totalCount: number;
@@ -33,85 +33,91 @@ export function OverviewCards(props: {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
-        <Card label="Total" value={metrics.totalCount} />
-        <Card label="Visited" value={metrics.visitedCount} />
-        <Card label="Pending" value={metrics.pendingCount} />
-        <Card label="Revenue" value={formatCurrencyCZK(metrics.revenue)} />
-        <Card label="Points" value={metrics.points} />
+        <MetricCard label="Total" value={metrics.totalCount} />
+        <MetricCard label="Visited" value={metrics.visitedCount} />
+        <MetricCard label="Pending" value={metrics.pendingCount} />
+        <MetricCard label="Revenue" value={formatCurrencyCZK(metrics.revenue)} />
+        <MetricCard label="Points" value={metrics.points} />
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
-          <h3 className="mb-2 text-sm font-semibold text-[color:var(--ds-text-muted)]">
-            Visits over time
-          </h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={series}
-                margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="color-mix(in srgb, var(--ds-border-subtle) 60%, transparent)"
-                />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 12, fill: "var(--ds-text-muted)" }}
-                />
-                <YAxis allowDecimals={false} width={30} />
-                <Tooltip />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="visits"
-                  stroke="var(--ds-chart-1)"
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </SurfaceCard>
-        <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
-          <h3 className="mb-2 text-sm font-semibold text-[color:var(--ds-text-muted)]">
-            Points over time
-          </h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={series}
-                margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="color-mix(in srgb, var(--ds-border-subtle) 60%, transparent)"
-                />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 12, fill: "var(--ds-text-muted)" }}
-                />
-                <YAxis allowDecimals={false} width={30} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="points" fill="var(--ds-chart-2)" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </SurfaceCard>
+        <Card>
+          <CardContent className="p-4">
+            <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
+              Visits over time
+            </h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={series}
+                  margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="hsl(var(--border))"
+                  />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                  />
+                  <YAxis allowDecimals={false} width={30} />
+                  <Tooltip />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="visits"
+                    stroke="hsl(var(--chart-1))"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
+              Points over time
+            </h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={series}
+                  margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="hsl(var(--border))"
+                  />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                  />
+                  <YAxis allowDecimals={false} width={30} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="points" fill="hsl(var(--chart-2))" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 }
 
-function Card(props: { label: string; value: number | string }) {
+function MetricCard(props: { label: string; value: number | string }) {
   return (
-    <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
-      <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--ds-text-subtle)]">
-        {props.label}
-      </div>
-      <div className="text-2xl font-semibold text-[color:var(--ds-text-strong)]">
-        {props.value}
-      </div>
-    </SurfaceCard>
+    <Card>
+      <CardContent className="p-4">
+        <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          {props.label}
+        </div>
+        <div className="text-2xl font-semibold text-foreground">
+          {props.value}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -3,12 +3,11 @@
 import { Suspense, useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocalizedRouter } from "@/i18n/use-localized-router";
-import {
-  DesignButton,
-  DesignFormField,
-  DesignInput,
-  SurfaceCard,
-} from "@/components/design-system";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { EmailVerification } from "@/site/components/email-verification";
 
 function SignupInner() {
@@ -88,21 +87,21 @@ function SignupInner() {
   }
 
   return (
-    <div className="flex min-h-[60vh] items-center justify-center bg-[color:var(--ds-surface-base)] px-6 py-12">
-      <SurfaceCard className="w-full max-w-xl space-y-6 rounded-3xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-8 shadow-[var(--ds-shadow-soft)]">
+    <div className="flex min-h-[60vh] items-center justify-center bg-background px-6 py-12">
+      <Card className="w-full max-w-xl space-y-6 rounded-lg p-8">
         <header className="space-y-1">
-          <h1 className="text-2xl font-semibold text-[color:var(--ds-text-strong)]">
+          <h1 className="text-2xl font-semibold text-foreground">
             Activate your partner account
           </h1>
-          <p className="text-sm text-[color:var(--ds-text-muted)]">
+          <p className="text-sm text-muted-foreground">
             Use the invite token from Zabava to finish setting up access for your venue.
           </p>
         </header>
 
         {error ? (
-          <SurfaceCard className="rounded-2xl border border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10 px-4 py-3 text-sm text-[color:var(--ds-danger)]">
-            {error}
-          </SurfaceCard>
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         ) : null}
 
         <EmailVerification
@@ -113,24 +112,26 @@ function SignupInner() {
         />
 
         {hasInviteToken ? (
-          <div className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] px-4 py-3 text-sm text-[color:var(--ds-text-muted)]">
+          <div className="rounded-lg border border-border bg-muted px-4 py-3 text-sm text-muted-foreground">
             Invitation detected. Complete the steps below to activate your partner account.
           </div>
         ) : (
-          <div className="rounded-2xl border border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10 px-4 py-3 text-sm text-[color:var(--ds-danger)]">
-            We couldn’t find an invite token. Open the signup link from your email invite or request a new one.
-          </div>
+          <Alert variant="destructive">
+            <AlertDescription>
+              We couldn&apos;t find an invite token. Open the signup link from your email invite or request a new one.
+            </AlertDescription>
+          </Alert>
         )}
 
         {emailVerified ? (
-          <div className="flex flex-col gap-3 rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] px-4 py-3 text-sm text-[color:var(--ds-text-muted)] sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted px-4 py-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
             <span>
               Verified email:{" "}
-              <span className="font-semibold text-[color:var(--ds-text-strong)]">
+              <span className="font-semibold text-foreground">
                 {verifiedEmail}
               </span>
             </span>
-            <DesignButton
+            <Button
               type="button"
               variant="ghost"
               size="sm"
@@ -138,26 +139,22 @@ function SignupInner() {
               className="self-start sm:self-auto"
             >
               Use a different email
-            </DesignButton>
+            </Button>
           </div>
         ) : (
-          <p className="rounded-2xl border border-dashed border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)]/60 px-4 py-3 text-sm text-[color:var(--ds-text-muted)]">
+          <p className="rounded-lg border border-dashed border-border bg-muted/60 px-4 py-3 text-sm text-muted-foreground">
             Verify your work email with a one-time code to continue.
           </p>
         )}
 
         <form onSubmit={onSubmit} className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2">
-            <DesignFormField
-              label="Work email"
-              required
-              helper={
-                emailVerified
-                  ? "Verified via the emailed code."
-                  : "Complete the verification step above to populate this field."
-              }
-            >
-              <DesignInput
+            <div className="space-y-2">
+              <Label htmlFor="work-email">
+                Work email <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="work-email"
                 type="email"
                 value={email}
                 readOnly
@@ -165,47 +162,65 @@ function SignupInner() {
                 autoComplete="email"
                 placeholder="Verify your email above to continue"
               />
-            </DesignFormField>
-            <DesignFormField label="Full name" required>
-              <DesignInput
+              <p className="text-xs text-muted-foreground">
+                {emailVerified
+                  ? "Verified via the emailed code."
+                  : "Complete the verification step above to populate this field."}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="full-name">
+                Full name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="full-name"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 autoComplete="name"
                 placeholder="Your name"
               />
-            </DesignFormField>
+            </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <DesignFormField label="Password" required helper="Minimum 8 characters.">
-              <DesignInput
+            <div className="space-y-2">
+              <Label htmlFor="password">
+                Password <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="password"
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 autoComplete="new-password"
                 placeholder="Create a password"
               />
-            </DesignFormField>
-            <DesignFormField label="Confirm password" required>
-              <DesignInput
+              <p className="text-xs text-muted-foreground">Minimum 8 characters.</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">
+                Confirm password <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="confirm-password"
                 type="password"
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
                 autoComplete="new-password"
                 placeholder="Re-enter password"
               />
-            </DesignFormField>
+            </div>
           </div>
 
-          <DesignButton
+          <Button
             type="submit"
             disabled={submitting || !emailVerified}
             className="w-full"
           >
             {submitting ? "Creating account…" : "Create account"}
-          </DesignButton>
+          </Button>
         </form>
-      </SurfaceCard>
+      </Card>
     </div>
   );
 }

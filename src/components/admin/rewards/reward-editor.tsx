@@ -802,14 +802,14 @@ export function RewardEditor({
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-2 text-sm text-[color:var(--ds-text-muted)] hover:text-[color:var(--ds-text-strong)] transition-colors"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" /> Back to rewards
           </button>
         }
         actions={
           saving ? (
-            <div className="inline-flex items-center gap-2 text-sm text-[color:var(--ds-text-muted)]">
+            <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> Saving…
             </div>
           ) : null
@@ -817,8 +817,8 @@ export function RewardEditor({
       />
 
       {saveError ? (
-        <SectionCard className="border-[color:var(--ds-danger)]/30 bg-[color:var(--ds-danger)]/10">
-          <p className="text-sm font-medium text-[color:var(--ds-danger)]">
+        <SectionCard className="border-destructive/30 bg-destructive/10">
+          <p className="text-sm font-medium text-destructive">
             {saveError}
           </p>
         </SectionCard>
@@ -1444,7 +1444,7 @@ export function RewardEditor({
             </SectionCard>
           ) : null}
 
-          <div className="flex flex-wrap items-center justify-end gap-3 pt-4 border-t border-[color:var(--ds-border-subtle)]">
+          <div className="flex flex-wrap items-center justify-end gap-3 pt-4 border-t border-border">
             <DesignButton
               type="button"
               variant="ghost"
@@ -1516,7 +1516,7 @@ export function RewardEditor({
                 </button>
               </div>
             </div>
-            <p className="mt-4 text-xs text-[color:var(--ds-text-muted)]">
+            <p className="mt-4 text-xs text-muted-foreground">
               Preview mirrors the bonus portal card using the selected images
               and metadata. Hero images look best at 1200×675px with the focus
               near the center.

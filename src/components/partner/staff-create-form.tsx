@@ -2,12 +2,10 @@
 
 import { FormEvent, useState } from "react";
 
-import {
-  DesignButton,
-  DesignFormField,
-  DesignInput,
-  SurfaceCard,
-} from "@/components/design-system";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface StaffCreateFormProps {
   onCreate: (payload: {
@@ -50,55 +48,64 @@ export function StaffCreateForm({ onCreate }: StaffCreateFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <h3 className="text-sm font-semibold text-[color:var(--ds-text-strong)]">
+        <h3 className="text-sm font-semibold text-foreground">
           Create staff account
         </h3>
-        <p className="text-xs text-[color:var(--ds-text-muted)]">
+        <p className="text-xs text-muted-foreground">
           Provision a login immediately using a temporary password.
         </p>
       </div>
 
       {error ? (
-        <SurfaceCard className="rounded-2xl border border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10 px-4 py-3 text-xs text-[color:var(--ds-danger)]">
-          {error}
-        </SurfaceCard>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <DesignFormField label="Email" required>
-          <DesignInput
+        <div className="space-y-2">
+          <Label htmlFor="create-email">
+            Email <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="create-email"
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             autoComplete="email"
             placeholder="staff@venue.cz"
           />
-        </DesignFormField>
-        <DesignFormField label="Name (optional)">
-          <DesignInput
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="create-name">Name (optional)</Label>
+          <Input
+            id="create-name"
             value={name}
             onChange={(event) => setName(event.target.value)}
             placeholder="Full name"
           />
-        </DesignFormField>
+        </div>
       </div>
 
-      <DesignFormField
-        label="Temporary password"
-        helper="Share this with the staff member; they’ll reset it on first login."
-        required
-      >
-        <DesignInput
+      <div className="space-y-2">
+        <Label htmlFor="create-password">
+          Temporary password <span className="text-destructive">*</span>
+        </Label>
+        <Input
+          id="create-password"
           type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           autoComplete="new-password"
         />
-      </DesignFormField>
+        <p className="text-xs text-muted-foreground">
+          Share this with the staff member; they&apos;ll reset it on first login.
+        </p>
+      </div>
 
-      <DesignButton type="submit" disabled={busy}>
+      <Button type="submit" disabled={busy}>
         {busy ? "Creating…" : "Create account"}
-      </DesignButton>
+      </Button>
     </form>
   );
 }

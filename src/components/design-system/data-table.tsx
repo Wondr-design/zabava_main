@@ -9,7 +9,7 @@ export const DesignTableWrapper = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "overflow-hidden rounded-[36px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4 shadow-[var(--ds-shadow-soft)]",
+      "overflow-hidden rounded-lg border border-border bg-card",
       className,
     )}
     {...props}
@@ -24,7 +24,7 @@ export const DesignTable = React.forwardRef<
   <table
     ref={ref}
     className={cn(
-      "w-full border-separate border-spacing-y-4 border-spacing-x-0 text-sm text-[color:var(--ds-text-strong)]",
+      "w-full caption-bottom text-sm text-foreground",
       className,
     )}
     {...props}
@@ -39,7 +39,7 @@ export const DesignTableHead = React.forwardRef<
   <thead
     ref={ref}
     className={cn(
-      "rounded-[32px] bg-[color:var(--ds-surface-muted)] text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]",
+      "[&_tr]:border-b",
       className,
     )}
     {...props}
@@ -51,7 +51,7 @@ export const DesignTableBody = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <tbody ref={ref} className={cn("align-middle", className)} {...props} />
+  <tbody ref={ref} className={cn("[&_tr:last-child]:border-0", className)} {...props} />
 ));
 DesignTableBody.displayName = "DesignTableBody";
 
@@ -62,9 +62,9 @@ export const DesignTableRow = React.forwardRef<
   <tr
     ref={ref}
     className={cn(
-      "rounded-[32px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-popover)] transition duration-200",
-      clickable && "cursor-pointer hover:border-[color:var(--ds-border-strong)] hover:shadow-[0_18px_32px_rgba(111,102,75,0.18)]",
-      selected && "border-[color:var(--ds-primary)] bg-[color:var(--ds-surface-card)] shadow-[0_18px_34px_rgba(111,102,75,0.2)]",
+      "border-b transition-colors hover:bg-muted/50",
+      clickable && "cursor-pointer",
+      selected && "bg-muted",
       className,
     )}
     {...props}
@@ -79,7 +79,7 @@ export const DesignTableHeader = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.32em] text-[color:var(--ds-text-subtle)]",
+      "h-10 px-4 text-left align-middle text-xs font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
       className,
     )}
     {...props}
@@ -91,7 +91,7 @@ export const DesignTableCell = React.forwardRef<
   HTMLTableCellElement,
   React.TdHTMLAttributes<HTMLTableCellElement>
 >(({ className, ...props }, ref) => (
-  <td ref={ref} className={cn("px-6 py-5 text-sm", className)} {...props} />
+  <td ref={ref} className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)} {...props} />
 ));
 DesignTableCell.displayName = "DesignTableCell";
 
@@ -102,7 +102,7 @@ export const DesignTableFooter = React.forwardRef<
   <tfoot
     ref={ref}
     className={cn(
-      "border-t border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] text-xs text-[color:var(--ds-text-muted)]",
+      "border-t bg-muted/50 font-medium [&>tr]:last:border-b-0",
       className,
     )}
     {...props}

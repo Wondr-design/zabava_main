@@ -21,7 +21,7 @@ export const DesignSelectTrigger = React.forwardRef<
   <SelectTrigger
     ref={ref}
     className={cn(
-      "h-12 w-full rounded-[999px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] px-5 text-sm text-[color:var(--ds-text-strong)] placeholder:text-[color:var(--ds-text-subtle)] shadow-none transition-colors focus:outline-none focus:ring-2 focus:ring-[color:var(--ds-focus-ring)] focus:ring-offset-2 focus:ring-offset-[color:var(--ds-surface-base)] data-[placeholder]:text-[color:var(--ds-text-subtle)]",
+      "h-10 w-full rounded-md border border-input bg-background px-4 text-sm text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background data-[placeholder]:text-muted-foreground",
       className,
     )}
     {...props}
@@ -37,7 +37,7 @@ export const DesignSelectContent = React.forwardRef<
     ref={ref}
     position={position}
     className={cn(
-      "rounded-[28px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-popover)] shadow-[var(--ds-shadow-popover)]",
+      "rounded-md border border-border bg-popover text-popover-foreground shadow-md",
       className,
     )}
     {...props}
@@ -52,7 +52,7 @@ export const DesignSelectItem = React.forwardRef<
   <SelectItem
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-pointer select-none items-center rounded-2xl px-4 py-2 text-sm font-medium text-[color:var(--ds-text-muted)] outline-none transition-colors focus:bg-[color:var(--ds-surface-muted)] focus:text-[color:var(--ds-text-strong)] data-[state=checked]:bg-[color:var(--ds-primary)]/12 data-[state=checked]:text-[color:var(--ds-text-strong)]",
+      "relative flex w-full cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm text-foreground outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground",
       className,
     )}
     {...props}

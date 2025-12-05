@@ -5,28 +5,28 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const designButtonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-full border text-sm font-semibold transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--ds-surface-card)] disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex items-center justify-center gap-2 rounded-md border text-sm font-medium transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         primary:
-          "bg-[color:var(--ds-primary)] text-[color:var(--ds-primary-foreground)] border-transparent shadow-none hover:bg-[color-mix(in srgb,var(--ds-primary) 94%,#000)]",
+          "bg-primary text-primary-foreground border-transparent hover:bg-primary/90",
         secondary:
-          "bg-[color:var(--ds-secondary)] text-[color:var(--ds-secondary-foreground)] border-transparent shadow-none hover:bg-[color-mix(in srgb,var(--ds-secondary) 95%,#000)]",
+          "bg-secondary text-secondary-foreground border-transparent hover:bg-secondary/80",
         tonal:
-          "bg-[color:var(--ds-surface-muted)] text-[color:var(--ds-text-strong)] border border-[color:var(--ds-border-subtle)] shadow-none hover:bg-[color-mix(in srgb,var(--ds-surface-muted) 96%,#000)]",
+          "bg-muted text-foreground border border-border hover:bg-accent",
         ghost:
-          "border-transparent bg-transparent text-[color:var(--ds-text-muted)] hover:bg-[color:var(--ds-surface-muted)] hover:text-[color:var(--ds-text-strong)]",
+          "border-transparent bg-transparent text-muted-foreground hover:bg-accent hover:text-foreground",
         outline:
-          "bg-transparent text-[color:var(--ds-text-strong)] border-[color:var(--ds-border-strong)] hover:border-[color-mix(in srgb,var(--ds-border-strong) 80%,#000)] hover:bg-[color:var(--ds-surface-muted)] shadow-none",
+          "bg-background text-foreground border-border hover:bg-accent hover:text-accent-foreground",
         destructive:
-          "bg-[color:var(--ds-danger)] text-[color:var(--ds-text-inverse)] border-transparent shadow-none hover:bg-[color-mix(in srgb,var(--ds-danger) 90%,#000)] focus-visible:ring-[color:var(--ds-danger)]/40",
+          "bg-destructive text-destructive-foreground border-transparent hover:bg-destructive/90 focus-visible:ring-destructive/40",
       },
       size: {
-        md: "h-12 px-7",
-        sm: "h-10 px-5 text-xs",
-        lg: "h-14 px-9 text-base",
-        icon: "h-12 w-12 p-0",
+        md: "h-10 px-5",
+        sm: "h-9 px-4 text-xs",
+        lg: "h-11 px-6 text-base",
+        icon: "h-10 w-10 p-0",
       },
     },
     defaultVariants: {

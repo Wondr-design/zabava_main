@@ -24,7 +24,7 @@ export function SegmentedControl({
   return (
     <ToggleGroup
       className={cn(
-        "inline-flex rounded-full border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] p-0.5",
+        "inline-flex rounded-lg border border-border bg-muted p-1",
         className,
       )}
       {...props}
@@ -53,7 +53,7 @@ export const SegmentedControlItem = React.forwardRef<
     <ToggleGroupItem
       ref={ref}
       className={cn(
-        "inline-flex flex-1 items-center justify-center gap-2 rounded-full px-4 font-medium text-[color:var(--ds-text-muted)] transition-all data-[state=on]:bg-[color:var(--ds-primary)] data-[state=on]:text-[color:var(--ds-primary-foreground)] data-[state=on]:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-focus-ring)]",
+        "inline-flex flex-1 items-center justify-center gap-2 rounded-md px-3 font-medium text-muted-foreground transition-all data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         sizeMap[size],
         className,
       )}

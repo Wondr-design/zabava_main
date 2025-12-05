@@ -4,17 +4,17 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const chipVariants = cva(
-  "inline-flex items-center gap-2 rounded-full border px-5 py-2 text-xs font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--ds-surface-base)] disabled:pointer-events-none disabled:opacity-40",
+  "inline-flex items-center gap-2 rounded-md border px-4 py-2 text-xs font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       selected: {
-        true: "bg-[color:var(--ds-primary)] text-[color:var(--ds-primary-foreground)] border-transparent shadow-none",
+        true: "bg-primary text-primary-foreground border-transparent",
         false:
-          "bg-[color:var(--ds-surface-muted)] text-[color:var(--ds-text-muted)] border-[color:var(--ds-border-subtle)] shadow-none hover:text-[color:var(--ds-text-strong)] hover:border-[color:var(--ds-border-strong)]",
+          "bg-muted text-muted-foreground border-border hover:text-foreground hover:bg-accent",
       },
       size: {
         sm: "text-[11px] px-3 py-1.5",
-        md: "text-xs px-5 py-2",
+        md: "text-xs px-4 py-2",
       },
     },
     defaultVariants: {
@@ -61,7 +61,7 @@ export const FilterChip = React.forwardRef<HTMLButtonElement, FilterChipProps>(
         leadingIcon || childElement.props.children ? (
           <>
             {leadingIcon ? (
-              <span className="flex items-center text-[color:var(--ds-text-subtle)] [&>svg]:size-3.5">
+              <span className="flex items-center text-muted-foreground [&>svg]:size-3.5">
                 {leadingIcon}
               </span>
             ) : null}
@@ -83,7 +83,7 @@ export const FilterChip = React.forwardRef<HTMLButtonElement, FilterChipProps>(
         {...props}
       >
         {leadingIcon ? (
-          <span className="flex items-center text-[color:var(--ds-text-subtle)] [&>svg]:size-3.5">
+          <span className="flex items-center text-muted-foreground [&>svg]:size-3.5">
             {leadingIcon}
           </span>
         ) : null}

@@ -14,7 +14,9 @@ import { useLocale } from "@/i18n/provider";
 import { buildLocalizedPath } from "@/i18n/routing";
 import { useLocalizedRouter } from "@/i18n/use-localized-router";
 import { LocalizedLink } from "@/components/ui/localized-link";
-import { DesignButton, SurfaceCard } from "@/components/design-system";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   PageHeaderSkeleton,
   CardSkeleton,
@@ -179,10 +181,10 @@ export default function PartnerStaffPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <DesignButton asChild variant="tonal" size="sm">
+          <Button asChild variant="secondary" size="sm">
             <LocalizedLink href="/partner/dashboard">Back to dashboard</LocalizedLink>
-          </DesignButton>
-          <DesignButton
+          </Button>
+          <Button
             type="button"
             variant="destructive"
             size="sm"
@@ -195,26 +197,26 @@ export default function PartnerStaffPage() {
           >
             <LogOut className="h-4 w-4" aria-hidden />
             Logout
-          </DesignButton>
+          </Button>
         </div>
       </div>
 
       {error ? (
-        <SurfaceCard className="rounded-2xl border border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10 px-4 py-3 text-sm text-[color:var(--ds-danger)]">
-          {error}
-        </SurfaceCard>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       ) : null}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <SurfaceCard className="rounded-3xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-6">
+        <Card className="rounded-lg p-6">
           <StaffCreateForm onCreate={handleCreateStaff} />
-        </SurfaceCard>
-        <SurfaceCard className="rounded-3xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-6">
+        </Card>
+        <Card className="rounded-lg p-6">
           <StaffInviteForm onCreate={handleInvite} />
-        </SurfaceCard>
+        </Card>
       </div>
 
-      <SurfaceCard className="rounded-3xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-6">
+      <Card className="rounded-lg p-6">
         {loading && staff.length === 0 ? (
           <div className="space-y-4">
             <div className="space-y-2">
@@ -231,15 +233,15 @@ export default function PartnerStaffPage() {
             loading={loading}
           />
         )}
-      </SurfaceCard>
+      </Card>
 
-      <SurfaceCard className="rounded-3xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-6">
+      <Card className="rounded-lg p-6">
         <StaffInviteTable
           items={pendingInvites}
           onCopy={handleCopyInvite}
           onRevoke={handleRevoke}
         />
-      </SurfaceCard>
+      </Card>
     </div>
   );
 }

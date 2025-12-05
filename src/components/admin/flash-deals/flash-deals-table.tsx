@@ -8,7 +8,7 @@ import {
   DashboardDataTable,
   type DashboardTableColumn,
 } from "@/components/dashboard/table/dashboard-data-table";
-import { StatusPill } from "@/components/design-system";
+import { Badge } from "@/components/ui/badge";
 
 export interface FlashDealsTableItem {
   id: string;
@@ -49,11 +49,11 @@ export function FlashDealsTable({
         header: "Title",
         accessor: (item) => (
           <div className="space-y-0.5">
-            <p className="font-semibold text-[color:var(--ds-text-strong)]">
+            <p className="font-semibold text-foreground">
               {item.title}
             </p>
             {item.description ? (
-              <p className="text-xs text-[color:var(--ds-text-muted)]">
+              <p className="text-xs text-muted-foreground">
                 {item.description}
               </p>
             ) : null}
@@ -65,7 +65,7 @@ export function FlashDealsTable({
         id: "partner",
         header: "Partner",
         accessor: (item) => (
-          <span className="text-sm text-[color:var(--ds-text-muted)]">
+          <span className="text-sm text-muted-foreground">
             {item.partnerId}
           </span>
         ),
@@ -102,7 +102,7 @@ export function FlashDealsTable({
         id: "schedule",
         header: "Schedule",
         accessor: (item) => (
-          <span className="text-xs text-[color:var(--ds-text-muted)]">
+          <span className="text-xs text-muted-foreground">
             {item.validFrom ? new Date(item.validFrom).toLocaleDateString() : "–"} →{" "}
             {item.validTo ? new Date(item.validTo).toLocaleDateString() : "–"}
           </span>
@@ -113,20 +113,26 @@ export function FlashDealsTable({
         id: "status",
         header: "Status",
         accessor: (item) => (
-          <StatusPill
-            size="sm"
-            tone={
+          <Badge
+            variant={
               item.status === "live"
-                ? "success"
+                ? "default"
                 : item.status === "paused"
-                ? "warning"
+                ? "secondary"
                 : item.status === "expired"
-                ? "danger"
-                : "neutral"
+                ? "destructive"
+                : "outline"
+            }
+            className={
+              item.status === "live"
+                ? "bg-green-500/20 text-green-600 border-green-500/30"
+                : item.status === "paused"
+                ? "bg-amber-500/20 text-amber-600 border-amber-500/30"
+                : ""
             }
           >
             {item.status}
-          </StatusPill>
+          </Badge>
         ),
         width: "10%",
       },
@@ -137,7 +143,7 @@ export function FlashDealsTable({
           <div className="flex justify-end gap-2">
             <button
               type="button"
-              className="rounded-full border border-[color:var(--ds-border-subtle)] px-3 py-1 text-xs font-semibold text-[color:var(--ds-text-strong)] transition hover:border-[color:var(--ds-primary)]"
+              className="rounded-full border border-border px-3 py-1 text-xs font-semibold text-foreground transition hover:border-primary"
               onClick={(event) => {
                 event.stopPropagation();
                 onDuplicate?.(item.id);

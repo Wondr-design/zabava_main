@@ -6,7 +6,7 @@ import {
   DashboardDataTable,
   type DashboardTableColumn,
 } from "@/components/dashboard/table/dashboard-data-table";
-import { StatusPill } from "@/components/design-system";
+import { Badge } from "@/components/ui/badge";
 
 export interface TransportRideRowItem {
   id: string;
@@ -31,10 +31,10 @@ export function TransportRideTable({ items, loading = false }: TransportRideTabl
         header: "Service",
         accessor: (item) => (
           <div className="space-y-1">
-            <p className="font-semibold text-[color:var(--ds-text-strong)]">
+            <p className="font-semibold text-foreground">
               {item.serviceName}
             </p>
-            <p className="text-xs uppercase tracking-[0.25em] text-[color:var(--ds-text-muted)]">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">
               #{item.id}
             </p>
           </div>
@@ -57,18 +57,24 @@ export function TransportRideTable({ items, loading = false }: TransportRideTabl
         id: "status",
         header: "Status",
         accessor: (item) => (
-          <StatusPill
-            size="sm"
-            tone={
+          <Badge
+            variant={
               item.status === "completed"
-                ? "success"
+                ? "default"
                 : item.status === "pending"
-                ? "warning"
-                : "danger"
+                ? "secondary"
+                : "destructive"
+            }
+            className={
+              item.status === "completed"
+                ? "bg-green-500/20 text-green-600 border-green-500/30"
+                : item.status === "pending"
+                ? "bg-amber-500/20 text-amber-600 border-amber-500/30"
+                : ""
             }
           >
             {item.status}
-          </StatusPill>
+          </Badge>
         ),
         width: "12%",
       },

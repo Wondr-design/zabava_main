@@ -15,7 +15,7 @@ export const DesignTextarea = React.forwardRef<
     <textarea
       ref={ref}
       className={cn(
-        "w-full rounded-[28px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] px-6 py-4 text-sm text-[color:var(--ds-text-strong)] placeholder:text-[color:var(--ds-text-subtle)] shadow-none transition-colors focus-visible:border-[color:var(--ds-focus-ring)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--ds-surface-base)] disabled:cursor-not-allowed disabled:opacity-50",
+        "w-full min-h-[100px] rounded-md border border-input bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground transition-colors focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50",
         resize === "none" && "resize-none",
         resize === "vertical" && "resize-y",
         resize === "both" && "resize",

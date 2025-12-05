@@ -5,16 +5,16 @@ import { toast } from "sonner";
 
 import { partnerApi } from "@/lib/web/api-client";
 import { useGlobalValues } from "@/hooks/use-global-values";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  DesignButton,
-  DesignFormField,
-  DesignInput,
-  DesignSelect,
-  DesignSelectContent,
-  DesignSelectItem,
-  DesignSelectTrigger,
-  DesignSelectValue,
-} from "@/components/design-system";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface QuickVisitFormProps {
   partnerId: string;
@@ -106,15 +106,15 @@ export function QuickVisitForm({ partnerId, onCreated }: QuickVisitFormProps) {
     <form onSubmit={submit} className="space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold text-[color:var(--ds-text-strong)]">
+          <h2 className="text-sm font-semibold text-foreground">
             Quick visit
           </h2>
-          <p className="text-xs text-[color:var(--ds-text-muted)]">
+          <p className="text-xs text-muted-foreground">
             Capture a guest without asking them to complete the full form.
           </p>
         </div>
         {ticketOptions.length > 0 ? (
-          <DesignButton
+          <Button
             type="button"
             variant="ghost"
             size="sm"
@@ -123,28 +123,32 @@ export function QuickVisitForm({ partnerId, onCreated }: QuickVisitFormProps) {
             }
           >
             {ticketMode === "select" ? "Use custom ticket" : "Use ticket list"}
-          </DesignButton>
+          </Button>
         ) : null}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <DesignFormField
-          label="Guest email"
-          required
-          className="sm:col-span-2"
-          helper="We’ll send the visit confirmation to this address."
-        >
-          <DesignInput
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="guest-email">
+            Guest email <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="guest-email"
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="guest@example.com"
             autoComplete="email"
           />
-        </DesignFormField>
+          <p className="text-xs text-muted-foreground">
+            We'll send the visit confirmation to this address.
+          </p>
+        </div>
 
-        <DesignFormField label="Number of visitors">
-          <DesignInput
+        <div className="space-y-2">
+          <Label htmlFor="num-visitors">Number of visitors</Label>
+          <Input
+            id="num-visitors"
             type="number"
             min={1}
             value={numPeople}
@@ -152,44 +156,46 @@ export function QuickVisitForm({ partnerId, onCreated }: QuickVisitFormProps) {
               setNumPeople(Number.parseInt(event.target.value, 10) || 1)
             }
           />
-        </DesignFormField>
+        </div>
 
-        <DesignFormField
-          label="Ticket type"
-          description={
-            showSelect
-              ? "Choose from configured ticket types."
-              : "Enter a ticket label to keep reporting consistent."
-          }
-        >
+        <div className="space-y-2">
+          <Label htmlFor="ticket-type">Ticket type</Label>
           {showSelect ? (
-            <DesignSelect
+            <Select
               value={selectedTicket}
               onValueChange={(value) => setSelectedTicket(value)}
               disabled={loading}
             >
-              <DesignSelectTrigger aria-label="Select ticket type">
-                <DesignSelectValue placeholder="Select ticket type" />
-              </DesignSelectTrigger>
-              <DesignSelectContent>
+              <SelectTrigger id="ticket-type" aria-label="Select ticket type">
+                <SelectValue placeholder="Select ticket type" />
+              </SelectTrigger>
+              <SelectContent>
                 {ticketOptions.map((option) => (
-                  <DesignSelectItem key={option.key} value={option.key}>
+                  <SelectItem key={option.key} value={option.key}>
                     {option.label}
-                  </DesignSelectItem>
+                  </SelectItem>
                 ))}
-              </DesignSelectContent>
-            </DesignSelect>
+              </SelectContent>
+            </Select>
           ) : (
-            <DesignInput
+            <Input
+              id="ticket-type"
               value={customTicket}
               onChange={(event) => setCustomTicket(event.target.value)}
               placeholder="VIP, family, walk-in…"
             />
           )}
-        </DesignFormField>
+          <p className="text-xs text-muted-foreground">
+            {showSelect
+              ? "Choose from configured ticket types."
+              : "Enter a ticket label to keep reporting consistent."}
+          </p>
+        </div>
 
-        <DesignFormField label="Estimated spend (CZK)">
-          <DesignInput
+        <div className="space-y-2">
+          <Label htmlFor="estimated-spend">Estimated spend (CZK)</Label>
+          <Input
+            id="estimated-spend"
             type="number"
             inputMode="decimal"
             min={0}
@@ -197,15 +203,15 @@ export function QuickVisitForm({ partnerId, onCreated }: QuickVisitFormProps) {
             onChange={(event) => setTotalPrice(event.target.value)}
             placeholder="Optional"
           />
-        </DesignFormField>
+        </div>
       </div>
 
-      <DesignButton
+      <Button
         disabled={loading}
         className="w-full sm:w-auto"
       >
         {loading ? "Saving…" : "Register"}
-      </DesignButton>
+      </Button>
     </form>
   );
 }

@@ -44,7 +44,7 @@ export const DesignInput = React.forwardRef<HTMLInputElement, DesignInputProps>(
     return (
       <div className="relative flex items-center">
         {leadingIcon ? (
-          <span className="pointer-events-none absolute left-4 text-[color:var(--ds-text-muted)] [&>svg]:size-4">
+          <span className="pointer-events-none absolute left-4 text-muted-foreground [&>svg]:size-4">
             {leadingIcon}
           </span>
         ) : null}
@@ -52,7 +52,7 @@ export const DesignInput = React.forwardRef<HTMLInputElement, DesignInputProps>(
           ref={ref}
           type={resolvedType}
           className={cn(
-            "h-12 w-full rounded-[999px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] px-5 text-sm text-[color:var(--ds-text-strong)] placeholder:text-[color:var(--ds-text-subtle)] shadow-none transition-colors focus-visible:border-[color:var(--ds-focus-ring)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--ds-surface-base)] disabled:cursor-not-allowed disabled:opacity-50",
+            "h-10 w-full rounded-md border border-input bg-background px-4 text-sm text-foreground placeholder:text-muted-foreground transition-colors focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50",
             leadingIcon && "pl-11",
             (trailingIcon || shouldToggle) && "pr-11",
             className,
@@ -63,14 +63,14 @@ export const DesignInput = React.forwardRef<HTMLInputElement, DesignInputProps>(
           <button
             type="button"
             onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute right-3 inline-flex size-8 items-center justify-center rounded-full text-[color:var(--ds-text-muted)] transition-colors hover:text-[color:var(--ds-text-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--ds-surface-base)]"
+            className="absolute right-3 inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             aria-label={showPassword ? "Hide password" : "Show password"}
             title={showPassword ? "Hide password" : "Show password"}
           >
             {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
           </button>
         ) : trailingIcon ? (
-          <span className="absolute right-4 text-[color:var(--ds-text-muted)] [&>svg]:size-4">
+          <span className="absolute right-4 text-muted-foreground [&>svg]:size-4">
             {trailingIcon}
           </span>
         ) : null}

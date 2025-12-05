@@ -100,16 +100,16 @@ export function DashboardDataTable<T>({
       >
         {toolbar}
       </DashboardTableToolbar>
-      <div className="overflow-x-auto px-2 py-2">
-        <table className="w-full border-collapse text-sm text-[color:var(--ds-text-strong)]">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm text-foreground">
           <thead>
-            <tr className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-muted)]">
+            <tr className="border-b text-xs font-medium text-muted-foreground">
               {selectable ? (
                 <th className="w-12 px-4 py-3 text-left">
                       <button
                         type="button"
                         aria-label="Select page"
-                        className="inline-flex items-center text-[color:var(--ds-text-muted)]"
+                        className="inline-flex items-center text-muted-foreground hover:text-foreground"
                         onClick={(event) => {
                           event.stopPropagation();
                           togglePageSelection();
@@ -127,7 +127,7 @@ export function DashboardDataTable<T>({
                 <th
                   key={column.id}
                   className={cn(
-                    "px-4 py-3 text-left font-semibold",
+                    "px-4 py-3 text-left font-medium",
                     column.align === "center" && "text-center",
                     column.align === "right" && "text-right",
                     column.className,
@@ -143,24 +143,24 @@ export function DashboardDataTable<T>({
             {loading ? (
               <>
                 {Array.from({ length: initialPageSize }).map((_, i) => (
-                  <tr key={`skeleton-${i}`} className="animate-pulse">
+                  <tr key={`skeleton-${i}`} className="animate-pulse border-b">
                     {selectable && (
                       <td className="px-4 py-3">
-                        <div className="h-4 w-4 rounded bg-[color:var(--ds-surface-muted)]" />
+                        <div className="h-4 w-4 rounded bg-muted" />
                       </td>
                     )}
                     {columns.map((_, colIndex) => (
                       <td key={colIndex} className="px-4 py-3">
                         <div
                           className={cn(
-                            "h-4 rounded bg-[color:var(--ds-surface-muted)]",
+                            "h-4 rounded bg-muted",
                             colIndex === 0 ? "w-32" : colIndex === 1 ? "w-24" : "w-20"
                           )}
                         />
                       </td>
                     ))}
                     <td className="px-4 py-3 text-right">
-                      <div className="ml-auto h-8 w-16 rounded bg-[color:var(--ds-surface-muted)]" />
+                      <div className="ml-auto h-8 w-16 rounded bg-muted" />
                     </td>
                   </tr>
                 ))}
@@ -169,7 +169,7 @@ export function DashboardDataTable<T>({
               <tr>
                 <td
                   colSpan={columns.length + (selectable ? 1 : 0)}
-                  className="px-4 py-10 text-center text-[color:var(--ds-text-muted)]"
+                  className="px-4 py-10 text-center text-muted-foreground"
                 >
                   {emptyMessage}
                 </td>
@@ -184,20 +184,19 @@ export function DashboardDataTable<T>({
                   <tr
                     key={id}
                     className={cn(
-                      "rounded-[26px] border border-transparent bg-[color:var(--ds-surface-muted)]/70 text-sm transition hover:border-[color:var(--ds-border-subtle)] hover:bg-[color:var(--ds-surface-muted)]",
-                      isSelected &&
-                        "border-[color:var(--ds-primary)] bg-[color:var(--ds-surface-card)]",
+                      "border-b text-sm transition-colors hover:bg-muted/50",
+                      isSelected && "bg-muted",
                       clickable && "cursor-pointer",
                       extraClass,
                     )}
                     onClick={() => onRowClick?.(item)}
                   >
                     {selectable ? (
-                      <td className="w-12 px-4 py-4 align-middle">
+                      <td className="w-12 px-4 py-3 align-middle">
                         <button
                           type="button"
                           aria-label="Select row"
-                          className="inline-flex items-center text-[color:var(--ds-text-muted)]"
+                          className="inline-flex items-center text-muted-foreground hover:text-foreground"
                           onClick={(event) => {
                             event.stopPropagation();
                             toggleRow(id);
@@ -215,7 +214,7 @@ export function DashboardDataTable<T>({
                       <td
                         key={`${id}-${column.id}`}
                         className={cn(
-                          "px-4 py-4 align-middle text-[color:var(--ds-text-strong)]",
+                          "px-4 py-3 align-middle text-foreground",
                           column.align === "center" && "text-center",
                           column.align === "right" && "text-right",
                           column.className,

@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 
-import { DesignButton, StatusPill, SurfaceCard } from "@/components/design-system";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   DashboardDataTable,
   type DashboardTableColumn,
@@ -54,11 +56,11 @@ export function StaffInviteTable({
       header: "Email",
       accessor: (invite) => (
         <div>
-          <div className="font-semibold text-[color:var(--ds-text-strong)]">
+          <div className="font-semibold text-foreground">
             {invite.email || "—"}
           </div>
           {invite.name ? (
-            <div className="text-xs text-[color:var(--ds-text-muted)]">
+            <div className="text-xs text-muted-foreground">
               {invite.name}
             </div>
           ) : null}
@@ -70,18 +72,24 @@ export function StaffInviteTable({
       id: "status",
       header: "Status",
       accessor: (invite) => (
-        <StatusPill
-          size="sm"
-          tone={
+        <Badge
+          variant={
             invite.status === "pending"
-              ? "warning"
+              ? "secondary"
               : invite.status === "used"
-              ? "success"
-              : "danger"
+              ? "default"
+              : "destructive"
+          }
+          className={
+            invite.status === "pending"
+              ? "bg-amber-500/20 text-amber-600 border-amber-500/30"
+              : invite.status === "used"
+              ? "bg-green-500/20 text-green-600 border-green-500/30"
+              : ""
           }
         >
           {invite.status}
-        </StatusPill>
+        </Badge>
       ),
       width: "15%",
     },
@@ -103,16 +111,16 @@ export function StaffInviteTable({
         const disabled = busyToken === invite.token;
         return (
           <div className="flex justify-end gap-2">
-            <DesignButton
+            <Button
               type="button"
-              variant="tonal"
+              variant="secondary"
               size="sm"
               onClick={() => onCopy(invite)}
             >
               Copy link
-            </DesignButton>
+            </Button>
             {invite.status === "pending" ? (
-              <DesignButton
+              <Button
                 type="button"
                 variant="destructive"
                 size="sm"
@@ -120,7 +128,7 @@ export function StaffInviteTable({
                 disabled={disabled}
               >
                 {disabled ? "Working…" : "Revoke"}
-              </DesignButton>
+              </Button>
             ) : null}
           </div>
         );
@@ -133,9 +141,9 @@ export function StaffInviteTable({
   return (
     <div className="space-y-4">
       {error ? (
-        <SurfaceCard className="rounded-2xl border border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10 px-4 py-3 text-xs text-[color:var(--ds-danger)]">
-          {error}
-        </SurfaceCard>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       ) : null}
       <DashboardDataTable
         title="Pending invites"

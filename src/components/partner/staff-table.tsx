@@ -3,7 +3,9 @@
 import { useCallback, useMemo, useState } from "react";
 import { format } from "date-fns";
 
-import { DesignButton, StatusPill, SurfaceCard } from "@/components/design-system";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   DashboardDataTable,
   type DashboardTableColumn,
@@ -79,7 +81,7 @@ export function StaffTable({
         id: "email",
         header: "Email",
         accessor: (staff) => (
-          <span className="font-medium text-[color:var(--ds-text-strong)]">
+          <span className="font-medium text-foreground">
             {staff.email}
           </span>
         ),
@@ -89,18 +91,24 @@ export function StaffTable({
         id: "status",
         header: "Status",
         accessor: (staff) => (
-          <StatusPill
-            size="sm"
-            tone={
+          <Badge
+            variant={
               staff.status === "active"
-                ? "success"
+                ? "default"
                 : staff.status === "inactive"
-                ? "warning"
-                : "danger"
+                ? "secondary"
+                : "destructive"
+            }
+            className={
+              staff.status === "active"
+                ? "bg-green-500/20 text-green-600 border-green-500/30"
+                : staff.status === "inactive"
+                ? "bg-amber-500/20 text-amber-600 border-amber-500/30"
+                : ""
             }
           >
             {staff.status}
-          </StatusPill>
+          </Badge>
         ),
         width: "15%",
       },
@@ -122,16 +130,16 @@ export function StaffTable({
             staff.status === "active" ? "Deactivate" : "Activate";
           return (
             <div className="flex justify-end gap-2">
-              <DesignButton
+              <Button
                 type="button"
-                variant="tonal"
+                variant="secondary"
                 size="sm"
                 onClick={() => void handleStatus(staff)}
                 disabled={disabled}
               >
                 {disabled ? "Saving…" : activateLabel}
-              </DesignButton>
-              <DesignButton
+              </Button>
+              <Button
                 type="button"
                 variant="destructive"
                 size="sm"
@@ -139,7 +147,7 @@ export function StaffTable({
                 disabled={disabled}
               >
                 Remove
-              </DesignButton>
+              </Button>
             </div>
           );
         },
@@ -153,9 +161,9 @@ export function StaffTable({
   return (
     <div className="space-y-4">
       {error ? (
-        <SurfaceCard className="rounded-2xl border border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10 px-4 py-3 text-sm text-[color:var(--ds-danger)]">
-          {error}
-        </SurfaceCard>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       ) : null}
       <DashboardDataTable
         title="Team members"

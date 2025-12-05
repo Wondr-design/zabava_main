@@ -7,12 +7,10 @@ import type { RedemptionRecord } from "@/lib/data/redemptions";
 import type { VisitRegistrationRecord } from "@/lib/data/visits";
 import { getCsrfToken } from "@/lib/web/csrf";
 import { useLocalizedRouter } from "@/i18n/use-localized-router";
-import {
-  DesignButton,
-  SectionCard,
-  SurfaceCard,
-  StatusPill,
-} from "@/components/design-system";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface StaffBonusRedemptionViewProps {
   visit: VisitRegistrationRecord & {
@@ -84,12 +82,19 @@ export function StaffBonusRedemptionView({
     (redemption?.status ?? "").toLowerCase() !== "used" &&
     (redemption?.status ?? "").toLowerCase() !== "rejected";
 
-  const statusTone: "success" | "danger" | "warning" =
+  const statusVariant =
     (redemption?.status ?? "").toLowerCase() === "used"
-      ? "success"
+      ? "default"
       : (redemption?.status ?? "").toLowerCase() === "rejected"
-      ? "danger"
-      : "warning";
+      ? "destructive"
+      : "secondary";
+
+  const statusClass =
+    (redemption?.status ?? "").toLowerCase() === "used"
+      ? "bg-green-500/20 text-green-600 border-green-500/30"
+      : (redemption?.status ?? "").toLowerCase() === "rejected"
+      ? ""
+      : "bg-amber-500/20 text-amber-600 border-amber-500/30";
 
   async function handleAction(action: "use" | "reject") {
     if (!visit.redemption_code) {
@@ -154,133 +159,144 @@ export function StaffBonusRedemptionView({
   [hiddenFields]);
 
   return (
-    <SectionCard
-      title={rewardName}
-      description="Review the submitted details and confirm the bonus QR if everything looks correct."
-      actions={
-        <StatusPill tone={statusTone} size="sm">
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-4">
+        <div className="space-y-1">
+          <CardTitle>{rewardName}</CardTitle>
+          <CardDescription>
+            Review the submitted details and confirm the bonus QR if everything looks correct.
+          </CardDescription>
+        </div>
+        <Badge variant={statusVariant} className={statusClass}>
           {titleCase(redemption?.status ?? "Pending")}
-        </StatusPill>
-      }
-    >
-      <SurfaceCard className="space-y-3 rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-[color:var(--ds-text-muted)]">
-          <span className="font-medium text-[color:var(--ds-text-subtle)]">
-            Redemption code
-          </span>
-          <code className="rounded-full bg-[color:var(--ds-surface-card)] px-3 py-1 font-mono text-sm text-[color:var(--ds-text-strong)] shadow-[var(--ds-shadow-soft)]">
-            {visit.redemption_code ?? "—"}
-          </code>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-[color:var(--ds-text-muted)]">
-          <span className="font-medium text-[color:var(--ds-text-subtle)]">
-            Member email
-          </span>
-          <span className="font-medium text-[color:var(--ds-text-strong)]">
-            {visit.email}
-          </span>
-        </div>
-      </SurfaceCard>
-
-      <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-[color:var(--ds-text-strong)]">
-          Submitted details
-        </h2>
-        <SurfaceCard className="space-y-3 rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
-          {orderedFields.length > 0 ? (
-            orderedFields.map((field) => (
-              <div
-                key={field.key}
-                className="grid grid-cols-1 gap-1 rounded-xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] px-3 py-2 text-sm text-[color:var(--ds-text-muted)] md:grid-cols-5"
-              >
-                <span className="font-medium text-[color:var(--ds-text-subtle)] md:col-span-2">
-                  {field.label}
-                </span>
-                <span className="md:col-span-3 text-[color:var(--ds-text-strong)]">
-                  {String(field.value ?? "—")}
-                </span>
-              </div>
-            ))
-          ) : (
-            <p className="text-sm text-[color:var(--ds-text-subtle)]">
-              No form values captured.
-            </p>
-          )}
-        </SurfaceCard>
-        {hiddenFieldEntries.length > 0 ? (
-          <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] p-4 text-xs text-[color:var(--ds-text-muted)]">
-            <p className="font-semibold text-[color:var(--ds-text-strong)]">
-              Hidden fields
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2 text-[color:var(--ds-text-muted)]">
-              {hiddenFieldEntries.map((entry) => (
-                <span
-                  key={entry.key}
-                  className="rounded-full bg-[color:var(--ds-surface-card)] px-3 py-1 font-mono text-[color:var(--ds-text-strong)] shadow-sm"
-                >
-                  {entry.key}: {String(entry.value ?? "")}
-                </span>
-              ))}
+        </Badge>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Card className="bg-muted/50">
+          <CardContent className="space-y-3 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+              <span className="font-medium text-muted-foreground">
+                Redemption code
+              </span>
+              <code className="rounded-full bg-card px-3 py-1 font-mono text-sm text-foreground border border-border">
+                {visit.redemption_code ?? "—"}
+              </code>
             </div>
-          </SurfaceCard>
-        ) : null}
-      </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+              <span className="font-medium text-muted-foreground">
+                Member email
+              </span>
+              <span className="font-medium text-foreground">
+                {visit.email}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
 
-      {actionState.error ? (
-        <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color-mix(in srgb,var(--ds-danger) 15%,transparent)] p-4 text-sm text-[color:var(--ds-danger)]">
-          {actionState.error}
-        </SurfaceCard>
-      ) : null}
-      {actionState.message ? (
-        <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color-mix(in srgb,var(--ds-success) 20%,transparent)] p-4 text-sm text-[color:var(--ds-success)]">
-          {actionState.message}
-        </SurfaceCard>
-      ) : null}
-
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-        <p className="text-xs text-[color:var(--ds-text-subtle)]">
-          Scanned by staff. Once marked, bonus commission will not be applied.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <DesignButton
-            type="button"
-            variant="tonal"
-            size="sm"
-            onClick={() => router.replace("/staff/console")}
-          >
-            Back to console
-          </DesignButton>
-          <DesignButton
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={actionState.submitting === "reject" || !pending}
-            onClick={() => handleAction("reject")}
-            className="gap-2 text-[color:var(--ds-danger)]"
-          >
-            {actionState.submitting === "reject" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <ShieldX className="h-4 w-4" />
-            )}
-            Reject
-          </DesignButton>
-          <DesignButton
-            type="button"
-            size="sm"
-            disabled={actionState.submitting === "use" || !pending}
-            onClick={() => handleAction("use")}
-            className="gap-2"
-          >
-            {actionState.submitting === "use" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <ShieldCheck className="h-4 w-4" />
-            )}
-            Mark redeemed
-          </DesignButton>
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-foreground">
+            Submitted details
+          </h2>
+          <Card>
+            <CardContent className="space-y-3 p-4">
+              {orderedFields.length > 0 ? (
+                orderedFields.map((field) => (
+                  <div
+                    key={field.key}
+                    className="grid grid-cols-1 gap-1 rounded-lg border border-border bg-muted px-3 py-2 text-sm text-muted-foreground md:grid-cols-5"
+                  >
+                    <span className="font-medium text-muted-foreground md:col-span-2">
+                      {field.label}
+                    </span>
+                    <span className="md:col-span-3 text-foreground">
+                      {String(field.value ?? "—")}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No form values captured.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+          {hiddenFieldEntries.length > 0 ? (
+            <Card className="bg-muted/50">
+              <CardContent className="p-4 text-xs text-muted-foreground">
+                <p className="font-semibold text-foreground">
+                  Hidden fields
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2 text-muted-foreground">
+                  {hiddenFieldEntries.map((entry) => (
+                    <span
+                      key={entry.key}
+                      className="rounded-full bg-card px-3 py-1 font-mono text-foreground border border-border"
+                    >
+                      {entry.key}: {String(entry.value ?? "")}
+                    </span>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
         </div>
-      </div>
-    </SectionCard>
+
+        {actionState.error ? (
+          <Alert variant="destructive">
+            <AlertDescription>{actionState.error}</AlertDescription>
+          </Alert>
+        ) : null}
+        {actionState.message ? (
+          <Alert className="border-green-500/40 bg-green-500/10 text-green-600">
+            <AlertDescription>{actionState.message}</AlertDescription>
+          </Alert>
+        ) : null}
+
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+          <p className="text-xs text-muted-foreground">
+            Scanned by staff. Once marked, bonus commission will not be applied.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => router.replace("/staff/console")}
+            >
+              Back to console
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={actionState.submitting === "reject" || !pending}
+              onClick={() => handleAction("reject")}
+              className="gap-2 text-destructive hover:text-destructive"
+            >
+              {actionState.submitting === "reject" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ShieldX className="h-4 w-4" />
+              )}
+              Reject
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={actionState.submitting === "use" || !pending}
+              onClick={() => handleAction("use")}
+              className="gap-2"
+            >
+              {actionState.submitting === "use" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ShieldCheck className="h-4 w-4" />
+              )}
+              Mark redeemed
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

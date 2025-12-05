@@ -1,10 +1,7 @@
 import { PartnerVisitActions } from "@/components/visits/partner-visit-actions";
 import { RecentVisitsTable } from "@/components/dashboard/recent-visits-table";
 import { StatsGrid } from "@/components/dashboard/stats-grid";
-import {
-  fetchDashboardMetrics,
-  fetchRecentVisits,
-} from "@/lib/data/analytics";
+import { fetchDashboardMetrics, fetchRecentVisits } from "@/lib/data/analytics";
 import { RefreshButton } from "@/components/ui/refresh-button";
 import { PageHeader, SectionCard } from "@/components/design-system";
 
@@ -22,7 +19,7 @@ export default async function AdminDashboardPage() {
       <PageHeader
         title="Zabava admin dashboard"
         description="Plan, track, and act on partner performance across visits, rewards, and redemptions."
-        actions={<RefreshButton variant="tonal" />}
+        actions={<RefreshButton variant="secondary" />}
       />
 
       <SectionCard

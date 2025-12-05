@@ -34,7 +34,7 @@ export const DesignFormField = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-          "space-y-2 text-sm text-[color:var(--ds-text-strong)]",
+          "space-y-2 text-sm text-foreground",
           layout === "horizontal" && "flex items-center gap-6",
           className,
         )}
@@ -42,22 +42,22 @@ export const DesignFormField = React.forwardRef<
       >
         <div className={cn("space-y-1", layout === "horizontal" && "w-48 shrink-0")}> 
           {label ? (
-            <label className="flex items-center gap-1 text-sm font-medium text-[color:var(--ds-text-strong)]">
+            <label className="flex items-center gap-1 text-sm font-medium text-foreground">
               <span>{label}</span>
-              {required ? <span className="text-[color:var(--ds-danger)]">*</span> : null}
+              {required ? <span className="text-destructive">*</span> : null}
             </label>
           ) : null}
           {description ? (
-            <p className="text-xs text-[color:var(--ds-text-muted)]">{description}</p>
+            <p className="text-xs text-muted-foreground">{description}</p>
           ) : null}
         </div>
         <div className={cn("space-y-1", layout === "horizontal" && "flex-1")}> 
           {children}
           {helper && !error ? (
-            <p className="text-xs text-[color:var(--ds-text-muted)]">{helper}</p>
+            <p className="text-xs text-muted-foreground">{helper}</p>
           ) : null}
           {error ? (
-            <p className="text-xs font-medium text-[color:var(--ds-danger)]">{error}</p>
+            <p className="text-xs font-medium text-destructive">{error}</p>
           ) : null}
         </div>
       </div>

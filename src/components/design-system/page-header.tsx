@@ -34,14 +34,14 @@ export const PageHeader = React.forwardRef<HTMLDivElement, PageHeaderProps>(
         )}
         {...props}
       >
-        {breadcrumbs ? <div className="text-sm text-[color:var(--ds-text-subtle)]">{breadcrumbs}</div> : null}
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1.5">
-            <h1 className="text-2xl font-semibold text-[color:var(--ds-text-strong)] sm:text-3xl">
+        {breadcrumbs ? <div className="text-sm text-muted-foreground">{breadcrumbs}</div> : null}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
               {title}
             </h1>
             {description ? (
-              <p className="max-w-2xl text-sm text-[color:var(--ds-text-muted)]">
+              <p className="max-w-2xl text-sm text-muted-foreground">
                 {description}
               </p>
             ) : null}

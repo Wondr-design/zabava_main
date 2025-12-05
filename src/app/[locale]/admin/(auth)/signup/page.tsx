@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from "react";
 
-import {
-  DesignButton,
-  DesignFormField,
-  DesignInput,
-  SurfaceCard,
-} from "@/components/design-system";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { EmailVerification } from "@/site/components/email-verification";
 import { LocalizedLink } from "@/components/ui/localized-link";
 import { useLocalizedRouter } from "@/i18n/use-localized-router";
@@ -113,27 +112,27 @@ export default function AdminSignupPage() {
   }
 
   return (
-    <div className="flex min-h-[60vh] items-center justify-center bg-[color:var(--ds-surface-base)] px-6 py-12">
-      <SurfaceCard className="w-full max-w-xl space-y-6 rounded-3xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-8 shadow-[var(--ds-shadow-soft)]">
+    <div className="flex min-h-[60vh] items-center justify-center bg-background px-6 py-12">
+      <Card className="w-full max-w-xl space-y-6 rounded-lg p-8">
         <header className="space-y-1">
-          <h1 className="text-2xl font-semibold text-[color:var(--ds-text-strong)]">
+          <h1 className="text-2xl font-semibold text-foreground">
             Create admin account
           </h1>
-          <p className="text-sm text-[color:var(--ds-text-muted)]">
+          <p className="text-sm text-muted-foreground">
             Use this form to provision a new administrator for the control centre.
           </p>
         </header>
 
         {error ? (
-          <SurfaceCard className="rounded-2xl border border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10 px-4 py-3 text-sm text-[color:var(--ds-danger)]">
-            {error}
-          </SurfaceCard>
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         ) : null}
 
         {success ? (
-          <SurfaceCard className="rounded-2xl border border-[color:var(--ds-success)]/40 bg-[color:var(--ds-success)]/10 px-4 py-3 text-sm text-[color:var(--ds-success)]">
+          <div className="rounded-lg border border-green-500/40 bg-green-500/10 px-4 py-3 text-sm text-green-600">
             {success}
-          </SurfaceCard>
+          </div>
         ) : null}
 
         <EmailVerification
@@ -144,14 +143,14 @@ export default function AdminSignupPage() {
         />
 
         {emailVerified ? (
-          <div className="flex flex-col gap-3 rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] px-4 py-3 text-sm text-[color:var(--ds-text-muted)] sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted px-4 py-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
             <span>
               Verified email:{" "}
-              <span className="font-semibold text-[color:var(--ds-text-strong)]">
+              <span className="font-semibold text-foreground">
                 {verifiedEmail}
               </span>
             </span>
-            <DesignButton
+            <Button
               type="button"
               variant="ghost"
               size="sm"
@@ -159,34 +158,33 @@ export default function AdminSignupPage() {
               className="self-start sm:self-auto"
             >
               Use a different email
-            </DesignButton>
+            </Button>
           </div>
         ) : (
-          <p className="rounded-2xl border border-dashed border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)]/60 px-4 py-3 text-sm text-[color:var(--ds-text-muted)]">
+          <p className="rounded-lg border border-dashed border-border bg-muted/60 px-4 py-3 text-sm text-muted-foreground">
             Verify your email with a one-time code to unlock the rest of the form.
           </p>
         )}
 
         <form onSubmit={onSubmit} className="space-y-5">
-          <DesignFormField label="Name" helper="Optional">
-            <DesignInput
+          <div className="space-y-2">
+            <Label htmlFor="name">Name</Label>
+            <Input
+              id="name"
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder="Ada Lovelace"
               autoComplete="name"
             />
-          </DesignFormField>
+            <p className="text-xs text-muted-foreground">Optional</p>
+          </div>
 
-          <DesignFormField
-            label="Email"
-            required
-            helper={
-              emailVerified
-                ? "Verified via the code sent to your inbox."
-                : "Complete the verification step above to populate this field."
-            }
-          >
-            <DesignInput
+          <div className="space-y-2">
+            <Label htmlFor="email">
+              Email <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="email"
               type="email"
               value={email}
               readOnly
@@ -194,45 +192,59 @@ export default function AdminSignupPage() {
               placeholder="Verify your email above to continue"
               autoComplete="email"
             />
-          </DesignFormField>
+            <p className="text-xs text-muted-foreground">
+              {emailVerified
+                ? "Verified via the code sent to your inbox."
+                : "Complete the verification step above to populate this field."}
+            </p>
+          </div>
 
-          <DesignFormField label="Password" required helper="Minimum 8 characters.">
-            <DesignInput
+          <div className="space-y-2">
+            <Label htmlFor="password">
+              Password <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="password"
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="new-password"
             />
-          </DesignFormField>
+            <p className="text-xs text-muted-foreground">Minimum 8 characters.</p>
+          </div>
 
-          <DesignFormField label="Confirm password" required>
-            <DesignInput
+          <div className="space-y-2">
+            <Label htmlFor="confirm-password">
+              Confirm password <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="confirm-password"
               type="password"
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
               autoComplete="new-password"
             />
-          </DesignFormField>
+          </div>
 
-          <DesignButton
+          <Button
             type="submit"
             disabled={submitting || !emailVerified}
             className="w-full"
           >
             {submitting ? "Creating account…" : "Create account"}
-          </DesignButton>
+          </Button>
         </form>
 
-        <p className="text-sm text-[color:var(--ds-text-muted)]">
+        <p className="text-sm text-muted-foreground">
           Already have access?{" "}
           <LocalizedLink
             href="/admin/login"
-            className="font-medium text-[color:var(--ds-primary)] underline-offset-4 hover:underline"
+            className="font-medium text-primary underline-offset-4 hover:underline"
           >
             Sign in instead
           </LocalizedLink>
         </p>
-      </SurfaceCard>
+      </Card>
     </div>
   );
 }

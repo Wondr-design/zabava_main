@@ -9,14 +9,14 @@ type SurfaceProps = React.HTMLAttributes<HTMLDivElement> & {
 };
 
 const surfaceClassMap: Record<NonNullable<SurfaceProps["variant"]>, string> = {
-  base: "bg-[color:var(--ds-surface-base)] text-[color:var(--ds-text-strong)]",
+  base: "bg-background text-foreground",
   muted:
-    "bg-[color:var(--ds-surface-muted)] text-[color:var(--ds-text-strong)] border border-[color:var(--ds-border-subtle)]",
-  card: "bg-[color:var(--ds-surface-card)] text-[color:var(--ds-text-strong)] shadow-none border border-[color:var(--ds-border-subtle)]",
+    "bg-muted text-foreground border border-border",
+  card: "bg-card text-card-foreground border border-border",
   elevated:
-    "bg-[color:var(--ds-surface-elevated)] text-[color:var(--ds-text-strong)] shadow-none border border-[color:var(--ds-border-subtle)]",
+    "bg-accent text-accent-foreground border border-border",
   popover:
-    "bg-[color:var(--ds-surface-popover)] text-[color:var(--ds-text-strong)] shadow-none border border-[color:var(--ds-border-subtle)]",
+    "bg-popover text-popover-foreground border border-border",
 };
 
 export const Surface = React.forwardRef<HTMLDivElement, SurfaceProps>(
@@ -26,7 +26,7 @@ export const Surface = React.forwardRef<HTMLDivElement, SurfaceProps>(
       <Comp
         ref={ref}
         className={cn(
-          "rounded-[32px] transition-shadow duration-200",
+          "rounded-lg transition-shadow duration-200",
           surfaceClassMap[variant],
           className,
         )}

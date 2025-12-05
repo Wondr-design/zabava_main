@@ -2,14 +2,11 @@
 
 import { useState } from "react";
 import { z } from "zod";
-import {
-  DesignButton,
-  DesignFormField,
-  DesignInput,
-  DesignTextarea,
-  SectionCard,
-  SurfaceCard,
-} from "@/components/design-system";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 
 const actionSchema = z.object({
@@ -115,109 +112,119 @@ export function PartnerVisitActions() {
   }
 
   return (
-    <SectionCard
-      title="Partner visit actions"
-      description="Use a partner JWT to check or confirm visits associated with your partner ID."
-      className="space-y-6"
-    >
-      <div className="grid gap-4 sm:grid-cols-2">
-        <DesignFormField
-          label="Partner JWT"
-          description="Paste the token generated with JWT_SECRET."
-          className="sm:col-span-2"
-        >
-          <DesignTextarea
-            rows={3}
-            placeholder="Paste partner token"
-            value={token}
-            onChange={(event) => setToken(event.target.value)}
-          />
-        </DesignFormField>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Partner visit actions</CardTitle>
+        <CardDescription>Use a partner JWT to check or confirm visits associated with your partner ID.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="partner-jwt">Partner JWT</Label>
+            <Textarea
+              id="partner-jwt"
+              rows={3}
+              placeholder="Paste partner token"
+              value={token}
+              onChange={(event) => setToken(event.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">Paste the token generated with JWT_SECRET.</p>
+          </div>
 
-        <DesignFormField label="Guest email" required>
-          <DesignInput
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            autoComplete="email"
-          />
-        </DesignFormField>
+          <div className="space-y-2">
+            <Label htmlFor="guest-email">Guest email <span className="text-destructive">*</span></Label>
+            <Input
+              id="guest-email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              autoComplete="email"
+            />
+          </div>
 
-        <DesignFormField label="Partner ID" required>
-          <DesignInput
-            value={partnerId}
-            onChange={(event) => setPartnerId(event.target.value)}
-          />
-        </DesignFormField>
+          <div className="space-y-2">
+            <Label htmlFor="partner-id">Partner ID <span className="text-destructive">*</span></Label>
+            <Input
+              id="partner-id"
+              value={partnerId}
+              onChange={(event) => setPartnerId(event.target.value)}
+            />
+          </div>
 
-        <DesignFormField
-          label="Visit ID"
-          description="Optional; provide to target a specific registration."
-        >
-          <DesignInput
-            value={visitId}
-            onChange={(event) => setVisitId(event.target.value)}
-            placeholder="UUID from registration"
-          />
-        </DesignFormField>
+          <div className="space-y-2">
+            <Label htmlFor="visit-id">Visit ID</Label>
+            <Input
+              id="visit-id"
+              value={visitId}
+              onChange={(event) => setVisitId(event.target.value)}
+              placeholder="UUID from registration"
+            />
+            <p className="text-xs text-muted-foreground">Optional; provide to target a specific registration.</p>
+          </div>
 
-        <DesignFormField label="Visit date (ISO)" description="Optional">
-          <DesignInput
-            value={visitDate}
-            onChange={(event) => setVisitDate(event.target.value)}
-            placeholder="2025-12-31T18:30:00.000Z"
-          />
-        </DesignFormField>
+          <div className="space-y-2">
+            <Label htmlFor="visit-date">Visit date (ISO)</Label>
+            <Input
+              id="visit-date"
+              value={visitDate}
+              onChange={(event) => setVisitDate(event.target.value)}
+              placeholder="2025-12-31T18:30:00.000Z"
+            />
+            <p className="text-xs text-muted-foreground">Optional</p>
+          </div>
 
-        <DesignFormField label="Notes">
-          <DesignTextarea
-            value={notes}
-            onChange={(event) => setNotes(event.target.value)}
-            rows={3}
-            placeholder="Context, shift details, or clarifications."
-          />
-        </DesignFormField>
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              rows={3}
+              placeholder="Context, shift details, or clarifications."
+            />
+          </div>
+        </div>
 
-      <div className="flex flex-wrap gap-3">
-        <DesignButton
-          type="button"
-          onClick={handleCheck}
-          disabled={isChecking || !token}
-        >
-          {isChecking ? "Checking…" : "Check visit"}
-        </DesignButton>
-        <DesignButton
-          type="button"
-          variant="tonal"
-          onClick={handleConfirm}
-          disabled={isConfirming || !token}
-        >
-          {isConfirming ? "Submitting…" : "Mark as visited"}
-        </DesignButton>
-      </div>
+        <div className="flex flex-wrap gap-3">
+          <Button
+            type="button"
+            onClick={handleCheck}
+            disabled={isChecking || !token}
+          >
+            {isChecking ? "Checking…" : "Check visit"}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleConfirm}
+            disabled={isConfirming || !token}
+          >
+            {isConfirming ? "Submitting…" : "Mark as visited"}
+          </Button>
+        </div>
 
-      {checkResponse ? (
-        <SurfaceCard className="space-y-2 rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] p-4 text-sm text-[color:var(--ds-text-muted)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-            Check response
-          </p>
-          <pre className="whitespace-pre-wrap break-all font-mono text-xs text-[color:var(--ds-text-strong)]">
-            {JSON.stringify(checkResponse, null, 2)}
-          </pre>
-        </SurfaceCard>
-      ) : null}
+        {checkResponse ? (
+          <Card className="space-y-2 rounded-lg bg-muted p-4 text-sm text-muted-foreground">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Check response
+            </p>
+            <pre className="whitespace-pre-wrap break-all font-mono text-xs text-foreground">
+              {JSON.stringify(checkResponse, null, 2)}
+            </pre>
+          </Card>
+        ) : null}
 
-      {confirmation ? (
-        <SurfaceCard className="space-y-2 rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] p-4 text-sm text-[color:var(--ds-text-muted)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-            Confirmation response
-          </p>
-          <pre className="whitespace-pre-wrap break-all font-mono text-xs text-[color:var(--ds-text-strong)]">
-            {JSON.stringify(confirmation, null, 2)}
-          </pre>
-        </SurfaceCard>
-      ) : null}
-    </SectionCard>
+        {confirmation ? (
+          <Card className="space-y-2 rounded-lg bg-muted p-4 text-sm text-muted-foreground">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Confirmation response
+            </p>
+            <pre className="whitespace-pre-wrap break-all font-mono text-xs text-foreground">
+              {JSON.stringify(confirmation, null, 2)}
+            </pre>
+          </Card>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }

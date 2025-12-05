@@ -76,16 +76,16 @@ export default async function StaffScanPage({ params }: StaffScanPageContext) {
       notFound();
     }
     return (
-      <main className="theme-staff min-h-screen bg-[color:var(--ds-surface-base)] px-4 pb-16 pt-10 text-[color:var(--ds-text-strong)] sm:px-6 lg:px-8">
+      <main className="theme-vercel min-h-screen bg-background px-4 pb-16 pt-10 text-foreground sm:px-6 lg:px-8">
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
           <section className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">
               Bonus redemption
             </p>
             <h1 className="text-3xl font-semibold tracking-tight">
               {visit.email}
             </h1>
-            <p className="text-sm text-[color:var(--ds-text-muted)]">
+            <p className="text-sm text-muted-foreground">
               Review the bonus form submission and confirm the redemption below.
             </p>
           </section>
@@ -104,16 +104,16 @@ export default async function StaffScanPage({ params }: StaffScanPageContext) {
   const options = await deriveStaffVisitOptions(visit.payload ?? {}, partnerMeta);
 
   return (
-    <main className="theme-staff min-h-screen bg-[color:var(--ds-surface-base)] px-4 pb-16 pt-10 text-[color:var(--ds-text-strong)] sm:px-6 lg:px-8">
+    <main className="theme-vercel min-h-screen bg-background px-4 pb-16 pt-10 text-foreground sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
         <section className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">
             Visit scan
           </p>
           <h1 className="text-3xl font-semibold tracking-tight">
             {visit.email}
           </h1>
-          <p className="text-sm text-[color:var(--ds-text-muted)]">
+          <p className="text-sm text-muted-foreground">
             Review details, make adjustments, and confirm the visit. All updates
             are logged under your staff account.
           </p>

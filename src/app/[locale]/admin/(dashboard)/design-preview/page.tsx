@@ -199,27 +199,27 @@ export default function AdminDesignPreviewPage() {
         description="Cards and elevated surfaces establish the soft, layered aesthetic."
       >
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <SurfaceCard className="rounded-3xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-6">
-            <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
+          <SurfaceCard className="rounded-lg border border-border bg-card p-6">
+            <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
               Surface card
             </p>
-            <p className="mt-2 text-sm text-[color:var(--ds-text-muted)]">
+            <p className="mt-2 text-sm text-muted-foreground">
               Use cards to group related inputs or data within a section.
             </p>
           </SurfaceCard>
-          <SurfaceCard className="rounded-full border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] px-5 py-4">
-            <p className="text-sm font-medium text-[color:var(--ds-text-strong)]">
+          <SurfaceCard className="rounded-full border border-border bg-muted px-5 py-4">
+            <p className="text-sm font-medium text-foreground">
               Capsule surface
             </p>
-            <p className="text-xs text-[color:var(--ds-text-muted)]">
+            <p className="text-xs text-muted-foreground">
               Capsule edges reinforce the soft, tactile layout.
             </p>
           </SurfaceCard>
-          <SurfaceCard className="rounded-[2.5rem] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] p-6">
-            <p className="text-sm font-medium text-[color:var(--ds-text-strong)]">
+          <SurfaceCard className="rounded-lg border border-border bg-muted p-6">
+            <p className="text-sm font-medium text-foreground">
               Elevated modal
             </p>
-            <p className="text-xs text-[color:var(--ds-text-muted)]">
+            <p className="text-xs text-muted-foreground">
               Wrap draw-over experiences in rounded surfaces with generous
               padding.
             </p>
@@ -257,12 +257,12 @@ export default function AdminDesignPreviewPage() {
             </DesignDialogHeader>
 
             <DesignDialogBody className="space-y-4 pb-6 pt-4">
-              <SurfaceCard className="flex items-center gap-3 rounded-[26px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] px-5 py-4">
+              <SurfaceCard className="flex items-center gap-3 rounded-lg border border-border bg-muted px-5 py-4">
                 <div className="flex flex-col">
-                  <span className="text-sm font-semibold text-[color:var(--ds-text-strong)]">
+                  <span className="text-sm font-semibold text-foreground">
                     Push notifications
                   </span>
-                  <span className="text-xs text-[color:var(--ds-text-muted)]">
+                  <span className="text-xs text-muted-foreground">
                     Automatically send new notifications
                   </span>
                 </div>
@@ -283,20 +283,20 @@ export default function AdminDesignPreviewPage() {
                 ].map((item) => (
                   <SurfaceCard
                     key={item}
-                    className="flex items-center gap-4 rounded-[26px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] px-4 py-3"
+                    className="flex items-center gap-4 rounded-lg border border-border bg-card px-4 py-3"
                   >
-                    <SurfaceCard className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] text-xs text-[color:var(--ds-text-muted)]">
+                    <SurfaceCard className="flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-muted text-xs text-muted-foreground">
                       Img
                     </SurfaceCard>
                     <div className="flex flex-col">
-                      <span className="text-sm font-semibold text-[color:var(--ds-text-strong)]">
+                      <span className="text-sm font-semibold text-foreground">
                         {item}
                       </span>
-                      <span className="text-xs text-[color:var(--ds-text-muted)]">
+                      <span className="text-xs text-muted-foreground">
                         Size: M | Color: BW
                       </span>
                     </div>
-                    <span className="ml-auto text-sm font-semibold text-[color:var(--ds-text-strong)]">
+                    <span className="ml-auto text-sm font-semibold text-foreground">
                       $45.90
                     </span>
                   </SurfaceCard>
@@ -317,13 +317,13 @@ export default function AdminDesignPreviewPage() {
         title="Table pattern"
         description="Embed the design table primitives to present analytics and logs."
       >
-        <SurfaceCard className="rounded-[40px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-6 shadow-[var(--ds-shadow-soft)]">
+        <SurfaceCard className="rounded-lg border border-border bg-card p-6 shadow-sm">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
             <div className="space-y-1">
-              <h3 className="text-base font-semibold text-[color:var(--ds-text-strong)]">
+              <h3 className="text-base font-semibold text-foreground">
                 Actions
               </h3>
-              <p className="text-xs text-[color:var(--ds-text-muted)]">
+              <p className="text-xs text-muted-foreground">
                 Preview of the import list table.
               </p>
             </div>
@@ -339,7 +339,7 @@ export default function AdminDesignPreviewPage() {
             </DesignSelect>
           </div>
 
-          <DesignTableWrapper className="bg-[color:var(--ds-surface-card)] p-0">
+          <DesignTableWrapper className="bg-card p-0">
             <DesignTable>
               <DesignTableHead>
                 <tr>
@@ -362,12 +362,12 @@ export default function AdminDesignPreviewPage() {
                     selected={index === 2}
                     className={
                       index === 2
-                        ? "border-[color:var(--ds-primary)] bg-[color:var(--ds-surface-card)]"
+                        ? "border-primary bg-card"
                         : ""
                     }
                   >
                     <DesignTableCell className="w-12">
-                      <label className="flex h-6 w-6 items-center justify-center rounded-full border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)]">
+                      <label className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card">
                         <input
                           type="checkbox"
                           className="sr-only"
@@ -376,33 +376,33 @@ export default function AdminDesignPreviewPage() {
                         <span
                           className={cn(
                             "size-2 rounded-full bg-transparent transition",
-                            index === 2 && "bg-[color:var(--ds-primary)]"
+                            index === 2 && "bg-primary"
                           )}
                         />
                       </label>
                     </DesignTableCell>
                     <DesignTableCell>
                       <div className="flex items-center gap-3">
-                        <SurfaceCard className="flex h-12 w-12 items-center justify-center rounded-[20px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] text-[11px] font-semibold text-[color:var(--ds-text-muted)]">
+                        <SurfaceCard className="flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-muted text-[11px] font-semibold text-muted-foreground">
                           {row.product.slice(0, 2)}
                         </SurfaceCard>
                         <div>
-                          <p className="font-semibold text-[color:var(--ds-text-strong)]">
+                          <p className="font-semibold text-foreground">
                             {row.product}
                           </p>
-                          <p className="text-xs text-[color:var(--ds-text-muted)]">
+                          <p className="text-xs text-muted-foreground">
                             {row.sku}
                           </p>
                         </div>
                       </div>
                     </DesignTableCell>
-                    <DesignTableCell className="font-medium text-[color:var(--ds-text-strong)]">
+                    <DesignTableCell className="font-medium text-foreground">
                       {row.price}
                     </DesignTableCell>
-                    <DesignTableCell className="text-[color:var(--ds-text-muted)]">
+                    <DesignTableCell className="text-muted-foreground">
                       {row.size}
                     </DesignTableCell>
-                    <DesignTableCell className="text-[color:var(--ds-text-muted)]">
+                    <DesignTableCell className="text-muted-foreground">
                       {row.date}
                     </DesignTableCell>
                     <DesignTableCell>
@@ -437,7 +437,7 @@ export default function AdminDesignPreviewPage() {
             </DesignTable>
           </DesignTableWrapper>
 
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 text-xs text-[color:var(--ds-text-muted)]">
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
               {[1, 2, 3, 4, 5].map((page) => (
                 <DesignButton
@@ -449,14 +449,14 @@ export default function AdminDesignPreviewPage() {
                   {page}
                 </DesignButton>
               ))}
-              <span className="px-2 text-sm text-[color:var(--ds-text-muted)]">
+              <span className="px-2 text-sm text-muted-foreground">
                 … 10
               </span>
             </div>
             <div className="flex items-center gap-4">
               <span>
                 Go to page{" "}
-                <strong className="mx-1 text-[color:var(--ds-text-strong)]">
+                <strong className="mx-1 text-foreground">
                   01
                 </strong>{" "}
                 of 10

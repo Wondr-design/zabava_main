@@ -167,10 +167,10 @@ function SummaryField({
 }) {
   return (
     <div className="space-y-1">
-      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-[color:var(--ds-text-muted)]">
+      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-muted-foreground">
         {label}
       </p>
-      <div className="text-sm text-[color:var(--ds-text-strong)]">
+      <div className="text-sm text-foreground">
         {children}
       </div>
     </div>
@@ -2116,7 +2116,7 @@ export function PartnerDetailEditor({
         <CardContent className="grid gap-6 px-6 py-5 lg:grid-cols-3">
           <div className="space-y-4">
             <SummaryField label="Display name">
-              <p className="text-lg font-semibold text-[color:var(--ds-text-strong)]">
+              <p className="text-lg font-semibold text-foreground">
                 {profileForm.displayName || activePartnerId}
               </p>
             </SummaryField>
@@ -2124,7 +2124,7 @@ export function PartnerDetailEditor({
               {listingTierLoading ? (
                 "Loading…"
               ) : listingTierLabel ? (
-                <span className="inline-flex items-center rounded-full border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] px-2 py-0.5 text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-[color:var(--ds-text-muted)]">
+                <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
                   {listingTierLabel}
                 </span>
               ) : (
@@ -2138,7 +2138,7 @@ export function PartnerDetailEditor({
                     href={ensureExternalUrl(profileForm.website)}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-[color:var(--ds-primary)] underline-offset-2 hover:underline"
+                    className="text-primary underline-offset-2 hover:underline"
                   >
                     {profileForm.website}
                   </a>
@@ -2152,7 +2152,7 @@ export function PartnerDetailEditor({
                     href={ensureExternalUrl(profileForm.googleMapUrl)}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-[color:var(--ds-primary)] underline-offset-2 hover:underline"
+                    className="text-primary underline-offset-2 hover:underline"
                   >
                     View map
                   </a>
@@ -2167,11 +2167,11 @@ export function PartnerDetailEditor({
             <SummaryField label="Contact">
               <div className="space-y-1">
                 <p>{profileForm.contactName || "Not set"}</p>
-                <p className="text-xs text-[color:var(--ds-text-muted)]">
+                <p className="text-xs text-muted-foreground">
                   {profileForm.contactEmail ? (
                     <a
                       href={`mailto:${profileForm.contactEmail}`}
-                      className="text-[color:var(--ds-primary)] underline-offset-2 hover:underline"
+                      className="text-primary underline-offset-2 hover:underline"
                     >
                       {profileForm.contactEmail}
                     </a>
@@ -2179,7 +2179,7 @@ export function PartnerDetailEditor({
                     "No email"
                   )}
                 </p>
-                <p className="text-xs text-[color:var(--ds-text-muted)]">
+                <p className="text-xs text-muted-foreground">
                   {profileForm.contactPhone || "No phone"}
                 </p>
               </div>

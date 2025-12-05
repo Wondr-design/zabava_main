@@ -6,7 +6,7 @@ import {
   DashboardDataTable,
   type DashboardTableColumn,
 } from "@/components/dashboard/table/dashboard-data-table";
-import { StatusPill } from "@/components/design-system";
+import { Badge } from "@/components/ui/badge";
 
 export interface TransportServiceRow {
   id: string;
@@ -39,8 +39,8 @@ export function TransportServiceTable({
         header: "Service",
         accessor: (item) => (
           <div className="space-y-1">
-            <p className="font-semibold text-[color:var(--ds-text-strong)]">{item.name}</p>
-            <p className="text-xs uppercase tracking-[0.25em] text-[color:var(--ds-text-muted)]">
+            <p className="font-semibold text-foreground">{item.name}</p>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">
               {item.partnerId}
             </p>
           </div>
@@ -69,9 +69,12 @@ export function TransportServiceTable({
         id: "status",
         header: "Status",
         accessor: (item) => (
-          <StatusPill size="sm" tone={item.enabled ? "success" : "danger"}>
+          <Badge
+            variant={item.enabled ? "default" : "destructive"}
+            className={item.enabled ? "bg-green-500/20 text-green-600 border-green-500/30" : ""}
+          >
             {item.enabled ? "Active" : "Disabled"}
-          </StatusPill>
+          </Badge>
         ),
         width: "12%",
       },
@@ -82,7 +85,7 @@ export function TransportServiceTable({
           <div className="flex justify-end gap-2">
             <button
               type="button"
-              className="rounded-full border border-[color:var(--ds-border-subtle)] px-3 py-1 text-xs font-semibold text-[color:var(--ds-text-strong)] transition hover:border-[color:var(--ds-primary)]"
+              className="rounded-full border border-border px-3 py-1 text-xs font-semibold text-foreground transition hover:border-primary"
               onClick={(event) => {
                 event.stopPropagation();
                 onEdit?.(item.id);
@@ -93,8 +96,8 @@ export function TransportServiceTable({
             <button
               type="button"
               className={item.enabled
-                ? "rounded-full border border-amber-300 px-3 py-1 text-xs font-semibold text-amber-700 transition hover:bg-amber-100"
-                : "rounded-full border border-emerald-300 px-3 py-1 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"}
+                ? "rounded-full border border-amber-300 px-3 py-1 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 dark:border-amber-500/50 dark:text-amber-400 dark:hover:bg-amber-500/20"
+                : "rounded-full border border-emerald-300 px-3 py-1 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-500/50 dark:text-emerald-400 dark:hover:bg-emerald-500/20"}
               onClick={(event) => {
                 event.stopPropagation();
                 onToggle?.(item.id, !item.enabled);

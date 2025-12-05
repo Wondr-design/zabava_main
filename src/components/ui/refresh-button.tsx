@@ -3,15 +3,12 @@
 import { RefreshCcw } from "lucide-react";
 import { useState, useTransition } from "react";
 
-import {
-  DesignButton,
-  type DesignButtonProps,
-} from "@/components/design-system";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLocalizedRouter } from "@/i18n/use-localized-router";
 
 interface RefreshButtonProps
-  extends Omit<DesignButtonProps, "children" | "onClick"> {
+  extends Omit<ButtonProps, "children" | "onClick"> {
   onRefresh?: () => Promise<void> | void;
   label?: string;
   loading?: boolean;
@@ -23,7 +20,7 @@ export function RefreshButton({
   className,
   disabled = false,
   loading: loadingOverride,
-  variant = "tonal",
+  variant = "secondary",
   size = "sm",
   ...buttonProps
 }: RefreshButtonProps) {
@@ -53,7 +50,7 @@ export function RefreshButton({
   }
 
   return (
-    <DesignButton
+    <Button
       type="button"
       variant={variant}
       size={size}
@@ -67,6 +64,6 @@ export function RefreshButton({
         aria-hidden
       />
       {loading ? "Refreshing…" : label}
-    </DesignButton>
+    </Button>
   );
 }

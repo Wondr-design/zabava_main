@@ -17,12 +17,12 @@ export const DesignCheckbox = React.forwardRef<
     <CheckboxPrimitive.Root
       ref={ref}
       className={cn(
-        "inline-flex size-5 items-center justify-center rounded-lg border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--ds-surface-base)] data-[state=checked]:border-[color:var(--ds-primary)] data-[state=checked]:bg-[color:var(--ds-primary)]",
+        "peer inline-flex size-4 shrink-0 items-center justify-center rounded-sm border border-primary bg-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}
     >
-      <CheckboxPrimitive.Indicator className="text-[color:var(--ds-primary-foreground)]">
+      <CheckboxPrimitive.Indicator className="flex items-center justify-center text-current">
         <CheckIcon className="size-3.5" strokeWidth={3} />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>

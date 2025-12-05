@@ -17,13 +17,11 @@ import { LocalizedLink } from "@/components/ui/localized-link";
 import { useLocalizedRouter } from "@/i18n/use-localized-router";
 import type { RedemptionHistoryItem } from "@/lib/data/redemptions";
 import { formatCurrencyCZK } from "@/lib/format/currency";
-import {
-  DesignButton,
-  DesignSwitch,
-  SectionCard,
-  StatusPill,
-  SurfaceCard,
-} from "@/components/design-system";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 interface FilePayload {
   filename: string;
   contentType: string;
@@ -302,9 +300,11 @@ export default function PartnerDashboardPage() {
   if (loading) {
     return (
       <div className="space-y-8">
-        <SurfaceCard className="rounded-3xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-6 text-sm text-[color:var(--ds-text-muted)]">
-          Loading partner dashboard…
-        </SurfaceCard>
+        <Card>
+          <CardContent className="p-6 text-sm text-muted-foreground">
+            Loading partner dashboard…
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -312,22 +312,26 @@ export default function PartnerDashboardPage() {
   if (error) {
     return (
       <div className="space-y-8">
-        <SurfaceCard className="rounded-3xl border border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10 p-6 text-sm text-[color:var(--ds-danger)]">
-          {error}
-        </SurfaceCard>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       </div>
     );
   }
 
   return (
     <div className="space-y-8">
-      <SectionCard
-        title={`Welcome back, ${partnerName || "Partner"}`}
-        description="Track visit performance, register walk-ins, and process loyalty redemptions for your team in one place."
-        actions={
+      <Card>
+        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <CardTitle>{`Welcome back, ${partnerName || "Partner"}`}</CardTitle>
+            <CardDescription>
+              Track visit performance, register walk-ins, and process loyalty redemptions for your team in one place.
+            </CardDescription>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <RefreshButton
-              variant="tonal"
+              variant="secondary"
               size="sm"
               onRefresh={async () => {
                 await triggerRefresh({ force: true });
@@ -335,7 +339,7 @@ export default function PartnerDashboardPage() {
               }}
               disabled={!partnerId || autoRefreshing}
             />
-            <DesignButton
+            <Button
               type="button"
               variant="outline"
               size="sm"
@@ -345,8 +349,8 @@ export default function PartnerDashboardPage() {
             >
               <Download className="size-4" aria-hidden />
               {billingExporting ? "Preparing export…" : "Export billing"}
-            </DesignButton>
-            <DesignButton
+            </Button>
+            <Button
               type="button"
               variant="outline"
               size="sm"
@@ -356,9 +360,9 @@ export default function PartnerDashboardPage() {
             >
               <Download className="size-4" aria-hidden />
               {flashExporting ? "Preparing export…" : "Flash-deal usage"}
-            </DesignButton>
-            <div className="flex items-center gap-2 rounded-full border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] px-4 py-2 text-sm text-[color:var(--ds-text-muted)]">
-              <DesignSwitch
+            </Button>
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-muted px-4 py-2 text-sm text-muted-foreground">
+              <Switch
                 id="partner-privacy-mode"
                 checked={privacyMode}
                 onCheckedChange={(checked) => setPrivacyMode(Boolean(checked))}
@@ -366,15 +370,15 @@ export default function PartnerDashboardPage() {
               />
               <label
                 htmlFor="partner-privacy-mode"
-                className="cursor-pointer select-none text-[color:var(--ds-text-strong)]"
+                className="cursor-pointer select-none text-foreground"
               >
                 Privacy mode
               </label>
             </div>
-            <DesignButton asChild variant="tonal" size="sm" className="gap-2">
+            <Button asChild variant="secondary" size="sm" className="gap-2">
               <LocalizedLink href="/partner/staff">Staff &amp; access</LocalizedLink>
-            </DesignButton>
-            <DesignButton
+            </Button>
+            <Button
               type="button"
               variant="destructive"
               size="sm"
@@ -385,122 +389,148 @@ export default function PartnerDashboardPage() {
             >
               <LogOut className="size-4" aria-hidden />
               Logout
-            </DesignButton>
+            </Button>
           </div>
-        }
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          <StatusPill tone="primary" size="sm">
-            {metrics.totalCount.toLocaleString()} total visits
-          </StatusPill>
-          <StatusPill tone="success" size="sm">
-            {metrics.visitedCount.toLocaleString()} visited
-          </StatusPill>
-          <StatusPill tone="warning" size="sm">
-            {metrics.pendingCount.toLocaleString()} pending
-          </StatusPill>
-          <StatusPill tone="primary" size="sm">
-            {redemptionStats.used.toLocaleString()} rewards redeemed
-          </StatusPill>
-          <StatusPill tone="danger" size="sm">
-            {redemptionStats.rejected.toLocaleString()} rejected
-          </StatusPill>
-        </div>
-      </SectionCard>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge>{metrics.totalCount.toLocaleString()} total visits</Badge>
+            <Badge className="bg-green-500/20 text-green-600 border-green-500/30">{metrics.visitedCount.toLocaleString()} visited</Badge>
+            <Badge className="bg-amber-500/20 text-amber-600 border-amber-500/30">{metrics.pendingCount.toLocaleString()} pending</Badge>
+            <Badge>{redemptionStats.used.toLocaleString()} rewards redeemed</Badge>
+            <Badge variant="destructive">{redemptionStats.rejected.toLocaleString()} rejected</Badge>
+          </div>
+        </CardContent>
+      </Card>
 
-      <SectionCard
-        title="Refine dashboard data"
-        description="Filter by date range, guest status, or keyword to focus on specific visits."
-      >
-        <DashboardFilters value={filters} onChange={setFilters} />
-      </SectionCard>
+      <Card>
+        <CardHeader>
+          <CardTitle>Refine dashboard data</CardTitle>
+          <CardDescription>
+            Filter by date range, guest status, or keyword to focus on specific visits.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DashboardFilters value={filters} onChange={setFilters} />
+        </CardContent>
+      </Card>
 
       <div className="space-y-6">
-        <SectionCard
-          title="Quick overview"
-          description="Key metrics and performance indicators at a glance."
-        >
-          <div className="flex flex-wrap items-center gap-3">
-            <StatusPill tone="primary" size="sm" className="px-4 py-2">
-              <span className="font-semibold">{metrics.totalCount.toLocaleString()}</span>
-              <span className="ml-2 text-xs">Total visits</span>
-            </StatusPill>
-            <StatusPill tone="success" size="sm" className="px-4 py-2">
-              <span className="font-semibold">{metrics.visitedCount.toLocaleString()}</span>
-              <span className="ml-2 text-xs">Visited</span>
-            </StatusPill>
-            <StatusPill tone="warning" size="sm" className="px-4 py-2">
-              <span className="font-semibold">{metrics.pendingCount.toLocaleString()}</span>
-              <span className="ml-2 text-xs">Pending</span>
-            </StatusPill>
-            <StatusPill tone="primary" size="sm" className="px-4 py-2">
-              <span className="font-semibold">{formatCurrencyCZK(metrics.revenue)}</span>
-              <span className="ml-2 text-xs">Revenue</span>
-            </StatusPill>
-            <StatusPill tone="primary" size="sm" className="px-4 py-2">
-              <span className="font-semibold">{metrics.points.toLocaleString()}</span>
-              <span className="ml-2 text-xs">Points awarded</span>
-            </StatusPill>
-          </div>
-        </SectionCard>
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick overview</CardTitle>
+            <CardDescription>
+              Key metrics and performance indicators at a glance.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap items-center gap-3">
+              <Badge className="px-4 py-2">
+                <span className="font-semibold">{metrics.totalCount.toLocaleString()}</span>
+                <span className="ml-2 text-xs">Total visits</span>
+              </Badge>
+              <Badge className="px-4 py-2 bg-green-500/20 text-green-600 border-green-500/30">
+                <span className="font-semibold">{metrics.visitedCount.toLocaleString()}</span>
+                <span className="ml-2 text-xs">Visited</span>
+              </Badge>
+              <Badge className="px-4 py-2 bg-amber-500/20 text-amber-600 border-amber-500/30">
+                <span className="font-semibold">{metrics.pendingCount.toLocaleString()}</span>
+                <span className="ml-2 text-xs">Pending</span>
+              </Badge>
+              <Badge className="px-4 py-2">
+                <span className="font-semibold">{formatCurrencyCZK(metrics.revenue)}</span>
+                <span className="ml-2 text-xs">Revenue</span>
+              </Badge>
+              <Badge className="px-4 py-2">
+                <span className="font-semibold">{metrics.points.toLocaleString()}</span>
+                <span className="ml-2 text-xs">Points awarded</span>
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
 
-        <SectionCard
-          title="Performance overview"
-          description="Key totals and charts for your partner location."
-        >
-          <OverviewCards metrics={metrics} series={series} />
-        </SectionCard>
+        <Card>
+          <CardHeader>
+            <CardTitle>Performance overview</CardTitle>
+            <CardDescription>
+              Key totals and charts for your partner location.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <OverviewCards metrics={metrics} series={series} />
+          </CardContent>
+        </Card>
       </div>
 
       {privacyMode ? (
-        <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-warning)]/10 px-4 py-3 text-sm text-[color:var(--ds-warning)]">
-          Privacy mode hides guest emails, payload details, and staff names in the visit list.
-        </SurfaceCard>
+        <Alert className="border-amber-500/40 bg-amber-500/10 text-amber-600">
+          <AlertDescription>
+            Privacy mode hides guest emails, payload details, and staff names in the visit list.
+          </AlertDescription>
+        </Alert>
       ) : null}
 
-      <SectionCard
-        title="Visit registrations"
-        description="Latest entries from your Zabava QR and quick visit forms. Refresh to see new guests."
-      >
-        <SubmissionsTable
-          items={filtered}
-          partnerId={partnerId}
-          onRefresh={async () => {
-            await refresh(partnerId, { silent: true });
-            toast.info("Visit list updated");
-          }}
-          viewerRole="partner"
-          privacyMode={privacyMode}
-        />
-      </SectionCard>
+      <Card>
+        <CardHeader>
+          <CardTitle>Visit registrations</CardTitle>
+          <CardDescription>
+            Latest entries from your Zabava QR and quick visit forms. Refresh to see new guests.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SubmissionsTable
+            items={filtered}
+            partnerId={partnerId}
+            onRefresh={async () => {
+              await refresh(partnerId, { silent: true });
+              toast.info("Visit list updated");
+            }}
+            viewerRole="partner"
+            privacyMode={privacyMode}
+          />
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <SectionCard
-          title="Register a quick visit"
-          description="Create a visit on behalf of guests who arrive without a completed form."
-          className="h-full"
-        >
-          <QuickVisitForm partnerId={partnerId} onCreated={() => refresh(partnerId)} />
-        </SectionCard>
-        <SectionCard
-          title="Process a loyalty redemption"
-          description="Validate and confirm loyalty rewards in real time."
-          className="h-full"
-        >
-          <RedemptionProcessor partnerId={partnerId} />
-        </SectionCard>
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle>Register a quick visit</CardTitle>
+            <CardDescription>
+              Create a visit on behalf of guests who arrive without a completed form.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <QuickVisitForm partnerId={partnerId} onCreated={() => refresh(partnerId)} />
+          </CardContent>
+        </Card>
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle>Process a loyalty redemption</CardTitle>
+            <CardDescription>
+              Validate and confirm loyalty rewards in real time.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RedemptionProcessor partnerId={partnerId} />
+          </CardContent>
+        </Card>
       </div>
 
-      <SectionCard
-        title="Redemption history"
-        description="Track recently processed rewards and confirm who handled each request."
-      >
-        <RedemptionHistoryCard
-          items={redemptions}
-          emptyLabel="No rewards have been processed yet."
-          showHeader={false}
-        />
-      </SectionCard>
+      <Card>
+        <CardHeader>
+          <CardTitle>Redemption history</CardTitle>
+          <CardDescription>
+            Track recently processed rewards and confirm who handled each request.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <RedemptionHistoryCard
+            items={redemptions}
+            emptyLabel="No rewards have been processed yet."
+            showHeader={false}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }

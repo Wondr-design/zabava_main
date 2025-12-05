@@ -13,14 +13,14 @@ import {
   DrawerFooter,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import "../../../styles/theme-darkmatter.css";
+import "../../../styles/theme-vercel.css";
 import { LogOut, Menu, X } from "lucide-react";
 import { LocalizedLink } from "@/components/ui/localized-link";
 import { useLocalizedRouter } from "@/i18n/use-localized-router";
 import { useLocale } from "@/i18n/provider";
 import { buildLocalizedPath } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
-import { DesignButton, FilterChip } from "@/components/design-system";
+import { Button } from "@/components/ui/button";
 import { BodyThemeClass } from "@/components/body-theme-class";
 
 const NAV_ITEMS = [
@@ -51,11 +51,11 @@ function StaffNav({
         const active =
           pathname === localizedHref || pathname.startsWith(`${localizedHref}/`);
         return (
-          <FilterChip
+          <Button
             key={item.href}
             asChild
-            selected={active}
-            size="md"
+            variant={active ? "default" : "ghost"}
+            size="sm"
             className={cn(
               "text-sm",
               vertical ? "w-full justify-start" : "justify-center",
@@ -70,7 +70,7 @@ function StaffNav({
                 {item.label}
               </span>
             </LocalizedLink>
-          </FilterChip>
+          </Button>
         );
       })}
     </nav>
@@ -103,8 +103,8 @@ export default function StaffLayout({ children }: { children: ReactNode }) {
   if (isAuthRoute) {
     return (
       <>
-        <BodyThemeClass className="theme-darkmatter" />
-        <div className="theme-darkmatter flex min-h-screen items-center justify-center bg-[color:var(--ds-surface-base)] text-[color:var(--ds-text-strong)]">
+        <BodyThemeClass className="theme-vercel" />
+        <div className="theme-vercel flex min-h-screen items-center justify-center bg-background text-foreground">
           <div className="w-full max-w-md px-4">{children}</div>
         </div>
       </>
@@ -113,22 +113,22 @@ export default function StaffLayout({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <BodyThemeClass className="theme-darkmatter" />
-      <div className="theme-darkmatter min-h-screen bg-[color:var(--ds-surface-base)] text-[color:var(--ds-text-strong)]">
-      <header className="sticky top-0 z-10 border-b border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-base)]/95 backdrop-blur-sm shadow-sm">
+      <BodyThemeClass className="theme-vercel" />
+      <div className="theme-vercel min-h-screen bg-background text-foreground">
+      <header className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <LocalizedLink
             href="/staff/console"
             className="flex items-center gap-3 transition-opacity hover:opacity-80"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[color:var(--ds-primary)] text-sm font-semibold text-[color:var(--ds-primary-foreground)] shadow-sm shadow-[color:var(--ds-primary)]/40">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground">
               ZA
             </div>
             <div className="flex flex-col">
-              <span className="text-lg font-semibold tracking-tight text-[color:var(--ds-text-strong)]">
+              <span className="text-lg font-semibold tracking-tight text-foreground">
                 Staff Console
               </span>
-              <span className="text-xs text-[color:var(--ds-text-muted)]">
+              <span className="text-xs text-muted-foreground">
                 Quick access portal
               </span>
             </div>
@@ -137,7 +137,7 @@ export default function StaffLayout({ children }: { children: ReactNode }) {
             <div className="hidden items-center gap-3 sm:flex">
               <StaffNav />
               <ThemeToggle />
-              <DesignButton
+              <Button
                 type="button"
                 onClick={handleSignOut}
                 disabled={signingOut}
@@ -146,13 +146,13 @@ export default function StaffLayout({ children }: { children: ReactNode }) {
               >
                 <LogOut className="size-4" aria-hidden />
                 {signingOut ? "Signing out…" : "Sign out"}
-              </DesignButton>
+              </Button>
             </div>
             <div className="flex items-center gap-2 sm:hidden">
               <Drawer open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <DrawerTrigger asChild>
-                  <DesignButton
-                    variant="tonal"
+                  <Button
+                    variant="secondary"
                     size="icon"
                     aria-label="Open staff menu"
                   >
@@ -161,12 +161,12 @@ export default function StaffLayout({ children }: { children: ReactNode }) {
                     ) : (
                       <Menu className="size-5" aria-hidden />
                     )}
-                  </DesignButton>
+                  </Button>
                 </DrawerTrigger>
-                <DrawerContent className="theme-darkmatter bg-[color:var(--ds-surface-base)] text-[color:var(--ds-text-strong)]">
+                <DrawerContent className="theme-vercel bg-background text-foreground">
                   <DrawerHeader className="space-y-2">
                     <DrawerTitle>Staff Console</DrawerTitle>
-                    <DrawerDescription className="text-[color:var(--ds-text-muted)]">
+                    <DrawerDescription className="text-muted-foreground">
                       Navigate between console tools and settings.
                     </DrawerDescription>
                   </DrawerHeader>
@@ -175,11 +175,11 @@ export default function StaffLayout({ children }: { children: ReactNode }) {
                       orientation="vertical"
                       onNavigate={() => setMobileMenuOpen(false)}
                     />
-                    <div className="flex items-center justify-between rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] px-4 py-3">
-                      <span className="text-sm text-[color:var(--ds-text-strong)]">Theme</span>
+                    <div className="flex items-center justify-between rounded-lg border border-border bg-muted px-4 py-3">
+                      <span className="text-sm text-foreground">Theme</span>
                       <ThemeToggle />
                     </div>
-                    <DesignButton
+                    <Button
                       type="button"
                       onClick={() => {
                         setMobileMenuOpen(false);
@@ -191,18 +191,18 @@ export default function StaffLayout({ children }: { children: ReactNode }) {
                     >
                       <LogOut className="size-4" aria-hidden />
                       {signingOut ? "Signing out…" : "Sign out"}
-                    </DesignButton>
+                    </Button>
                   </div>
-                  <DrawerFooter className="border-t border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)]/60">
+                  <DrawerFooter className="border-t border-border bg-muted/60">
                     <DrawerClose asChild>
-                      <DesignButton
+                      <Button
                         type="button"
-                        variant="tonal"
+                        variant="secondary"
                         size="sm"
                         className="w-full"
                       >
                         Close
-                      </DesignButton>
+                      </Button>
                     </DrawerClose>
                   </DrawerFooter>
                 </DrawerContent>

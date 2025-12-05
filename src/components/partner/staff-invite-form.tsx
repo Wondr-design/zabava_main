@@ -2,12 +2,10 @@
 
 import { FormEvent, useState } from "react";
 
-import {
-  DesignButton,
-  DesignFormField,
-  DesignInput,
-  SurfaceCard,
-} from "@/components/design-system";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface StaffInviteFormProps {
   onCreate: (payload: {
@@ -52,43 +50,48 @@ export function StaffInviteForm({ onCreate }: StaffInviteFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <h3 className="text-sm font-semibold text-[color:var(--ds-text-strong)]">
+        <h3 className="text-sm font-semibold text-foreground">
           Invite staff member
         </h3>
-        <p className="text-xs text-[color:var(--ds-text-muted)]">
+        <p className="text-xs text-muted-foreground">
           Send a one-use invite to onboard a teammate or contractor.
         </p>
       </div>
 
       {error ? (
-        <SurfaceCard className="rounded-2xl border border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10 px-4 py-3 text-xs text-[color:var(--ds-danger)]">
-          {error}
-        </SurfaceCard>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <DesignFormField label="Email" required>
-          <DesignInput
+        <div className="space-y-2">
+          <Label htmlFor="invite-email">
+            Email <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="invite-email"
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="staff@zabava.cz"
           />
-        </DesignFormField>
-        <DesignFormField label="Name (optional)">
-          <DesignInput
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="invite-name">Name (optional)</Label>
+          <Input
+            id="invite-name"
             value={name}
             onChange={(event) => setName(event.target.value)}
             placeholder="Full name"
           />
-        </DesignFormField>
+        </div>
       </div>
 
-      <DesignFormField
-        label="Invite expires in"
-        helper="Minimum 30 minutes. Increase for complex onboarding."
-      >
-        <DesignInput
+      <div className="space-y-2">
+        <Label htmlFor="invite-expires">Invite expires in (minutes)</Label>
+        <Input
+          id="invite-expires"
           type="number"
           min={30}
           max={60 * 24 * 30}
@@ -96,11 +99,14 @@ export function StaffInviteForm({ onCreate }: StaffInviteFormProps) {
           onChange={(event) => setExpires(Number(event.target.value) || 60)}
           className="w-40"
         />
-      </DesignFormField>
+        <p className="text-xs text-muted-foreground">
+          Minimum 30 minutes. Increase for complex onboarding.
+        </p>
+      </div>
 
-      <DesignButton type="submit" disabled={busy}>
+      <Button type="submit" disabled={busy}>
         {busy ? "Sending…" : "Send invite"}
-      </DesignButton>
+      </Button>
     </form>
   );
 }

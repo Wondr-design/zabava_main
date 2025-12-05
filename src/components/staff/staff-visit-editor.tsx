@@ -19,13 +19,10 @@ import {
 
 import type { VisitRegistrationRecord } from "@/lib/data/visits";
 import { getCsrfToken } from "@/lib/web/csrf";
-import {
-  DesignButton,
-  DesignTextarea,
-  SectionCard,
-  StatusPill,
-  SurfaceCard,
-} from "@/components/design-system";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 interface StaffVisitEditorProps {
@@ -676,12 +673,12 @@ export function StaffVisitEditor({
     label: string,
     disabled?: boolean
   ) => (
-    <DesignButton
+    <Button
       type="button"
       onClick={() => toggleEditing(key)}
-      variant="tonal"
+      variant="ghost"
       size="icon"
-      className="rounded-full"
+      className="rounded-full h-8 w-8"
       aria-label={isEditing(key) ? `Stop editing ${label}` : `Edit ${label}`}
       disabled={disabled}
     >
@@ -690,7 +687,7 @@ export function StaffVisitEditor({
       ) : (
         <Pencil className="h-4 w-4" />
       )}
-    </DesignButton>
+    </Button>
   );
 
   const renderEditableCard = (
@@ -707,580 +704,590 @@ export function StaffVisitEditor({
     const { description, helper, span, editor, display } = config;
     const editing = isEditing(key);
     return (
-      <SurfaceCard
+      <Card
         className={cn(
-          "space-y-3 border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4",
+          "space-y-3 p-4",
           span && "sm:col-span-2"
         )}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
-            <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">
               {label}
             </p>
             {description ? (
-              <p className="text-[11px] text-[color:var(--ds-text-muted)]">
+              <p className="text-[11px] text-muted-foreground">
                 {description}
               </p>
             ) : null}
           </div>
           {renderEditToggle(key, label)}
         </div>
-        <div className="space-y-2 text-sm text-[color:var(--ds-text-strong)]">
+        <div className="space-y-2 text-sm text-foreground">
           {editing ? editor : display}
           {helper ? (
-            <p className="text-[11px] text-[color:var(--ds-text-muted)]">
+            <p className="text-[11px] text-muted-foreground">
               {helper}
             </p>
           ) : null}
         </div>
-      </SurfaceCard>
+      </Card>
     );
   };
 
   return (
     <div className="flex flex-col gap-8 pb-12">
       {isFlashDeal ? (
-        <SectionCard
-          className="space-y-4 border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10"
-          title="Flash deal requirements"
-          description="Minimum visitor counts are enforced. Update the guest count to the number currently present."
-          actions={<StatusPill tone="danger">Flash Deal</StatusPill>}
-        >
-          <dl className="grid gap-3 text-sm text-[color:var(--ds-text-strong)] sm:grid-cols-2">
-            {flashDealTitle ? (
-              <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
-                <dt className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-                  Deal
-                </dt>
-                <dd className="mt-1 text-base font-semibold">
-                  {flashDealTitle}
-                </dd>
-                {flashDealSlug ? (
-                  <dd className="mt-1 text-[11px] text-[color:var(--ds-text-muted)]">
-                    Slug: {flashDealSlug}
+        <Card className="border-destructive/40 bg-destructive/10">
+          <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+            <div>
+              <CardTitle className="text-base">Flash deal requirements</CardTitle>
+              <CardDescription>Minimum visitor counts are enforced. Update the guest count to the number currently present.</CardDescription>
+            </div>
+            <Badge variant="destructive">Flash Deal</Badge>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <dl className="grid gap-3 text-sm text-foreground sm:grid-cols-2">
+              {flashDealTitle ? (
+                <Card className="rounded-lg p-4">
+                  <dt className="text-xs uppercase tracking-widest text-muted-foreground">
+                    Deal
+                  </dt>
+                  <dd className="mt-1 text-base font-semibold">
+                    {flashDealTitle}
                   </dd>
-                ) : null}
-                {flashDealId ? (
-                  <dd className="mt-1 text-[11px] text-[color:var(--ds-text-muted)]">
-                    ID: {flashDealId}
+                  {flashDealSlug ? (
+                    <dd className="mt-1 text-[11px] text-muted-foreground">
+                      Slug: {flashDealSlug}
+                    </dd>
+                  ) : null}
+                  {flashDealId ? (
+                    <dd className="mt-1 text-[11px] text-muted-foreground">
+                      ID: {flashDealId}
+                    </dd>
+                  ) : null}
+                </Card>
+              ) : null}
+              {typeof requiredVisitors === "number" ? (
+                <Card className="rounded-lg p-4">
+                  <dt className="text-xs uppercase tracking-widest text-muted-foreground">
+                    Required visitors
+                  </dt>
+                  <dd className="mt-1 text-base font-semibold">
+                    {requiredVisitors}
                   </dd>
-                ) : null}
-              </SurfaceCard>
-            ) : null}
-            {typeof requiredVisitors === "number" ? (
-              <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
-                <dt className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-                  Required visitors
+                  <dd className="mt-1 text-[11px] text-muted-foreground">
+                    Minimum group size for this flash deal.
+                  </dd>
+                </Card>
+              ) : null}
+              {ticketRequirements ? (
+                <Card className="rounded-lg p-4">
+                  <dt className="text-xs uppercase tracking-widest text-muted-foreground">
+                    Required ticket mix
+                  </dt>
+                  <dd className="mt-1 text-base font-semibold">
+                    {requirementsSummary}
+                  </dd>
+                  <dd className="mt-1 text-[11px] text-muted-foreground">
+                    Guests must match this mix to redeem.
+                  </dd>
+                </Card>
+              ) : null}
+              <Card className="rounded-lg p-4">
+                <dt className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Recorded visitors
                 </dt>
                 <dd className="mt-1 text-base font-semibold">
-                  {requiredVisitors}
+                  {actualVisitorsCurrent ?? "—"}
                 </dd>
-                <dd className="mt-1 text-[11px] text-[color:var(--ds-text-muted)]">
-                  Minimum group size for this flash deal.
+                <dd className="mt-1 text-[11px] text-muted-foreground">
+                  Update the guest count before confirming arrival.
                 </dd>
-              </SurfaceCard>
+              </Card>
+              {ticketBreakdown ? (
+                <Card className="rounded-lg p-4">
+                  <dt className="text-xs uppercase tracking-widest text-muted-foreground">
+                    Submitted ticket mix
+                  </dt>
+                  <dd className="mt-1 text-base font-semibold">
+                    {breakdownSummary ?? "—"}
+                  </dd>
+                  <dd className="mt-1 text-[11px] text-muted-foreground">
+                    Provided during booking. Verify on arrival.
+                  </dd>
+                </Card>
+              ) : null}
+            </dl>
+            {visitorsWarning ? (
+              <Card className="rounded-lg bg-destructive/10 p-4 text-sm text-destructive border-destructive/30">
+                <span className="font-semibold">
+                  {ticketMismatch
+                    ? "Ticket mix does not match the requirement."
+                    : `At least ${requiredVisitors} visitors must be present.`}
+                </span>{" "}
+                Update the guest count or decline the QR until the full group
+                arrives.
+              </Card>
             ) : null}
-            {ticketRequirements ? (
-              <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
-                <dt className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-                  Required ticket mix
-                </dt>
-                <dd className="mt-1 text-base font-semibold">
-                  {requirementsSummary}
-                </dd>
-                <dd className="mt-1 text-[11px] text-[color:var(--ds-text-muted)]">
-                  Guests must match this mix to redeem.
-                </dd>
-              </SurfaceCard>
-            ) : null}
-            <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
-              <dt className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-                Recorded visitors
-              </dt>
-              <dd className="mt-1 text-base font-semibold">
-                {actualVisitorsCurrent ?? "—"}
-              </dd>
-              <dd className="mt-1 text-[11px] text-[color:var(--ds-text-muted)]">
-                Update the guest count before confirming arrival.
-              </dd>
-            </SurfaceCard>
-            {ticketBreakdown ? (
-              <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
-                <dt className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-                  Submitted ticket mix
-                </dt>
-                <dd className="mt-1 text-base font-semibold">
-                  {breakdownSummary ?? "—"}
-                </dd>
-                <dd className="mt-1 text-[11px] text-[color:var(--ds-text-muted)]">
-                  Provided during booking. Verify on arrival.
-                </dd>
-              </SurfaceCard>
-            ) : null}
-          </dl>
-          {visitorsWarning ? (
-            <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-danger)]/10 p-4 text-sm text-[color:var(--ds-danger)]">
-              <span className="font-semibold">
-                {ticketMismatch
-                  ? "Ticket mix does not match the requirement."
-                  : `At least ${requiredVisitors} visitors must be present.`}
-              </span>{" "}
-              Update the guest count or decline the QR until the full group
-              arrives.
-            </SurfaceCard>
-          ) : null}
-        </SectionCard>
+          </CardContent>
+        </Card>
       ) : null}
 
-      <SectionCard
-        title="Visit summary"
-        description="Confirm the guest’s details captured during registration."
-        className="space-y-4"
-      >
-        <div className="grid gap-3 text-sm text-[color:var(--ds-text-strong)] sm:grid-cols-2">
-          <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
-            <dt className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-              Visitor
-            </dt>
-            <dd className="mt-1 break-all text-base font-medium">
-              {visit.email}
-            </dd>
-          </SurfaceCard>
-          <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
-            <dt className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-              Status
-            </dt>
-            <dd className="mt-1 text-base font-medium">
-              {visit.status === "visited" ? "Visited" : "Pending"}
-            </dd>
-          </SurfaceCard>
-          <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
-            <dt className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-              Registered
-            </dt>
-            <dd className="mt-1 text-base font-medium">
-              {createdAt ?? "Unknown"}
-            </dd>
-          </SurfaceCard>
-          <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
-            <dt className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-              Checked in
-            </dt>
-            <dd className="mt-1 text-base font-medium">
-              {visitedAt ?? "Not yet"}
-            </dd>
-          </SurfaceCard>
-          <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
-            <dt className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-              Estimated points
-            </dt>
-            <dd className="mt-1 text-base font-medium">
-              {(visit.estimated_points ?? 0).toLocaleString()}
-            </dd>
-          </SurfaceCard>
-          {expiresAt ? (
-            <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-warning)]/15 p-4 text-[color:var(--ds-warning)]">
-              <dt className="text-xs uppercase tracking-[0.3em]">QR expires</dt>
-              <dd className="mt-1 text-base font-medium text-[color:var(--ds-text-strong)]">
-                {expiresAt}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Visit summary</CardTitle>
+          <CardDescription>Confirm the guest&apos;s details captured during registration.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 text-sm text-foreground sm:grid-cols-2">
+            <Card className="rounded-lg p-4">
+              <dt className="text-xs uppercase tracking-widest text-muted-foreground">
+                Visitor
+              </dt>
+              <dd className="mt-1 break-all text-base font-medium">
+                {visit.email}
               </dd>
-            </SurfaceCard>
-          ) : null}
-        </div>
-      </SectionCard>
+            </Card>
+            <Card className="rounded-lg p-4">
+              <dt className="text-xs uppercase tracking-widest text-muted-foreground">
+                Status
+              </dt>
+              <dd className="mt-1 text-base font-medium">
+                {visit.status === "visited" ? "Visited" : "Pending"}
+              </dd>
+            </Card>
+            <Card className="rounded-lg p-4">
+              <dt className="text-xs uppercase tracking-widest text-muted-foreground">
+                Registered
+              </dt>
+              <dd className="mt-1 text-base font-medium">
+                {createdAt ?? "Unknown"}
+              </dd>
+            </Card>
+            <Card className="rounded-lg p-4">
+              <dt className="text-xs uppercase tracking-widest text-muted-foreground">
+                Checked in
+              </dt>
+              <dd className="mt-1 text-base font-medium">
+                {visitedAt ?? "Not yet"}
+              </dd>
+            </Card>
+            <Card className="rounded-lg p-4">
+              <dt className="text-xs uppercase tracking-widest text-muted-foreground">
+                Estimated points
+              </dt>
+              <dd className="mt-1 text-base font-medium">
+                {(visit.estimated_points ?? 0).toLocaleString()}
+              </dd>
+            </Card>
+            {expiresAt ? (
+              <Card className="rounded-lg bg-amber-500/15 p-4 text-amber-600 border-amber-500/30">
+                <dt className="text-xs uppercase tracking-widest">QR expires</dt>
+                <dd className="mt-1 text-base font-medium text-foreground">
+                  {expiresAt}
+                </dd>
+              </Card>
+            ) : null}
+          </div>
+        </CardContent>
+      </Card>
 
-      <SectionCard
-        title="Ticket details"
-        description="Cross-check the guest’s selections against the partner catalog before editing."
-        className="space-y-4"
-      >
-        <div className="grid gap-4 lg:grid-cols-2">
-          <SurfaceCard className="space-y-4 rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-                Guest ticket selections
-              </p>
-              <p className="text-[11px] text-[color:var(--ds-text-muted)]">
-                Pulled from the QR registration payload.
-              </p>
-            </div>
-            {ticketSelections.length === 0 ? (
-              <p className="rounded-xl bg-[color:var(--ds-surface-muted)] px-3 py-2 text-xs text-[color:var(--ds-text-muted)]">
-                No ticket selections were captured for this visit.
-              </p>
-            ) : (
-              <ul className="divide-y divide-[color:var(--ds-border-subtle)] rounded-2xl border border-[color:var(--ds-border-subtle)] text-sm">
-                {ticketSelections.map((selection, index) => {
-                  const lineSubtotal =
-                    selection.subtotal ??
-                    (typeof selection.unitPrice === "number"
-                      ? selection.unitPrice * selection.quantity
-                      : null);
-                  return (
-                    <li
-                      key={`${selection.id}-${index}`}
-                      className="flex flex-col gap-1 px-3 py-3"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-base font-semibold text-[color:var(--ds-text-strong)]">
-                            {selection.label}
-                          </p>
-                          <p className="text-[11px] uppercase tracking-[0.2em] text-[color:var(--ds-text-subtle)]">
-                            {selection.ticketType ?? "Ticket"}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Ticket details</CardTitle>
+          <CardDescription>Cross-check the guest&apos;s selections against the partner catalog before editing.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card className="space-y-4 rounded-lg p-4">
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Guest ticket selections
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  Pulled from the QR registration payload.
+                </p>
+              </div>
+              {ticketSelections.length === 0 ? (
+                <p className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
+                  No ticket selections were captured for this visit.
+                </p>
+              ) : (
+                <ul className="divide-y divide-border rounded-lg border border-border text-sm">
+                  {ticketSelections.map((selection, index) => {
+                    const lineSubtotal =
+                      selection.subtotal ??
+                      (typeof selection.unitPrice === "number"
+                        ? selection.unitPrice * selection.quantity
+                        : null);
+                    return (
+                      <li
+                        key={`${selection.id}-${index}`}
+                        className="flex flex-col gap-1 px-3 py-3"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-base font-semibold text-foreground">
+                              {selection.label}
+                            </p>
+                            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                              {selection.ticketType ?? "Ticket"}
+                            </p>
+                          </div>
+                          <p className="text-base font-semibold text-foreground">
+                            {formatCurrencyAmount(lineSubtotal)}
                           </p>
                         </div>
-                        <p className="text-base font-semibold text-[color:var(--ds-text-strong)]">
-                          {formatCurrencyAmount(lineSubtotal)}
+                        <p className="text-xs text-muted-foreground">
+                          {selection.quantity.toLocaleString()} ×{" "}
+                          {formatCurrencyAmount(selection.unitPrice)}
                         </p>
-                      </div>
-                      <p className="text-xs text-[color:var(--ds-text-muted)]">
-                        {selection.quantity.toLocaleString()} ×{" "}
-                        {formatCurrencyAmount(selection.unitPrice)}
-                      </p>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-            {ticketSelectionsTotal !== null ? (
-              <div className="flex items-center justify-between border-t border-dashed border-[color:var(--ds-border-subtle)] pt-3 text-sm text-[color:var(--ds-text-strong)]">
-                <span className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-                  Estimated ticket total
-                </span>
-                <span className="text-base font-semibold">
-                  {formatCurrencyAmount(ticketSelectionsTotal)}
-                </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              {ticketSelectionsTotal !== null ? (
+                <div className="flex items-center justify-between border-t border-dashed border-border pt-3 text-sm text-foreground">
+                  <span className="text-xs uppercase tracking-widest text-muted-foreground">
+                    Estimated ticket total
+                  </span>
+                  <span className="text-base font-semibold">
+                    {formatCurrencyAmount(ticketSelectionsTotal)}
+                  </span>
+                </div>
+              ) : null}
+            </Card>
+
+            <Card className="space-y-4 rounded-lg p-4">
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Partner ticket catalog
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  Configured ticket types available for this partner.
+                </p>
               </div>
-            ) : null}
-          </SurfaceCard>
-
-          <SurfaceCard className="space-y-4 rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-                Partner ticket catalog
-              </p>
-              <p className="text-[11px] text-[color:var(--ds-text-muted)]">
-                Configured ticket types available for this partner.
-              </p>
-            </div>
-            {ticketCatalog.length === 0 ? (
-              <p className="rounded-xl bg-[color:var(--ds-surface-muted)] px-3 py-2 text-xs text-[color:var(--ds-text-muted)]">
-                This partner does not have ticket pricing configured yet.
-              </p>
-            ) : (
-              <ul className="divide-y divide-[color:var(--ds-border-subtle)] rounded-2xl border border-[color:var(--ds-border-subtle)] text-sm">
-                {ticketCatalog.map((entry) => (
-                  <li
-                    key={entry.value}
-                    className="flex items-center justify-between gap-3 px-3 py-3"
-                  >
-                    <div>
-                      <p className="text-base font-semibold text-[color:var(--ds-text-strong)]">
-                        {entry.label}
-                      </p>
-                      <p className="text-[11px] uppercase tracking-[0.2em] text-[color:var(--ds-text-subtle)]">
-                        {entry.value}
-                      </p>
-                    </div>
-                    <p className="text-sm font-semibold text-[color:var(--ds-text-strong)]">
-                      {typeof entry.discountedPrice === "number"
-                        ? formatCurrencyAmount(entry.discountedPrice)
-                        : "Price not set"}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </SurfaceCard>
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title={
-          <span className="flex items-center gap-2">
-            <ShieldCheck className="size-5 text-[color:var(--ds-primary)]" />
-            <span>Update visit details</span>
-          </span>
-        }
-        description="Adjust guest counts or logistics if things changed at the door."
-        className="space-y-6"
-      >
-        <div className="space-y-6">
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-                Ticket selections
-              </p>
-              <p className="text-[11px] text-[color:var(--ds-text-muted)]">
-                Use the partner-configured price cards to reflect what the guest
-                purchased.
-              </p>
-            </div>
-            {ticketEditorOptions.length === 0 ? (
-              <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)]/60 p-4 text-sm text-[color:var(--ds-text-muted)]">
-                This partner has not configured ticket pricing in the admin
-                dashboard yet. Update their ticket catalog to enable door-side
-                edits.
-              </SurfaceCard>
-            ) : (
-              <div className="grid gap-3 md:grid-cols-2">
-                {ticketEditorOptions.map((entry) => {
-                  const normalizedValue = normalizeTicketKey(entry.value);
-                  const isSelected =
-                    normalizedSelectedTicket &&
-                    normalizedSelectedTicket === normalizedValue;
-                  const priceValue =
-                    typeof entry.discountedPrice === "number"
-                      ? entry.discountedPrice
-                      : entry.price;
-                  const priceDisplay =
-                    typeof priceValue === "number"
-                      ? formatCurrencyAmount(priceValue)
-                      : null;
-                  return (
-                    <button
-                      type="button"
+              {ticketCatalog.length === 0 ? (
+                <p className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
+                  This partner does not have ticket pricing configured yet.
+                </p>
+              ) : (
+                <ul className="divide-y divide-border rounded-lg border border-border text-sm">
+                  {ticketCatalog.map((entry) => (
+                    <li
                       key={entry.value}
-                      onClick={() => handleTicketCardSelect(entry.value)}
-                      className={cn(
-                        "flex flex-col gap-3 rounded-2xl border px-4 py-4 text-left transition",
-                        isSelected
-                          ? "border-[color:var(--ds-primary)] bg-[color:var(--ds-primary)]/10 shadow-none"
-                          : "border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] hover:border-[color:var(--ds-primary)]/50"
-                      )}
+                      className="flex items-center justify-between gap-3 px-3 py-3"
                     >
-                      <div className="space-y-1">
-                        <p className="text-base font-semibold text-[color:var(--ds-text-strong)]">
+                      <div>
+                        <p className="text-base font-semibold text-foreground">
                           {entry.label}
                         </p>
-                        <p className="text-sm text-[color:var(--ds-text-muted)]">
-                          {priceDisplay ?? "Price not set"}
+                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                          {entry.value}
                         </p>
                       </div>
-                      {isSelected ? (
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <DesignButton
-                              type="button"
-                              variant="tonal"
-                              size="icon"
-                              onClick={(event) => {
-                                event.preventDefault();
-                                event.stopPropagation();
-                                handleTicketQuantityAdjust(-1);
-                              }}
-                              disabled={currentGuestCount <= 1}
-                              className="rounded-full"
-                              aria-label="Decrease guests"
-                            >
-                              <Minus className="h-4 w-4" aria-hidden />
-                            </DesignButton>
-                            <span className="text-lg font-semibold text-[color:var(--ds-text-strong)]">
-                              {currentGuestCount}
-                            </span>
-                            <DesignButton
-                              type="button"
-                              variant="tonal"
-                              size="icon"
-                              onClick={(event) => {
-                                event.preventDefault();
-                                event.stopPropagation();
-                                handleTicketQuantityAdjust(1);
-                              }}
-                              className="rounded-full"
-                              aria-label="Increase guests"
-                            >
-                              <Plus className="h-4 w-4" aria-hidden />
-                            </DesignButton>
-                          </div>
-                          <p className="text-xs text-[color:var(--ds-text-muted)]">
-                            Guests present for this ticket profile.
+                      <p className="text-sm font-semibold text-foreground">
+                        {typeof entry.discountedPrice === "number"
+                          ? formatCurrencyAmount(entry.discountedPrice)
+                          : "Price not set"}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <ShieldCheck className="size-5 text-primary" />
+            <span>Update visit details</span>
+          </CardTitle>
+          <CardDescription>Adjust guest counts or logistics if things changed at the door.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Ticket selections
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  Use the partner-configured price cards to reflect what the guest
+                  purchased.
+                </p>
+              </div>
+              {ticketEditorOptions.length === 0 ? (
+                <Card className="rounded-lg bg-muted/60 p-4 text-sm text-muted-foreground">
+                  This partner has not configured ticket pricing in the admin
+                  dashboard yet. Update their ticket catalog to enable door-side
+                  edits.
+                </Card>
+              ) : (
+                <div className="grid gap-3 md:grid-cols-2">
+                  {ticketEditorOptions.map((entry) => {
+                    const normalizedValue = normalizeTicketKey(entry.value);
+                    const isSelected =
+                      normalizedSelectedTicket &&
+                      normalizedSelectedTicket === normalizedValue;
+                    const priceValue =
+                      typeof entry.discountedPrice === "number"
+                        ? entry.discountedPrice
+                        : entry.price;
+                    const priceDisplay =
+                      typeof priceValue === "number"
+                        ? formatCurrencyAmount(priceValue)
+                        : null;
+                    return (
+                      <button
+                        type="button"
+                        key={entry.value}
+                        onClick={() => handleTicketCardSelect(entry.value)}
+                        className={cn(
+                          "flex flex-col gap-3 rounded-lg border px-4 py-4 text-left transition",
+                          isSelected
+                            ? "border-primary bg-primary/10"
+                            : "border-border bg-card hover:border-primary/50"
+                        )}
+                      >
+                        <div className="space-y-1">
+                          <p className="text-base font-semibold text-foreground">
+                            {entry.label}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {priceDisplay ?? "Price not set"}
                           </p>
                         </div>
-                      ) : (
-                        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[color:var(--ds-text-muted)]">
-                          Tap to select
-                        </p>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <SurfaceCard className="space-y-2 rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
-              <div className="space-y-1">
-                <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-                  Estimated spend
-                </p>
-                <p className="text-[11px] text-[color:var(--ds-text-muted)]">
-                  Reported by the guest during registration.
-                </p>
-              </div>
-              <p className="text-base font-semibold text-[color:var(--ds-text-strong)]">
-                {estimatedSpendDisplay}
-              </p>
-            </SurfaceCard>
-
-            <SurfaceCard className="space-y-2 rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4">
-              <div className="space-y-1">
-                <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-                  Categories / tags
-                </p>
-                <p className="text-[11px] text-[color:var(--ds-text-muted)]">
-                  Pulled from the original registration form.
-                </p>
-              </div>
-              <p className="text-base font-semibold text-[color:var(--ds-text-strong)]">
-                {categoriesDisplay}
-              </p>
-            </SurfaceCard>
-          </div>
-
-          {renderEditableCard("visitNotes", "Internal notes", {
-            description: "Add context for other staff members.",
-            span: true,
-            editor: (
-              <DesignTextarea
-                value={visitNotes}
-                onChange={(event) => setVisitNotes(event.target.value)}
-                rows={6}
-                placeholder="Add context for other staff members..."
-              />
-            ),
-            display: (
-              <p className="whitespace-pre-wrap text-sm">
-                {visitNotes ? visitNotes : "No internal notes"}
-              </p>
-            ),
-          })}
-          {isFlashDeal ? (
-            <div className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-                Rejection note (required to decline)
-              </p>
-              <DesignTextarea
-                value={rejectNote}
-                onChange={(event) => setRejectNote(event.target.value)}
-                rows={3}
-                placeholder="Add a short reason if you need to reject this QR."
-              />
+                        {isSelected ? (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="icon"
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  handleTicketQuantityAdjust(-1);
+                                }}
+                                disabled={currentGuestCount <= 1}
+                                className="rounded-full h-8 w-8"
+                                aria-label="Decrease guests"
+                              >
+                                <Minus className="h-4 w-4" aria-hidden />
+                              </Button>
+                              <span className="text-lg font-semibold text-foreground">
+                                {currentGuestCount}
+                              </span>
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="icon"
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  handleTicketQuantityAdjust(1);
+                                }}
+                                className="rounded-full h-8 w-8"
+                                aria-label="Increase guests"
+                              >
+                                <Plus className="h-4 w-4" aria-hidden />
+                              </Button>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              Guests present for this ticket profile.
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                            Tap to select
+                          </p>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          ) : null}
-        </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <DesignButton
-            variant="tonal"
-            type="button"
-            onClick={refreshData}
-            disabled={refreshing}
-            className="w-full sm:w-auto"
-          >
-            {refreshing ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                Refreshing…
-              </>
-            ) : (
-              <>
-                <RefreshCcw className="size-4" />
-                Refresh data
-              </>
-            )}
-          </DesignButton>
-          <DesignButton
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className="w-full sm:w-auto"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                Saving…
-              </>
-            ) : (
-              <>
-                <Save className="size-4" />
-                Save changes
-              </>
-            )}
-          </DesignButton>
-          <DesignButton
-            variant="secondary"
-            type="button"
-            onClick={handleMarkVisited}
-            disabled={visit.status === "visited" || marking}
-            className="w-full sm:w-auto"
-          >
-            {marking ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                Updating…
-              </>
-            ) : (
-              <>
-                <ClipboardCheck className="size-4" />
-                Mark visited
-              </>
-            )}
-          </DesignButton>
-          {isFlashDeal ? (
-            <DesignButton
-              variant="destructive"
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Card className="space-y-2 rounded-lg p-4">
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                    Estimated spend
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Reported by the guest during registration.
+                  </p>
+                </div>
+                <p className="text-base font-semibold text-foreground">
+                  {estimatedSpendDisplay}
+                </p>
+              </Card>
+
+              <Card className="space-y-2 rounded-lg p-4">
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                    Categories / tags
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Pulled from the original registration form.
+                  </p>
+                </div>
+                <p className="text-base font-semibold text-foreground">
+                  {categoriesDisplay}
+                </p>
+              </Card>
+            </div>
+
+            {renderEditableCard("visitNotes", "Internal notes", {
+              description: "Add context for other staff members.",
+              span: true,
+              editor: (
+                <Textarea
+                  value={visitNotes}
+                  onChange={(event) => setVisitNotes(event.target.value)}
+                  rows={6}
+                  placeholder="Add context for other staff members..."
+                />
+              ),
+              display: (
+                <p className="whitespace-pre-wrap text-sm">
+                  {visitNotes ? visitNotes : "No internal notes"}
+                </p>
+              ),
+            })}
+            {isFlashDeal ? (
+              <div className="space-y-2">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Rejection note (required to decline)
+                </p>
+                <Textarea
+                  value={rejectNote}
+                  onChange={(event) => setRejectNote(event.target.value)}
+                  rows={3}
+                  placeholder="Add a short reason if you need to reject this QR."
+                />
+              </div>
+            ) : null}
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button
+              variant="secondary"
               type="button"
-              onClick={handleReject}
-              disabled={marking}
+              onClick={refreshData}
+              disabled={refreshing}
+              className="w-full sm:w-auto"
+            >
+              {refreshing ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Refreshing…
+                </>
+              ) : (
+                <>
+                  <RefreshCcw className="size-4" />
+                  Refresh data
+                </>
+              )}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="w-full sm:w-auto"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Saving…
+                </>
+              ) : (
+                <>
+                  <Save className="size-4" />
+                  Save changes
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={handleMarkVisited}
+              disabled={visit.status === "visited" || marking}
               className="w-full sm:w-auto"
             >
               {marking ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  Rejecting…
+                  Updating…
                 </>
               ) : (
                 <>
-                  <ClipboardX className="size-4" />
-                  Reject QR
+                  <ClipboardCheck className="size-4" />
+                  Mark visited
                 </>
               )}
-            </DesignButton>
-          ) : null}
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Original form details"
-        description="What the guest submitted during registration."
-        className="space-y-4"
-      >
-        {payloadSummary.length === 0 ? (
-          <SurfaceCard className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] p-4 text-sm text-[color:var(--ds-text-muted)]">
-            No additional form fields were captured for this visit.
-          </SurfaceCard>
-        ) : (
-          <dl className="grid gap-3 sm:grid-cols-2">
-            {payloadSummary.map(({ key, value }) => (
-              <SurfaceCard
-                key={key}
-                className="space-y-2 rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4"
+            </Button>
+            {isFlashDeal ? (
+              <Button
+                variant="destructive"
+                type="button"
+                onClick={handleReject}
+                disabled={marking}
+                className="w-full sm:w-auto"
               >
-                <dt className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-                  {key}
-                </dt>
-                <dd className="whitespace-pre-wrap font-mono text-xs text-[color:var(--ds-text-strong)]">
-                  {value}
-                </dd>
-              </SurfaceCard>
-            ))}
-          </dl>
-        )}
-      </SectionCard>
+                {marking ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Rejecting…
+                  </>
+                ) : (
+                  <>
+                    <ClipboardX className="size-4" />
+                    Reject QR
+                  </>
+                )}
+              </Button>
+            ) : null}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Original form details</CardTitle>
+          <CardDescription>What the guest submitted during registration.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {payloadSummary.length === 0 ? (
+            <Card className="rounded-lg bg-muted p-4 text-sm text-muted-foreground">
+              No additional form fields were captured for this visit.
+            </Card>
+          ) : (
+            <dl className="grid gap-3 sm:grid-cols-2">
+              {payloadSummary.map(({ key, value }) => (
+                <Card
+                  key={key}
+                  className="space-y-2 rounded-lg p-4"
+                >
+                  <dt className="text-xs uppercase tracking-widest text-muted-foreground">
+                    {key}
+                  </dt>
+                  <dd className="whitespace-pre-wrap font-mono text-xs text-foreground">
+                    {value}
+                  </dd>
+                </Card>
+              ))}
+            </dl>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -13,7 +13,7 @@ export function DashboardTableCard({
   return (
     <div
       className={cn(
-        "rounded-[32px] border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)]",
+        "rounded-lg border border-border bg-card",
         className,
       )}
     >
@@ -36,13 +36,13 @@ export function DashboardTableToolbar({
   children,
 }: ToolbarProps) {
   return (
-    <div className="flex flex-col gap-3 border-b border-[color:var(--ds-border-subtle)] px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 border-b border-border px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="space-y-1">
-        <h2 className="text-lg font-semibold text-[color:var(--ds-text-strong)]">
+        <h2 className="text-lg font-semibold text-foreground">
           {title}
         </h2>
         {description ? (
-          <p className="text-sm text-[color:var(--ds-text-muted)]">
+          <p className="text-sm text-muted-foreground">
             {description}
           </p>
         ) : null}
@@ -88,7 +88,7 @@ export function DashboardTableFooter({
   }
 
   return (
-    <div className="flex flex-col gap-4 border-t border-[color:var(--ds-border-subtle)] px-6 py-4 text-sm text-[color:var(--ds-text-muted)] sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-4 border-t border-border px-6 py-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
       <form
         className="flex flex-wrap items-center gap-2"
         onSubmit={handleSubmit}
@@ -100,21 +100,21 @@ export function DashboardTableFooter({
           max={totalPages}
           value={pageInput}
           onChange={(event) => setPageInput(event.target.value)}
-          className="h-10 w-16 rounded-full border border-[color:var(--ds-border-subtle)] bg-transparent px-3 text-center text-[color:var(--ds-text-strong)] focus-visible:border-[color:var(--ds-focus-ring)] focus-visible:outline-none"
+          className="h-9 w-16 rounded-md border border-input bg-background px-3 text-center text-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
         <span>
           of {String(totalPages).padStart(2, "0")} • {totalItems} entries
         </span>
       </form>
       <div className="flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2 text-[color:var(--ds-text-strong)]">
-          <span className="text-sm text-[color:var(--ds-text-muted)]">
+        <div className="flex items-center gap-2 text-foreground">
+          <span className="text-sm text-muted-foreground">
             Show entries
           </span>
           <select
             value={pageSize}
             onChange={(event) => onPageSizeChange(Number(event.target.value))}
-            className="h-10 rounded-full border border-[color:var(--ds-border-subtle)] bg-transparent px-4 text-sm text-[color:var(--ds-text-strong)] focus-visible:border-[color:var(--ds-focus-ring)] focus-visible:outline-none"
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {pageSizeOptions.map((option) => (
               <option key={option} value={option}>
@@ -173,7 +173,7 @@ export function DashboardPagination({
         item === "ellipsis" ? (
           <span
             key={`ellipsis-${index}`}
-            className="px-2 text-base text-[color:var(--ds-text-muted)]"
+            className="px-2 text-base text-muted-foreground"
           >
             …
           </span>
@@ -183,7 +183,7 @@ export function DashboardPagination({
             aria-label={`Page ${item}`}
             data-active={item === page}
             className={cn(
-              "data-[active=true]:border-[color:var(--ds-primary)] data-[active=true]:bg-[color:var(--ds-primary)] data-[active=true]:text-[color:var(--ds-primary-foreground)]",
+              "data-[active=true]:border-primary data-[active=true]:bg-primary data-[active=true]:text-primary-foreground",
             )}
             onClick={() => onPageChange(item)}
           >
@@ -219,7 +219,7 @@ function PaginationButton({
       type="button"
       disabled={disabled}
       className={cn(
-        "inline-flex h-8 min-w-[32px] items-center justify-center rounded-full border border-[color:var(--ds-border-subtle)] bg-transparent px-2 text-sm font-medium text-[color:var(--ds-text-muted)] transition hover:border-[color:var(--ds-primary)] hover:text-[color:var(--ds-text-strong)] disabled:cursor-not-allowed disabled:opacity-40",
+        "inline-flex h-8 min-w-[32px] items-center justify-center rounded-md border border-input bg-background px-2 text-sm font-medium text-muted-foreground transition hover:border-primary hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}

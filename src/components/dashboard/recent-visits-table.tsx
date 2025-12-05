@@ -3,10 +3,8 @@
 import { useMemo } from "react";
 import Image from "next/image";
 
-import {
-  DesignButton,
-  StatusPill,
-} from "@/components/design-system";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DashboardDataTable,
   type DashboardTableColumn,
@@ -116,7 +114,7 @@ export function RecentVisitsTable({
         id: "partner",
         header: "Partner",
         accessor: (row) => (
-          <span className="text-xs uppercase tracking-[0.25em] text-[color:var(--ds-text-muted)]">
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">
             {row.partnerLabel}
           </span>
         ),
@@ -126,9 +124,24 @@ export function RecentVisitsTable({
         id: "status",
         header: "Status",
         accessor: (row) => (
-          <StatusPill size="sm" tone={row.statusTone}>
+          <Badge
+            variant={
+              row.statusTone === "success"
+                ? "default"
+                : row.statusTone === "warning"
+                ? "secondary"
+                : "destructive"
+            }
+            className={
+              row.statusTone === "success"
+                ? "bg-green-500/20 text-green-600 border-green-500/30"
+                : row.statusTone === "warning"
+                ? "bg-amber-500/20 text-amber-600 border-amber-500/30"
+                : ""
+            }
+          >
             {row.statusLabel}
-          </StatusPill>
+          </Badge>
         ),
         width: "12%",
       },
@@ -151,7 +164,7 @@ export function RecentVisitsTable({
           <span
             className={cn(
               "font-semibold",
-              row.isPendingExpired && "text-[color:var(--ds-danger)]",
+              row.isPendingExpired && "text-destructive",
             )}
           >
             {row.pointsDisplay}
@@ -175,7 +188,7 @@ export function RecentVisitsTable({
                   alt="Visit QR code"
                   width={48}
                   height={48}
-                  className="h-12 w-12 rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] object-contain p-1"
+                  className="h-12 w-12 rounded-lg border border-border bg-muted object-contain p-1"
                   title={row.qrExpiryMessage ?? undefined}
                   unoptimized
                   sizes="48px"
@@ -185,20 +198,20 @@ export function RecentVisitsTable({
                     href={row.qrUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs font-medium text-[color:var(--ds-primary)] underline underline-offset-2 transition hover:text-[color:var(--ds-primary)]/80"
+                    className="text-xs font-medium text-primary underline underline-offset-2 transition hover:text-primary/80"
                     title={row.qrExpiryMessage ?? undefined}
                   >
                     {row.qrDisplay ?? "Open"}
                   </a>
                   {row.qrExpiryMessage ? (
-                    <span className="text-[10px] uppercase tracking-[0.3em] text-[color:var(--ds-text-muted)]">
+                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
                       {row.qrExpiryMessage}
                     </span>
                   ) : null}
                 </div>
               </div>
             ) : (
-              <span className="text-xs text-[color:var(--ds-text-muted)]">—</span>
+              <span className="text-xs text-muted-foreground">—</span>
             ),
           width: "18%",
         },
@@ -211,12 +224,12 @@ export function RecentVisitsTable({
                 href={row.verifyUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs font-medium text-[color:var(--ds-primary)] underline underline-offset-2 transition hover:text-[color:var(--ds-primary)]/80"
+                className="text-xs font-medium text-primary underline underline-offset-2 transition hover:text-primary/80"
               >
                 {row.verifyDisplay ?? row.verifyUrl}
               </a>
             ) : (
-              <span className="text-xs text-[color:var(--ds-text-muted)]">—</span>
+              <span className="text-xs text-muted-foreground">—</span>
             ),
           width: "16%",
         },
@@ -229,9 +242,9 @@ export function RecentVisitsTable({
         header: "",
         accessor: (row) => (
           <div className="flex justify-end">
-            <DesignButton
+            <Button
               type="button"
-              variant="tonal"
+              variant="secondary"
               size="sm"
               onClick={(event) => {
                 event.stopPropagation();
@@ -239,7 +252,7 @@ export function RecentVisitsTable({
               }}
             >
               View
-            </DesignButton>
+            </Button>
           </div>
         ),
         align: "right",
@@ -261,7 +274,7 @@ export function RecentVisitsTable({
       onRowClick={onSelectVisit ? (row) => onSelectVisit(row.visit) : undefined}
       rowClassName={(row) =>
         row.isPendingExpired
-          ? "border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10"
+          ? "border-destructive/40 bg-destructive/10"
           : undefined
       }
     />

@@ -3,12 +3,11 @@
 import { useState } from "react";
 import { partnerApi } from "@/lib/web/api-client";
 import type { RedemptionCheckResponse } from "@/lib/data/redemptions";
-import {
-  DesignButton,
-  DesignInput,
-  StatusPill,
-  SurfaceCard,
-} from "@/components/design-system";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function RedemptionProcessor({ partnerId: _partnerId }: { partnerId: string }) {
   void _partnerId;
@@ -49,133 +48,142 @@ export function RedemptionProcessor({ partnerId: _partnerId }: { partnerId: stri
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <DesignInput
+        <Input
           value={code}
           onChange={(event) => setCode(event.target.value)}
           placeholder="Enter redemption code"
           className="sm:flex-1"
           autoComplete="off"
         />
-        <DesignButton
+        <Button
           type="button"
           onClick={check}
           disabled={loading || !code.trim()}
           className="sm:w-auto"
         >
           {loading ? "Checking…" : "Check"}
-        </DesignButton>
+        </Button>
       </div>
 
       {error ? (
-        <SurfaceCard className="rounded-2xl border border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10 px-4 py-3 text-sm text-[color:var(--ds-danger)]">
-          {error}
-        </SurfaceCard>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       ) : null}
       {success ? (
-        <SurfaceCard className="rounded-2xl border border-[color:var(--ds-success)]/40 bg-[color:var(--ds-success)]/15 px-4 py-3 text-sm text-[color:var(--ds-success)]">
-          {success}
-        </SurfaceCard>
+        <Alert className="border-green-500/40 bg-green-500/10 text-green-600">
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
       ) : null}
 
       {data ? (
-        <SurfaceCard className="space-y-4 rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-[color:var(--ds-text-muted)]">
-            <span className="font-medium text-[color:var(--ds-text-strong)]">
-              {data.redemption?.code ?? code}
-            </span>
-            <StatusPill
-              tone={
-                data.redemption?.status === "used"
-                  ? "success"
-                  : data.redemption?.status === "rejected"
-                  ? "danger"
-                  : "warning"
-              }
-              size="sm"
-            >
-              {data.redemption?.status ?? "unknown"}
-            </StatusPill>
-          </div>
-
-          <div className="space-y-3 text-sm text-[color:var(--ds-text-strong)]">
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-                Reward
-              </p>
-              <p className="font-medium">
-                {data.reward?.name ||
-                  data.redemption?.rewardName ||
-                  "Unknown reward"}
-                {typeof data.reward?.pointsCost === "number" ||
-                typeof data.redemption?.pointsCost === "number" ? (
-                  <span className="text-xs text-[color:var(--ds-text-muted)]">
-                    {" "}
-                    (
-                    {(
-                      data.reward?.pointsCost ??
-                      data.redemption?.pointsCost ??
-                      0
-                    ).toLocaleString()}{" "}
-                    pts)
-                  </span>
-                ) : null}
-              </p>
+        <Card>
+          <CardContent className="space-y-4 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">
+                {data.redemption?.code ?? code}
+              </span>
+              <Badge
+                variant={
+                  data.redemption?.status === "used"
+                    ? "default"
+                    : data.redemption?.status === "rejected"
+                    ? "destructive"
+                    : "secondary"
+                }
+                className={
+                  data.redemption?.status === "used"
+                    ? "bg-green-500/20 text-green-600 border-green-500/30"
+                    : ""
+                }
+              >
+                {data.redemption?.status ?? "unknown"}
+              </Badge>
             </div>
 
-            {data.reward?.description ? (
-              <SurfaceCard className="rounded-xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-3 text-xs text-[color:var(--ds-text-muted)]">
-                <strong className="block text-[color:var(--ds-text-subtle)]">
-                  Description
-                </strong>
-                <p className="mt-1 whitespace-pre-line">
-                  {data.reward.description}
+            <div className="space-y-3 text-sm text-foreground">
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Reward
                 </p>
-              </SurfaceCard>
-            ) : null}
-
-            {data.reward?.instructions ? (
-              <SurfaceCard className="rounded-xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-3 text-xs text-[color:var(--ds-text-muted)]">
-                <strong className="block text-[color:var(--ds-text-subtle)]">
-                  Partner instructions
-                </strong>
-                <p className="mt-1 whitespace-pre-line">
-                  {data.reward.instructions}
+                <p className="font-medium">
+                  {data.reward?.name ||
+                    data.redemption?.rewardName ||
+                    "Unknown reward"}
+                  {typeof data.reward?.pointsCost === "number" ||
+                  typeof data.redemption?.pointsCost === "number" ? (
+                    <span className="text-xs text-muted-foreground">
+                      {" "}
+                      (
+                      {(
+                        data.reward?.pointsCost ??
+                        data.redemption?.pointsCost ??
+                        0
+                      ).toLocaleString()}{" "}
+                      pts)
+                    </span>
+                  ) : null}
                 </p>
-              </SurfaceCard>
-            ) : null}
+              </div>
 
-            <div className="space-y-1 text-sm text-[color:var(--ds-text-muted)]">
-              <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--ds-text-subtle)]">
-                Booking
-              </p>
-              <p className="font-medium text-[color:var(--ds-text-strong)]">
-                {data.booking?.email ?? "—"}
-              </p>
-              <p>{data.booking?.ticketType ?? "—"}</p>
+              {data.reward?.description ? (
+                <Card className="bg-muted/50">
+                  <CardContent className="p-3 text-xs text-muted-foreground">
+                    <strong className="block text-muted-foreground">
+                      Description
+                    </strong>
+                    <p className="mt-1 whitespace-pre-line">
+                      {data.reward.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : null}
+
+              {data.reward?.instructions ? (
+                <Card className="bg-muted/50">
+                  <CardContent className="p-3 text-xs text-muted-foreground">
+                    <strong className="block text-muted-foreground">
+                      Partner instructions
+                    </strong>
+                    <p className="mt-1 whitespace-pre-line">
+                      {data.reward.instructions}
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : null}
+
+              <div className="space-y-1 text-sm text-muted-foreground">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Booking
+                </p>
+                <p className="font-medium text-foreground">
+                  {data.booking?.email ?? "—"}
+                </p>
+                <p>{data.booking?.ticketType ?? "—"}</p>
+              </div>
             </div>
-          </div>
 
-          <div className="flex flex-wrap gap-2">
-            <DesignButton
-              type="button"
-              variant="primary"
-              size="sm"
-              onClick={() => act("process")}
-              disabled={!data.canProcess || processing}
-            >
-              Process
-            </DesignButton>
-            <DesignButton
-              type="button"
-              variant="destructive"
-              size="sm"
-              onClick={() => act("reject")}
-              disabled={processing}
-            >
-              Reject
-            </DesignButton>
-          </div>
-        </SurfaceCard>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => act("process")}
+                disabled={!data.canProcess || processing}
+              >
+                Process
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => act("reject")}
+                disabled={processing}
+              >
+                Reject
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       ) : null}
     </div>
   );

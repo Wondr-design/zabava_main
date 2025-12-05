@@ -44,23 +44,23 @@ export const DesignRadioCard = React.forwardRef<
     <RadioGroupPrimitive.Item
       ref={ref}
       className={cn(
-        "flex min-w-[200px] flex-1 cursor-pointer flex-col gap-2 rounded-3xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] p-4 text-left shadow-none transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ds-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--ds-surface-base)] data-[state=checked]:border-[color:var(--ds-primary)] data-[state=checked]:shadow-none",
+        "flex min-w-[200px] flex-1 cursor-pointer flex-col gap-2 rounded-lg border border-border bg-card p-4 text-left transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[state=checked]:border-primary data-[state=checked]:bg-accent",
         className,
       )}
       {...props}
     >
       <div className="flex items-center gap-3">
-        <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-full border-2 border-[color:var(--ds-border-strong)] bg-[color:var(--ds-surface-muted)] transition-colors data-[state=checked]:border-[color:var(--ds-primary)]">
-          <RadioGroupPrimitive.Indicator className="relative flex size-5 items-center justify-center">
-            <span className="absolute size-2.5 rounded-full bg-[color:var(--ds-primary)]" />
+        <span className="inline-flex size-4 shrink-0 items-center justify-center rounded-full border border-primary text-primary">
+          <RadioGroupPrimitive.Indicator className="relative flex size-4 items-center justify-center">
+            <span className="absolute size-2 rounded-full bg-current" />
           </RadioGroupPrimitive.Indicator>
         </span>
         <div>
-          <div className="text-sm font-semibold text-[color:var(--ds-text-strong)]">
+          <div className="text-sm font-medium text-foreground">
             {title}
           </div>
           {description ? (
-            <p className="text-xs text-[color:var(--ds-text-muted)]">{description}</p>
+            <p className="text-xs text-muted-foreground">{description}</p>
           ) : null}
         </div>
       </div>

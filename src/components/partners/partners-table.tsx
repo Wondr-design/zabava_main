@@ -4,7 +4,7 @@ import {
   DashboardDataTable,
   type DashboardTableColumn,
 } from "@/components/dashboard/table/dashboard-data-table";
-import { StatusPill } from "@/components/design-system";
+import { Badge } from "@/components/ui/badge";
 import type { PartnerOverview } from "@/lib/data/analytics";
 import { formatCurrencyCZK } from "@/lib/format/currency";
 import { formatDate } from "@/lib/format/date";
@@ -19,19 +19,19 @@ const numberFormatter = new Intl.NumberFormat("en-US");
 
 function ListingTierBadge({ label }: { label: string }) {
   return (
-    <span className="inline-flex items-center rounded-full border border-[color:var(--ds-border-subtle)]/80 bg-[color:var(--ds-surface-muted)] px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-[color:var(--ds-text-muted)]">
+    <Badge variant="secondary" className="text-[0.65rem] uppercase tracking-widest">
       {label}
-    </span>
+    </Badge>
   );
 }
 
 function StatChip({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-card)] px-3 py-1 text-center">
-      <p className="text-sm font-semibold text-[color:var(--ds-text-strong)]">
+    <div className="rounded-lg border border-border bg-card px-3 py-1 text-center">
+      <p className="text-sm font-semibold text-foreground">
         {numberFormatter.format(value)}
       </p>
-      <p className="text-[0.65rem] uppercase tracking-[0.25em] text-[color:var(--ds-text-muted)]">
+      <p className="text-[0.65rem] uppercase tracking-widest text-muted-foreground">
         {label}
       </p>
     </div>
@@ -55,28 +55,29 @@ const columns: DashboardTableColumn<PartnerOverview>[] = [
       return (
         <div className="space-y-1 text-sm">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="font-semibold text-[color:var(--ds-text-strong)]">
+            <p className="font-semibold text-foreground">
               {partner.display_name || "Unnamed partner"}
             </p>
             {partner.listingTierLabel ? (
               <ListingTierBadge label={partner.listingTierLabel} />
             ) : null}
           </div>
-          <p className="text-xs text-[color:var(--ds-text-muted)]">
+          <p className="text-xs text-muted-foreground">
             {partner.id} · {partner.type}
           </p>
-          <p className="text-xs text-[color:var(--ds-text-muted)]">
+          <p className="text-xs text-muted-foreground">
             {partner.businessName || partner.companyName || "—"}
           </p>
           {warnings.length > 0 ? (
             <div className="flex flex-wrap gap-1 pt-1">
               {warnings.map((warning) => (
-                <span
+                <Badge
                   key={warning}
-                  className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-amber-700"
+                  variant="outline"
+                  className="border-amber-500/50 bg-amber-500/10 text-[0.65rem] text-amber-700 uppercase tracking-widest"
                 >
                   {warning}
-                </span>
+                </Badge>
               ))}
             </div>
           ) : null}
@@ -90,14 +91,14 @@ const columns: DashboardTableColumn<PartnerOverview>[] = [
     header: "Contact",
     accessor: (partner) => (
       <div className="space-y-1 text-sm">
-        <p className="font-medium text-[color:var(--ds-text-strong)]">
+        <p className="font-medium text-foreground">
           {partner.contactName || "Not set"}
         </p>
-        <p className="text-xs text-[color:var(--ds-text-muted)]">
+        <p className="text-xs text-muted-foreground">
           {partner.contactEmail ? (
             <a
               href={`mailto:${partner.contactEmail}`}
-              className="text-[color:var(--ds-primary)] underline-offset-2 hover:underline"
+              className="text-primary underline-offset-2 hover:underline"
             >
               {partner.contactEmail}
             </a>
@@ -105,7 +106,7 @@ const columns: DashboardTableColumn<PartnerOverview>[] = [
             "No email"
           )}
         </p>
-        <p className="text-xs text-[color:var(--ds-text-muted)]">
+        <p className="text-xs text-muted-foreground">
           {partner.contactPhone || "No phone"}
         </p>
       </div>
@@ -120,18 +121,18 @@ const columns: DashboardTableColumn<PartnerOverview>[] = [
         typeof partner.discountRate === "number" && partner.discountRate > 0;
       return (
         <div className="space-y-1 text-sm">
-          <p className="text-base font-semibold text-[color:var(--ds-text-strong)]">
+          <p className="text-base font-semibold text-foreground">
             {hasDiscount
               ? `Discount ${partner.discountRate?.toFixed(0)}%`
               : "No customer discount"}
           </p>
-          <p className="text-xs text-[color:var(--ds-text-muted)]">
+          <p className="text-xs text-muted-foreground">
             Commission {partner.commissionRate ?? "—"}% ·{" "}
             {partner.commissionBasis === "original"
               ? "Original price"
               : "Discounted price"}
           </p>
-          <p className="text-xs text-[color:var(--ds-text-muted)]">
+          <p className="text-xs text-muted-foreground">
             Monthly fee {formatCurrencyCZK(partner.monthlyFee)}
           </p>
         </div>
@@ -156,19 +157,25 @@ const columns: DashboardTableColumn<PartnerOverview>[] = [
     header: "Status",
     accessor: (partner) => (
       <div className="space-y-1 text-sm">
-        <StatusPill
-          tone={
+        <Badge
+          variant={
             partner.status === "active"
-              ? "success"
+              ? "default"
               : partner.status === "pending"
-              ? "warning"
-              : "neutral"
+              ? "secondary"
+              : "outline"
           }
-          size="sm"
+          className={
+            partner.status === "active"
+              ? "bg-green-500/20 text-green-600 border-green-500/30"
+              : partner.status === "pending"
+              ? "bg-amber-500/20 text-amber-600 border-amber-500/30"
+              : ""
+          }
         >
           {partner.status}
-        </StatusPill>
-        <p className="text-[0.65rem] text-[color:var(--ds-text-muted)]">
+        </Badge>
+        <p className="text-[0.65rem] text-muted-foreground">
           Onboarded {formatDate(partner.created_at)}
         </p>
       </div>

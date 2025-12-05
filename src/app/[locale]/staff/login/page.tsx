@@ -2,13 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useLocalizedRouter } from "@/i18n/use-localized-router";
-import {
-  DesignButton,
-  DesignFormField,
-  DesignInput,
-  SurfaceCard,
-  StatusPill,
-} from "@/components/design-system";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ResetPasswordPanel } from "@/components/auth/reset-password-panel";
 import { useEmailVerification } from "@/hooks/use-email-verification";
 
@@ -118,120 +116,134 @@ export default function StaffLoginPage() {
   }
 
   return (
-    <SurfaceCard className="w-full max-w-2xl rounded-3xl border border-[color:var(--ds-border-subtle)] p-6 shadow-[var(--ds-shadow-soft)]">
-      <form onSubmit={onSubmit} className="space-y-5">
-        <header className="space-y-2">
-          <h1 className="text-xl font-semibold text-[color:var(--ds-text-strong)]">
-            Staff login
-          </h1>
-          <p className="text-sm text-[color:var(--ds-text-muted)]">
-            Use the email and password created during your invite onboarding.
+    <Card className="w-full max-w-2xl">
+      <CardContent className="p-6">
+        <form onSubmit={onSubmit} className="space-y-5">
+          <header className="space-y-2">
+            <h1 className="text-xl font-semibold text-foreground">
+              Staff login
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Use the email and password created during your invite onboarding.
+            </p>
+          </header>
+          {error ? (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : null}
+          {notice ? (
+            <Alert className="border-green-500/40 bg-green-500/10 text-green-600">
+              <AlertDescription>{notice}</AlertDescription>
+            </Alert>
+          ) : null}
+          <div className="space-y-2">
+            <Label htmlFor="email">
+              Email <span className="text-destructive">*</span>
+            </Label>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                placeholder="name@example.com"
+                disabled={codeRequesting}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleRequestCode}
+                disabled={codeRequesting || !normalizedEmail.length}
+              >
+                {codeRequesting ? "Sending…" : "Send code"}
+              </Button>
+            </div>
+            {verificationError ? (
+              <p className="text-xs text-destructive mt-2">
+                {verificationError}
+              </p>
+            ) : null}
+            {expiresAt && !isEmailVerified ? (
+              <p className="text-xs text-muted-foreground mt-1">
+                Code expires at {new Date(expiresAt).toLocaleTimeString()}
+              </p>
+            ) : null}
+            {isEmailVerified ? (
+              <p className="text-xs text-green-600 mt-1">
+                Email verified.
+              </p>
+            ) : null}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="code">
+              Verification code <span className="text-destructive">*</span>
+            </Label>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Input
+                id="code"
+                type="text"
+                inputMode="numeric"
+                value={codeInput}
+                onChange={(e) => setCodeInput(e.target.value)}
+                placeholder="Enter the code"
+                maxLength={8}
+                disabled={isEmailVerified}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleVerifyCode}
+                disabled={
+                  isEmailVerified ||
+                  codeVerifying ||
+                  !codeInput.trim() ||
+                  !normalizedEmail.length
+                }
+              >
+                {codeVerifying ? "Verifying…" : isEmailVerified ? "Verified" : "Verify"}
+              </Button>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">
+              Password <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              placeholder="••••••••"
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={submitting}>
+            {submitting ? "Signing in…" : "Sign in"}
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Need access? Ask your partner admin for a new staff invite link.
           </p>
-        </header>
-        {error ? (
-          <StatusPill tone="danger" className="w-full justify-center">
-            {error}
-          </StatusPill>
-        ) : null}
-        {notice ? (
-          <StatusPill tone="success" className="w-full justify-center">
-            {notice}
-          </StatusPill>
-        ) : null}
-        <DesignFormField label="Email" required>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <DesignInput
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              placeholder="name@example.com"
-              disabled={codeRequesting}
+          <button
+            type="button"
+            onClick={() => {
+              setShowReset((prev) => !prev);
+              setError("");
+            }}
+            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            {showReset ? "Hide password reset" : "Forgot password?"}
+          </button>
+          {showReset ? (
+            <ResetPasswordPanel
+              role="staff"
+              onSuccess={handleResetSuccess}
+              className="mt-2"
             />
-            <DesignButton
-              type="button"
-              variant="secondary"
-              onClick={handleRequestCode}
-              disabled={codeRequesting || !normalizedEmail.length}
-            >
-              {codeRequesting ? "Sending…" : "Send code"}
-            </DesignButton>
-          </div>
-          {verificationError ? (
-            <p className="text-xs text-[color:var(--ds-danger)] mt-2">
-              {verificationError}
-            </p>
           ) : null}
-          {expiresAt && !isEmailVerified ? (
-            <p className="text-xs text-[color:var(--ds-text-muted)] mt-1">
-              Code expires at {new Date(expiresAt).toLocaleTimeString()}
-            </p>
-          ) : null}
-          {isEmailVerified ? (
-            <p className="text-xs text-[color:var(--ds-success)] mt-1">
-              Email verified.
-            </p>
-          ) : null}
-        </DesignFormField>
-        <DesignFormField label="Verification code" required>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <DesignInput
-              type="text"
-              inputMode="numeric"
-              value={codeInput}
-              onChange={(e) => setCodeInput(e.target.value)}
-              placeholder="Enter the code"
-              maxLength={8}
-              disabled={isEmailVerified}
-            />
-            <DesignButton
-              type="button"
-              variant="secondary"
-              onClick={handleVerifyCode}
-              disabled={
-                isEmailVerified ||
-                codeVerifying ||
-                !codeInput.trim() ||
-                !normalizedEmail.length
-              }
-            >
-              {codeVerifying ? "Verifying…" : isEmailVerified ? "Verified" : "Verify"}
-            </DesignButton>
-          </div>
-        </DesignFormField>
-        <DesignFormField label="Password" required>
-          <DesignInput
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-            placeholder="••••••••"
-          />
-        </DesignFormField>
-        <DesignButton type="submit" className="w-full" disabled={submitting}>
-          {submitting ? "Signing in…" : "Sign in"}
-        </DesignButton>
-        <p className="text-xs text-[color:var(--ds-text-muted)]">
-          Need access? Ask your partner admin for a new staff invite link.
-        </p>
-        <button
-          type="button"
-          onClick={() => {
-            setShowReset((prev) => !prev);
-            setError("");
-          }}
-          className="text-sm font-medium text-[color:var(--ds-primary)] underline-offset-4 hover:underline"
-        >
-          {showReset ? "Hide password reset" : "Forgot password?"}
-        </button>
-        {showReset ? (
-          <ResetPasswordPanel
-            role="staff"
-            onSuccess={handleResetSuccess}
-            className="mt-2"
-          />
-        ) : null}
-      </form>
-    </SurfaceCard>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

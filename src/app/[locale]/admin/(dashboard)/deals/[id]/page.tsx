@@ -6,7 +6,7 @@ import {
   type PartnerOption,
 } from "@/components/admin/deals/deal-create-form";
 import { PageHeader } from "@/components/design-system/page-header";
-import { DesignButton } from "@/components/design-system";
+import { Button } from "@/components/ui/button";
 import { LocalizedLink } from "@/components/ui/localized-link";
 import { getDealWithMeta } from "@/lib/data/flash-deals";
 import { listPartnerMetas } from "@/lib/data/partners";
@@ -175,16 +175,16 @@ export default async function AdminDealDetailPage({
         description={
           <div className="space-y-1">
             <p>Review the current configuration for this deal.</p>
-            <p className="text-xs text-[color:var(--ds-text-muted)]">
-              Partner: <span className="font-semibold text-[color:var(--ds-text-strong)]">{partnerLabel}</span>{" "}
-              <span className="font-mono text-[11px] text-[color:var(--ds-text-subtle)]">({deal.deal.partner_id})</span>
+            <p className="text-xs text-muted-foreground">
+              Partner: <span className="font-semibold text-foreground">{partnerLabel}</span>{" "}
+              <span className="font-mono text-[11px] text-muted-foreground">({deal.deal.partner_id})</span>
             </p>
           </div>
         }
         actions={
-          <DesignButton asChild size="sm">
+          <Button asChild size="sm">
             <LocalizedLink href={`/admin/deals/${id}/edit`}>Edit deal</LocalizedLink>
-          </DesignButton>
+          </Button>
         }
       />
 

@@ -68,11 +68,11 @@ type FormattedDealItem = AdminDealListItem & {
 };
 
 const SUMMARY_TONE_TEXT: Record<StatusTone, string> = {
-  neutral: "text-[color:var(--ds-text-strong)]",
-  success: "text-[color:var(--ds-primary)]",
-  warning: "text-[color:var(--ds-warning)]",
-  danger: "text-[color:var(--ds-danger)]",
-  primary: "text-[color:var(--ds-primary)]",
+  neutral: "text-foreground",
+  success: "text-primary",
+  warning: "text-warning",
+  danger: "text-destructive",
+  primary: "text-primary",
 };
 
 export interface AdminDealListItem {
@@ -416,10 +416,10 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
         header: "Partner",
         accessor: (deal) => (
           <div className="flex flex-col gap-1">
-            <span className="font-semibold text-[color:var(--ds-text-strong)]">
+            <span className="font-semibold text-foreground">
               {deal.partnerName ?? deal.partnerId}
             </span>
-            <span className="font-mono text-[11px] text-[color:var(--ds-text-subtle)]">
+            <span className="font-mono text-[11px] text-muted-foreground">
               {deal.partnerId}
             </span>
           </div>
@@ -431,10 +431,10 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
         header: "Deal",
         accessor: (deal) => (
           <div className="flex flex-col gap-1">
-            <span className="font-semibold text-[color:var(--ds-text-strong)]">
+            <span className="font-semibold text-foreground">
               {deal.title}
             </span>
-            <span className="text-xs text-[color:var(--ds-text-muted)]">
+            <span className="text-xs text-muted-foreground">
               Min visitors: {deal.minVisitors}
             </span>
           </div>
@@ -465,7 +465,7 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
         id: "validity",
         header: "Validity",
         accessor: (deal) => (
-          <span className="text-xs text-[color:var(--ds-text-muted)]">
+          <span className="text-xs text-muted-foreground">
             {deal.validRange}
           </span>
         ),
@@ -482,7 +482,7 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
                 ? "warning"
                 : "neutral";
           return (
-            <div className="space-y-1 text-xs text-[color:var(--ds-text-muted)]">
+            <div className="space-y-1 text-xs text-muted-foreground">
               <span>{deal.qrStats}</span>
               {typeof deal.qrScanRate === "number" ? (
                 <StatusPill tone="success" size="sm" className="w-max">
@@ -521,7 +521,7 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
               ))}
             </div>
           ) : (
-            <span className="text-xs text-[color:var(--ds-text-muted)]">—</span>
+            <span className="text-xs text-muted-foreground">—</span>
           ),
         width: "15%",
       },
@@ -534,14 +534,14 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
               {deal.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex rounded-full bg-[color:var(--ds-surface-muted)] px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--ds-text-muted)]"
+                  className="inline-flex rounded-full bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
                 >
                   {tag}
                 </span>
               ))}
             </div>
           ) : (
-            <span className="text-xs text-[color:var(--ds-text-muted)]">—</span>
+            <span className="text-xs text-muted-foreground">—</span>
           ),
         width: "15%",
       },
@@ -698,7 +698,7 @@ export function DealsDashboard({ initialItems }: DealsDashboardProps) {
           </DesignSelectContent>
         </DesignSelect>
       </div>
-      <span className="text-xs text-[color:var(--ds-text-muted)]">
+      <span className="text-xs text-muted-foreground">
         {loading
           ? "Loading deals…"
           : `Showing ${formattedItems.length} deal${
@@ -832,8 +832,8 @@ function DesignSummaryTile({
 }) {
   const toneClass = SUMMARY_TONE_TEXT[tone] ?? SUMMARY_TONE_TEXT.neutral;
   return (
-    <SurfaceCard className="rounded-3xl border border-[color:var(--ds-border-subtle)] p-5">
-      <p className="text-xs uppercase tracking-[0.18em] text-[color:var(--ds-text-subtle)]">
+    <SurfaceCard className="rounded-lg border border-border p-5">
+      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
         {label}
       </p>
       <p className={cn("text-3xl font-semibold", toneClass)}>{value}</p>

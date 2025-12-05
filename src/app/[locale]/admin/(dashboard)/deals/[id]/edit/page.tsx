@@ -142,9 +142,9 @@ export default async function AdminDealEditPage({
         description={
           <div className="space-y-1">
             <p>Update deal configuration, visibility, and conditions.</p>
-            <p className="text-xs text-[color:var(--ds-text-muted)]">
-              Partner: <span className="font-semibold text-[color:var(--ds-text-strong)]">{partnerLabel}</span>{" "}
-              <span className="font-mono text-[11px] text-[color:var(--ds-text-subtle)]">({deal.deal.partner_id})</span>
+            <p className="text-xs text-muted-foreground">
+              Partner: <span className="font-semibold text-foreground">{partnerLabel}</span>{" "}
+              <span className="font-mono text-[11px] text-muted-foreground">({deal.deal.partner_id})</span>
             </p>
           </div>
         }

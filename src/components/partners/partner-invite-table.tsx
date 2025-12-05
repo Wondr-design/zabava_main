@@ -66,10 +66,10 @@ export function PartnerInviteTable({
       header: "Invitee",
       accessor: (invite) => (
         <div className="space-y-1 text-sm">
-          <p className="font-semibold text-[color:var(--ds-text-strong)]">
+          <p className="font-semibold text-foreground">
             {invite.name || invite.email || "—"}
           </p>
-          <p className="text-xs text-[color:var(--ds-text-muted)]">
+          <p className="text-xs text-muted-foreground">
             {invite.email || "No email"}
           </p>
         </div>
@@ -87,22 +87,22 @@ export function PartnerInviteTable({
         if (!partner) return invite.partnerId;
         return (
           <div className="space-y-1 text-sm">
-            <p className="font-semibold text-[color:var(--ds-text-strong)]">
+            <p className="font-semibold text-foreground">
               {partner.display_name || partner.id}
             </p>
-            <p className="text-xs text-[color:var(--ds-text-muted)]">
+            <p className="text-xs text-muted-foreground">
               {partner.listingTierLabel ?? "No tier"}
             </p>
-            <p className="text-xs text-[color:var(--ds-text-muted)]">
+            <p className="text-xs text-muted-foreground">
               Monthly fee:{" "}
               {partner.monthlyFee !== null
                 ? formatCurrencyCZK(partner.monthlyFee)
                 : "—"}
             </p>
-            <p className="text-xs text-[color:var(--ds-text-muted)]">
+            <p className="text-xs text-muted-foreground">
               Contact: {partner.contactName || "Not set"}
             </p>
-            <p className="text-xs text-[color:var(--ds-text-muted)]">
+            <p className="text-xs text-muted-foreground">
               {partner.contactEmail || "No email"}
             </p>
           </div>
@@ -127,11 +127,11 @@ export function PartnerInviteTable({
       header: "Status",
       accessor: (invite) =>
         invite.used ? (
-          <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+          <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
             Used
           </span>
         ) : (
-          <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+          <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
             Pending
           </span>
         ),
@@ -145,12 +145,12 @@ export function PartnerInviteTable({
           <button
             type="button"
             onClick={() => void copyInviteLink(invite)}
-            className="rounded-full border border-[color:var(--ds-border-subtle)] px-3 py-1 text-xs font-semibold text-[color:var(--ds-text-strong)] transition hover:border-[color:var(--ds-primary)]"
+            className="rounded-full border border-border px-3 py-1 text-xs font-semibold text-foreground transition hover:border-primary"
           >
             {copiedToken === invite.token ? "Copied!" : "Copy link"}
           </button>
         ) : (
-          <span className="text-xs text-[color:var(--ds-text-muted)]">
+          <span className="text-xs text-muted-foreground">
             Unavailable
           </span>
         ),
@@ -165,9 +165,8 @@ export function PartnerInviteTable({
             <input type="hidden" name="token" value={invite.token} />
             <Button
               type="submit"
-              variant="outline"
+              variant="destructive"
               size="sm"
-              className="rounded-full border border-[color:var(--ds-danger)]/40 text-[color:var(--ds-danger)] hover:border-[color:var(--ds-danger)]"
             >
               Delete
             </Button>
@@ -182,7 +181,7 @@ export function PartnerInviteTable({
   return (
     <div className="space-y-3">
       {copyError ? (
-        <div className="rounded-2xl border border-[color:var(--ds-danger)]/40 bg-[color:var(--ds-danger)]/10 px-4 py-3 text-sm text-[color:var(--ds-danger)]">
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {copyError}
         </div>
       ) : null}

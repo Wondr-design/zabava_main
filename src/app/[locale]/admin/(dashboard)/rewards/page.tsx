@@ -172,7 +172,7 @@ export default function AdminRewardsPage() {
         />
         <SectionCard>
           <div className="py-12 text-center">
-            <p className="text-sm font-medium text-[color:var(--ds-text-destructive)]">
+            <p className="text-sm font-medium text-destructive">
               {error}
             </p>
             <DesignButton
@@ -213,60 +213,60 @@ export default function AdminRewardsPage() {
         <SectionCard className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-[color:var(--ds-text-muted)]">
+              <p className="text-sm font-medium text-muted-foreground">
                 Total rewards
               </p>
-              <p className="mt-1 text-2xl font-semibold text-[color:var(--ds-text-strong)]">
+              <p className="mt-1 text-2xl font-semibold text-foreground">
                 {statistics.total}
               </p>
             </div>
-            <div className="rounded-full bg-[color:var(--ds-primary)]/10 p-3">
-              <Sparkles className="h-5 w-5 text-[color:var(--ds-primary)]" />
+            <div className="rounded-full bg-primary/10 p-3">
+              <Sparkles className="h-5 w-5 text-primary" />
             </div>
           </div>
         </SectionCard>
         <SectionCard className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-[color:var(--ds-text-muted)]">
+              <p className="text-sm font-medium text-muted-foreground">
                 Active rewards
               </p>
-              <p className="mt-1 text-2xl font-semibold text-[color:var(--ds-text-strong)]">
+              <p className="mt-1 text-2xl font-semibold text-foreground">
                 {statistics.active}
               </p>
             </div>
-            <div className="rounded-full bg-[color:var(--ds-success)]/10 p-3">
-              <TrendingUp className="h-5 w-5 text-[color:var(--ds-success)]" />
+            <div className="rounded-full bg-emerald-500/10 p-3">
+              <TrendingUp className="h-5 w-5 text-emerald-500" />
             </div>
           </div>
         </SectionCard>
         <SectionCard className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-[color:var(--ds-text-muted)]">
+              <p className="text-sm font-medium text-muted-foreground">
                 Total points value
               </p>
-              <p className="mt-1 text-2xl font-semibold text-[color:var(--ds-text-strong)]">
+              <p className="mt-1 text-2xl font-semibold text-foreground">
                 {statistics.totalPoints.toLocaleString()}
               </p>
             </div>
-            <div className="rounded-full bg-[color:var(--ds-warning)]/10 p-3">
-              <Package className="h-5 w-5 text-[color:var(--ds-warning)]" />
+            <div className="rounded-full bg-amber-500/10 p-3">
+              <Package className="h-5 w-5 text-amber-500" />
             </div>
           </div>
         </SectionCard>
         <SectionCard className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-[color:var(--ds-text-muted)]">
+              <p className="text-sm font-medium text-muted-foreground">
                 Total stock
               </p>
-              <p className="mt-1 text-2xl font-semibold text-[color:var(--ds-text-strong)]">
+              <p className="mt-1 text-2xl font-semibold text-foreground">
                 {statistics.totalStock.toLocaleString()}
               </p>
             </div>
-            <div className="rounded-full bg-[color:var(--ds-info)]/10 p-3">
-              <Users className="h-5 w-5 text-[color:var(--ds-info)]" />
+            <div className="rounded-full bg-sky-500/10 p-3">
+              <Users className="h-5 w-5 text-sky-500" />
             </div>
           </div>
         </SectionCard>
@@ -279,7 +279,7 @@ export default function AdminRewardsPage() {
       >
         <div className="space-y-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--ds-text-subtle)]" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <DesignInput
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -289,7 +289,7 @@ export default function AdminRewardsPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium text-[color:var(--ds-text-muted)]">
+            <span className="text-sm font-medium text-muted-foreground">
               Status:
             </span>
             <FilterChip
@@ -311,7 +311,7 @@ export default function AdminRewardsPage() {
               Inactive
             </FilterChip>
 
-            <span className="ml-4 text-sm font-medium text-[color:var(--ds-text-muted)]">
+            <span className="ml-4 text-sm font-medium text-muted-foreground">
               Category:
             </span>
             <FilterChip
@@ -376,11 +376,11 @@ export default function AdminRewardsPage() {
           </div>
         ) : filteredRewards.length === 0 ? (
           <div className="py-16 text-center">
-            <Sparkles className="mx-auto h-12 w-12 text-[color:var(--ds-text-subtle)]" />
-            <h3 className="mt-4 text-lg font-semibold text-[color:var(--ds-text-strong)]">
+            <Sparkles className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h3 className="mt-4 text-lg font-semibold text-foreground">
               No rewards found
             </h3>
-            <p className="mt-2 text-sm text-[color:var(--ds-text-muted)]">
+            <p className="mt-2 text-sm text-muted-foreground">
               {hasActiveFilters
                 ? "Try adjusting your filters or search query."
                 : "Get started by creating your first reward."}
@@ -453,11 +453,11 @@ export default function AdminRewardsPage() {
                       >
                         <DesignTableCell>
                           <div>
-                            <div className="font-medium text-[color:var(--ds-text-strong)]">
+                            <div className="font-medium text-foreground">
                               {reward.name}
                             </div>
                             {reward.description && (
-                              <div className="mt-1 text-xs text-[color:var(--ds-text-muted)] line-clamp-1">
+                              <div className="mt-1 text-xs text-muted-foreground line-clamp-1">
                                 {reward.description}
                               </div>
                             )}
@@ -465,28 +465,28 @@ export default function AdminRewardsPage() {
                         </DesignTableCell>
                         <DesignTableCell>
                           <div className="flex items-center gap-1.5">
-                            <span className="font-semibold text-[color:var(--ds-text-strong)]">
+                            <span className="font-semibold text-foreground">
                               {reward.pointsCost.toLocaleString()}
                             </span>
-                            <span className="text-xs text-[color:var(--ds-text-subtle)]">
+                            <span className="text-xs text-muted-foreground">
                               pts
                             </span>
                           </div>
                         </DesignTableCell>
                         <DesignTableCell>
-                          <span className="text-sm text-[color:var(--ds-text-muted)]">
+                          <span className="text-sm text-muted-foreground">
                             {categoryLabel}
                           </span>
                         </DesignTableCell>
                         <DesignTableCell>
-                          <span className="text-sm text-[color:var(--ds-text-muted)]">
+                          <span className="text-sm text-muted-foreground">
                             {stockLabel}
                           </span>
                         </DesignTableCell>
                         <DesignTableCell>
                           <div className="flex items-center gap-1.5">
-                            <Users className="h-3.5 w-3.5 text-[color:var(--ds-text-subtle)]" />
-                            <span className="text-sm text-[color:var(--ds-text-muted)]">
+                            <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">
                               {visibilityLabel}
                             </span>
                           </div>
@@ -522,7 +522,7 @@ export default function AdminRewardsPage() {
                               onClick={() =>
                                 handleArchive(reward.id, reward.name)
                               }
-                              className="opacity-0 transition-opacity group-hover:opacity-100 text-[color:var(--ds-text-destructive)] hover:bg-[color:var(--ds-surface-destructive)]/10"
+                              className="opacity-0 transition-opacity group-hover:opacity-100 text-destructive hover:bg-destructive/10"
                               aria-label="Archive reward"
                             >
                               <Archive className="h-4 w-4" />

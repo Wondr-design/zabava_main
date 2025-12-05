@@ -469,7 +469,7 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
                 >
                   <div className="space-y-3">
                     {form.heroMediaUrl ? (
-                      <div className="relative h-48 overflow-hidden rounded-2xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)]">
+                      <div className="relative h-48 overflow-hidden rounded-lg border border-border bg-muted">
                         {inferMediaKind(form.heroMediaUrl) === "video" ? (
                           <video
                             className="h-full w-full object-cover"
@@ -583,7 +583,7 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
               >
                 <div className="space-y-2">
                   {availableTicketTypesForSubOptions.length === 0 ? (
-                    <p className="text-xs text-[color:var(--ds-text-muted)]">
+                    <p className="text-xs text-muted-foreground">
                       No other active ticket types available. Create other
                       ticket types first.
                     </p>
@@ -692,15 +692,15 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
                   }
                 />
               </DesignFormField>
-              <div className="flex flex-col justify-between rounded-lg border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] p-3">
+              <div className="flex flex-col justify-between rounded-lg border border-border bg-muted p-3">
                 <div className="space-y-1">
                   <label
                     htmlFor="global-active"
-                    className="text-sm font-medium text-[color:var(--ds-text-strong)]"
+                    className="text-sm font-medium text-foreground"
                   >
                     Active status
                   </label>
-                  <p className="text-xs text-[color:var(--ds-text-muted)]">
+                  <p className="text-xs text-muted-foreground">
                     Inactive values stay available historically but cannot be
                     selected in new records.
                   </p>
@@ -713,7 +713,7 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
                       setForm((prev) => ({ ...prev, isActive: checked }))
                     }
                   />
-                  <span className="text-sm text-[color:var(--ds-text-muted)]">
+                  <span className="text-sm text-muted-foreground">
                     {form.isActive ? "Active" : "Inactive"}
                   </span>
                 </div>
@@ -764,8 +764,8 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
           }
         >
           {currentValues.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] p-8 text-center">
-              <p className="text-sm text-[color:var(--ds-text-muted)]">
+            <div className="rounded-lg border border-dashed border-border bg-muted p-8 text-center">
+              <p className="text-sm text-muted-foreground">
                 No values yet. Add your first entry to make it available
                 throughout the admin experience.
               </p>
@@ -775,11 +775,11 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
               {currentValues.map((item) => (
                 <div
                   key={item.id}
-                  className="flex flex-col gap-4 rounded-xl border border-[color:var(--ds-border-subtle)] bg-[color:var(--ds-surface-muted)] p-4 transition hover:border-[color:var(--ds-border-strong)] sm:flex-row sm:items-start sm:justify-between"
+                  className="flex flex-col gap-4 rounded-lg border border-border bg-muted p-4 transition hover:border-foreground/30 sm:flex-row sm:items-start sm:justify-between"
                 >
                   <div className="flex-1 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold text-[color:var(--ds-text-strong)]">
+                      <span className="font-semibold text-foreground">
                         {item.label}
                       </span>
                       {item.key && (
@@ -798,7 +798,7 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
                       )}
                     </div>
                     {item.description && (
-                      <p className="text-sm text-[color:var(--ds-text-muted)]">
+                      <p className="text-sm text-muted-foreground">
                         {item.description}
                       </p>
                     )}
@@ -806,7 +806,7 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
                       Array.isArray(item.metadata?.subOptions) &&
                       (item.metadata.subOptions as unknown[]).length > 0 && (
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-xs font-medium text-[color:var(--ds-text-subtle)]">
+                          <span className="text-xs font-medium text-muted-foreground">
                             Sub-options:
                           </span>
                           {(item.metadata.subOptions as string[]).map(
@@ -827,7 +827,7 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
                           )}
                         </div>
                       )}
-                    <div className="flex items-center gap-4 text-xs text-[color:var(--ds-text-subtle)]">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span>Sort order: {item.sortOrder}</span>
                     </div>
                   </div>
