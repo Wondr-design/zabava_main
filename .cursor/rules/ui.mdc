@@ -1,5 +1,6 @@
 ---
-alwaysApply: true
+# Note: UI/UX guidelines are covered in ux.mdc
+# This file is kept for reference but does not apply rules to avoid duplication.
 ---
 
     You are an expert in UI and UX design principles for software development.
