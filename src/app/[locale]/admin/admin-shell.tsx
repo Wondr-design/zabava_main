@@ -76,13 +76,15 @@ function AdminNavigation() {
   }, []);
 
   return (
-    <nav className="space-y-6 text-sm font-medium text-muted-foreground">
+    <nav className="flex-1 space-y-6">
       {Object.entries(groupedNav).map(([section, items]) => (
-        <div key={section} className="space-y-2">
-          <div className="px-4 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground/70">
-            {section}
+        <div key={section} className="space-y-1">
+          <div className="px-3 py-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+              {section}
+            </span>
           </div>
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {items.map((item) => {
               const localizedHref = buildLocalizedPath(item.href, locale);
               const active =
@@ -92,19 +94,18 @@ function AdminNavigation() {
                 <LocalizedLink
                   key={item.href}
                   href={item.href}
-                  className={
-                    "flex items-center justify-between rounded-xl px-4 py-2.5 transition-all duration-200 " +
-                    (active
-                      ? "bg-primary/10 text-foreground ring-1 ring-primary/30 shadow-sm"
-                      : "hover:bg-muted/60 hover:text-foreground")
-                  }
+                  className={`
+                    group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150
+                    ${active
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                    }
+                  `}
                 >
-                  <span className="flex items-center gap-3">
-                    <Icon className="h-4 w-4 shrink-0" aria-hidden />
-                    <span>{item.label}</span>
-                  </span>
+                  <Icon className={`h-4 w-4 shrink-0 ${active ? "text-background" : "text-muted-foreground group-hover:text-foreground"}`} aria-hidden />
+                  <span>{item.label}</span>
                   {active && (
-                    <span className="h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden />
+                    <div className="absolute right-3 h-1.5 w-1.5 rounded-full bg-background" aria-hidden />
                   )}
                 </LocalizedLink>
               );
@@ -201,73 +202,93 @@ export function AdminShell({ children }: { children: ReactNode }) {
     <>
       <BodyThemeClass className="theme-vercel" />
       <div className="theme-vercel min-h-screen overflow-x-hidden bg-background text-foreground">
-        <aside className="bg-card lg:fixed lg:inset-y-0 lg:left-0 lg:w-[280px] lg:border-r lg:shadow-sm">
-        <div className="flex h-full flex-col gap-6 overflow-y-auto px-5 py-6">
-          <div className="space-y-3">
-            <LocalizedLink href="/admin/dashboard" className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/40">
-                ZA
+        <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-[260px] lg:flex-col lg:border-r lg:border-border/50 lg:bg-card/50">
+        {/* Sidebar Header */}
+        <div className="flex h-16 shrink-0 items-center border-b border-border/50 px-4">
+          <LocalizedLink href="/admin/dashboard" className="flex items-center gap-3 transition-opacity hover:opacity-80">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-foreground text-sm font-bold text-background">
+              Z
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-foreground">
+                Zabava
               </span>
-              <div className="flex flex-col">
-                <span className="text-xl font-semibold tracking-tight text-foreground">
-                  Zabava Admin
-                </span>
-                <p className="text-xs text-muted-foreground">
-                  Operations control centre
-                </p>
-              </div>
-            </LocalizedLink>
-          </div>
+              <span className="text-[11px] text-muted-foreground">
+                Admin Console
+              </span>
+            </div>
+          </LocalizedLink>
+        </div>
 
+        {/* Navigation */}
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 py-4">
           <AdminNavigation />
+        </div>
 
-          <div className="mt-auto space-y-4 text-sm text-muted-foreground">
-            <DesignButton
-              type="button"
-              variant="destructive"
-              onClick={handleSignOut}
-              disabled={signingOut}
-              className="w-full"
-            >
-              <LogOut className="h-4 w-4" aria-hidden />
-              {signingOut ? "Signing out…" : "Sign out"}
-            </DesignButton>
-          </div>
+        {/* Sidebar Footer */}
+        <div className="shrink-0 border-t border-border/50 p-3">
+          <button
+            type="button"
+            onClick={handleSignOut}
+            disabled={signingOut}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+          >
+            <LogOut className="h-4 w-4" aria-hidden />
+            {signingOut ? "Signing out…" : "Sign out"}
+          </button>
         </div>
       </aside>
 
-      <div className="flex min-h-screen flex-col lg:ml-[280px]">
+      <div className="flex min-h-screen flex-col lg:ml-[260px]">
         <header
-          className={`sticky top-0 z-10 border-b bg-background/95 backdrop-blur-sm transition-opacity duration-200 ${
+          className={`sticky top-0 z-10 border-b border-border/50 bg-background/80 backdrop-blur-xl transition-opacity duration-200 ${
             drawerOpen ? "pointer-events-none opacity-0" : "opacity-100"
           }`}
         >
-          <div className="flex flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between lg:px-6 lg:py-4">
-            <div className="relative flex w-full items-center gap-3 rounded-xl border border-border/60 bg-muted/50 px-4 py-2.5 transition-all focus-within:border-primary/40 focus-within:bg-background focus-within:shadow-sm">
-              <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-              <input
-                type="search"
-                name="q"
+          <div className="flex h-16 items-center justify-between gap-4 px-4 lg:px-6">
+            {/* Search Bar */}
+            <div className="flex flex-1 items-center gap-4">
+              <button
+                type="button"
+                className="group flex h-10 w-full max-w-md items-center gap-3 rounded-lg border border-border/60 bg-muted/40 px-3 text-sm text-muted-foreground transition-all hover:border-border hover:bg-muted/60"
                 aria-label="Search admin console"
-                className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
-                placeholder="Search partners, visits, rewards…"
-                disabled
-              />
+              >
+                <Search className="h-4 w-4 shrink-0" aria-hidden />
+                <span className="flex-1 text-left">Search...</span>
+                <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border border-border bg-background px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:flex">
+                  <span className="text-xs">⌘</span>K
+                </kbd>
+              </button>
             </div>
-            <div className="flex items-center gap-3">
+
+            {/* Right Section */}
+            <div className="flex items-center gap-2">
+              {/* Status indicator */}
+              <div className="hidden items-center gap-2 rounded-full border border-border/60 bg-muted/40 px-3 py-1.5 md:flex">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                </span>
+                <span className="text-xs font-medium text-muted-foreground">Live</span>
+              </div>
+
+              {/* Divider */}
+              <div className="hidden h-6 w-px bg-border/60 md:block" />
+
+              {/* Theme Toggle */}
               <ThemeToggle />
-              <div className="hidden items-center gap-3 sm:flex">
-                <div className="hidden flex-col text-right lg:flex">
-                  <span className="text-sm font-medium text-foreground">
-                    Admin Console
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    Secure session
-                  </span>
+
+              {/* Divider */}
+              <div className="hidden h-6 w-px bg-border/60 sm:block" />
+
+              {/* User Avatar */}
+              <div className="relative">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background">
+                  A
                 </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-sm font-semibold text-primary-foreground shadow-sm">
-                  ZA
-                </div>
+                <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3 items-center justify-center rounded-full border-2 border-background bg-emerald-500">
+                  <span className="sr-only">Online</span>
+                </span>
               </div>
             </div>
           </div>

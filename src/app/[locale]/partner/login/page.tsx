@@ -2,13 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useLocalizedRouter } from "@/i18n/use-localized-router";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ResetPasswordPanel } from "@/components/auth/reset-password-panel";
 import { useEmailVerification } from "@/hooks/use-email-verification";
+import { AuthLayout } from "@/components/auth/auth-layout";
+import {
+  AuthAlert,
+  AuthInput,
+  AuthSubmitButton,
+  EmailVerificationSection,
+} from "@/components/auth/auth-form";
+import { ResetPasswordPanel } from "@/components/auth/reset-password-panel";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 export default function PartnerLoginPage() {
   const router = useLocalizedRouter();
@@ -19,6 +23,7 @@ export default function PartnerLoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [showReset, setShowReset] = useState(false);
+
   const {
     email: verifiedEmail,
     requestCode,
@@ -31,10 +36,7 @@ export default function PartnerLoginPage() {
     reset: resetVerification,
   } = useEmailVerification({ type: "partner_login" });
 
-  const normalizedEmail = useMemo(
-    () => email.trim().toLowerCase(),
-    [email],
-  );
+  const normalizedEmail = useMemo(() => email.trim().toLowerCase(), [email]);
 
   const isEmailVerified =
     Boolean(verifiedAt) &&
@@ -42,16 +44,13 @@ export default function PartnerLoginPage() {
     normalizedEmail.length > 0;
 
   useEffect(() => {
-    if (
-      verifiedEmail &&
-      verifiedEmail.toLowerCase() !== normalizedEmail
-    ) {
+    if (verifiedEmail && verifiedEmail.toLowerCase() !== normalizedEmail) {
       resetVerification();
       setCodeInput("");
     }
   }, [normalizedEmail, verifiedEmail, resetVerification]);
 
-  async function handleRequestCode() {
+  const handleRequestCode = async () => {
     if (!normalizedEmail) {
       setError("Enter your email before requesting a code.");
       return;
@@ -59,9 +58,9 @@ export default function PartnerLoginPage() {
     setError("");
     await requestCode(normalizedEmail);
     setNotice("Verification code sent. Check your inbox.");
-  }
+  };
 
-  async function handleVerifyCode() {
+  const handleVerifyCode = async () => {
     if (!codeInput.trim()) {
       setError("Enter the verification code we emailed you.");
       return;
@@ -71,13 +70,14 @@ export default function PartnerLoginPage() {
     if (ok) {
       setNotice("Email verified. Continue signing in.");
     }
-  }
+  };
 
-  async function onSubmit(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (submitting) return;
     setError("");
     setNotice(null);
+
     if (!email || !password) {
       setError("Enter both email and password");
       return;
@@ -86,173 +86,119 @@ export default function PartnerLoginPage() {
       setError("Verify the code we emailed you before signing in.");
       return;
     }
+
     setSubmitting(true);
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase(), password, role: "partner" }),
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          password,
+          role: "partner",
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Login failed");
       router.replace("/partner/dashboard");
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Login failed";
+      const message = err instanceof Error ? err.message : "Login failed";
       setError(message);
     } finally {
       setSubmitting(false);
     }
-  }
+  };
 
-  function handleResetSuccess(resetEmail: string) {
+  const handleResetSuccess = (resetEmail: string) => {
     setShowReset(false);
     setNotice("Password updated. Sign in with your new password.");
     setEmail(resetEmail);
     setPassword("");
     setError("");
-  }
+  };
 
   return (
-    <div className="flex min-h-[60vh] items-center justify-center bg-background px-6 py-12">
-      <Card className="w-full max-w-2xl">
-        <CardContent className="space-y-6 p-8">
-          <header className="space-y-1">
-            <h1 className="text-2xl font-semibold text-foreground">
-              Partner login
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Sign in to manage visits, redemptions, and your partner directory.
-            </p>
-          </header>
+    <AuthLayout
+      variant="partner"
+      title="Partner Sign In"
+      description="Access your dashboard to manage visits, redemptions, and your venue."
+      brandTitle="Partner Portal"
+      brandDescription="Manage your venue, track customer visits, and grow your business with powerful analytics and tools."
+    >
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {error && <AuthAlert type="error" message={error} />}
+        {notice && <AuthAlert type="success" message={notice} />}
 
-          {error ? (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          ) : null}
+        <EmailVerificationSection
+          email={email}
+          onEmailChange={setEmail}
+          codeInput={codeInput}
+          onCodeChange={setCodeInput}
+          isVerified={isEmailVerified}
+          verifiedEmail={verifiedEmail}
+          expiresAt={expiresAt}
+          verificationError={verificationError}
+          onRequestCode={handleRequestCode}
+          onVerifyCode={handleVerifyCode}
+          onReset={() => {
+            resetVerification();
+            setCodeInput("");
+          }}
+          codeRequesting={codeRequesting}
+          codeVerifying={codeVerifying}
+        />
 
-          {notice ? (
-            <Alert className="border-green-500/40 bg-green-500/10 text-green-600">
-              <AlertDescription>{notice}</AlertDescription>
-            </Alert>
-          ) : null}
+        <AuthInput
+          id="password"
+          label="Password"
+          type="password"
+          value={password}
+          onChange={setPassword}
+          placeholder="Enter your password"
+          required
+          autoComplete="current-password"
+          icon="password"
+        />
 
-          <form onSubmit={onSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="email">
-                Email <span className="text-destructive">*</span>
-              </Label>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  autoComplete="email"
-                  placeholder="partner@example.com"
-                  disabled={codeRequesting}
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={handleRequestCode}
-                  disabled={codeRequesting || !normalizedEmail.length}
-                >
-                  {codeRequesting ? "Sending…" : "Send code"}
-                </Button>
-              </div>
-              {verificationError ? (
-                <p className="text-xs text-destructive mt-2">
-                  {verificationError}
-                </p>
-              ) : null}
-              {expiresAt && !isEmailVerified ? (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Code expires at {new Date(expiresAt).toLocaleTimeString()}
-                </p>
-              ) : null}
-              {isEmailVerified ? (
-                <p className="text-xs text-green-600 mt-1">
-                  Email verified.
-                </p>
-              ) : null}
-            </div>
+        <AuthSubmitButton loading={submitting} loadingText="Signing in...">
+          Sign in
+        </AuthSubmitButton>
+      </form>
 
-            <div className="space-y-2">
-              <Label htmlFor="code">
-                Verification code <span className="text-destructive">*</span>
-              </Label>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <Input
-                  id="code"
-                  type="text"
-                  inputMode="numeric"
-                  value={codeInput}
-                  onChange={(event) => setCodeInput(event.target.value)}
-                  placeholder="Enter the code"
-                  maxLength={8}
-                  disabled={isEmailVerified}
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={handleVerifyCode}
-                  disabled={
-                    isEmailVerified ||
-                    codeVerifying ||
-                    !codeInput.trim() ||
-                    !normalizedEmail.length
-                  }
-                >
-                  {codeVerifying ? "Verifying…" : isEmailVerified ? "Verified" : "Verify"}
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">
-                Password <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                autoComplete="current-password"
-                placeholder="Enter your password"
-              />
-            </div>
-
-            <Button
-              type="submit"
-              disabled={submitting}
-              className="w-full"
-            >
-              {submitting ? "Signing in…" : "Sign in"}
-            </Button>
-          </form>
-
-          <button
-            type="button"
-            onClick={() => {
-              setShowReset((prev) => !prev);
-              setError("");
-            }}
-            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-          >
-            {showReset ? "Hide password reset" : "Forgot password?"}
-          </button>
-
+      {/* Password reset toggle */}
+      <div className="mt-6">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setShowReset((prev) => !prev);
+            setError("");
+          }}
+          className="h-auto p-0 text-sm font-normal text-muted-foreground hover:text-foreground"
+        >
           {showReset ? (
-            <ResetPasswordPanel
-              role="partner"
-              onSuccess={handleResetSuccess}
-              className="mt-2"
-            />
-          ) : null}
-        </CardContent>
-      </Card>
-    </div>
+            <>
+              Hide password reset <ChevronUp className="ml-1 h-3 w-3" />
+            </>
+          ) : (
+            <>
+              Forgot password? <ChevronDown className="ml-1 h-3 w-3" />
+            </>
+          )}
+        </Button>
+
+        {showReset && (
+          <div className="mt-4">
+            <ResetPasswordPanel role="partner" onSuccess={handleResetSuccess} />
+          </div>
+        )}
+      </div>
+
+      {/* Info text */}
+      <p className="mt-8 text-center text-sm text-muted-foreground">
+        Need access? Contact your administrator for an invite.
+      </p>
+    </AuthLayout>
   );
 }

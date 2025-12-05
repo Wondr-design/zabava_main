@@ -9,17 +9,40 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
-  Legend,
 } from "recharts";
+import {
+  BarChart3,
+  RefreshCw,
+  Download,
+  TrendingUp,
+  Users,
+  Ticket,
+  Zap,
+  Clock,
+  QrCode,
+  Bell,
+  MapPin,
+  Activity,
+  Loader2,
+} from "lucide-react";
 
-import { RefreshButton } from "@/components/ui/refresh-button";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { adminApi } from "@/lib/web/api-client";
 import { formatDateTime } from "@/lib/format/date";
 import { useAutoRefresh } from "@/hooks/use-auto-refresh";
 import { getSupabaseBrowser } from "@/lib/realtime/client";
 import type { QrEventStats } from "@/lib/data/qr-events";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 type TimelinePoint = { date: string; value: number };
 type PartnerSummary = {
@@ -90,6 +113,106 @@ type CityBreakdownItem = {
   averageSpend: number;
 };
 
+// Metric Card Component
+function MetricCard({
+  label,
+  value,
+  icon: Icon,
+  trend,
+  className,
+}: {
+  label: string;
+  value: string | number;
+  icon?: React.ComponentType<{ className?: string }>;
+  trend?: "up" | "down" | "neutral";
+  className?: string;
+}) {
+  return (
+    <div className={cn("rounded-lg border border-border bg-card p-4", className)}>
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-muted-foreground">{label}</p>
+          <p className="text-2xl font-semibold tracking-tight text-foreground">{value}</p>
+        </div>
+        {Icon && (
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
+            <Icon className="h-4 w-4 text-muted-foreground" />
+          </div>
+        )}
+      </div>
+      {trend && (
+        <div className="mt-2 flex items-center gap-1">
+          <TrendingUp
+            className={cn(
+              "h-3 w-3",
+              trend === "up" && "text-emerald-500",
+              trend === "down" && "rotate-180 text-red-500",
+              trend === "neutral" && "text-muted-foreground"
+            )}
+          />
+          <span className="text-xs text-muted-foreground">vs. yesterday</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Section Card Component
+function SectionCard({
+  title,
+  description,
+  children,
+  actions,
+  className,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+  actions?: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("rounded-lg border border-border bg-card", className)}>
+      <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
+        <div>
+          <h3 className="font-semibold text-foreground">{title}</h3>
+          {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
+        </div>
+        {actions && <div className="flex items-center gap-2">{actions}</div>}
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
+  );
+}
+
+// Data Table Component
+function DataTable({
+  headers,
+  children,
+  emptyMessage = "No data available",
+}: {
+  headers: string[];
+  children: React.ReactNode;
+  emptyMessage?: string;
+}) {
+  return (
+    <div className="overflow-auto rounded-lg border border-border">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-border bg-muted/50">
+            {headers.map((header) => (
+              <th key={header} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                {header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border">{children}</tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function AdminAnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -106,231 +229,137 @@ export default function AdminAnalyticsPage() {
   const [qrEvents, setQrEvents] = useState<QrEventFeedItem[]>([]);
   const [eventsLoading, setEventsLoading] = useState(false);
   const [eventsError, setEventsError] = useState("");
-  const [eventTypeFilter, setEventTypeFilter] = useState<string>("");
-  const [qrTypeFilter, setQrTypeFilter] = useState<string>("");
+  const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
+  const [qrTypeFilter, setQrTypeFilter] = useState<string>("all");
   const [reminders, setReminders] = useState<DealReminderItem[]>([]);
   const [remindersLoading, setRemindersLoading] = useState(false);
   const [remindersError, setRemindersError] = useState<string | null>(null);
   const [queueingReminders, setQueueingReminders] = useState(false);
   const [dispatchingReminders, setDispatchingReminders] = useState(false);
   const [cityBreakdown, setCityBreakdown] = useState<CityBreakdownItem[]>([]);
-
   const [search, setSearch] = useState("");
   const [partnerId, setPartnerId] = useState("");
   const [submissions, setSubmissions] = useState<SubmissionSummary[]>([]);
   const [subLoading, setSubLoading] = useState(false);
 
-  const loadMetrics = useCallback(
-    async ({ silent = false }: { silent?: boolean } = {}) => {
-      if (!silent) {
-        setLoading(true);
-        setError("");
-      }
-      try {
-        const res = await adminApi.analyticsMetrics({});
-        const {
-          totals: totalsData,
-          revenueTrend: revenueTrendData,
-          partners: partnerData,
-          latestSubmissions,
-          points: pointsData,
-          redemptions: redemptionsData,
-          pointsTrend: pointsTrendData,
-          redemptionUsedTrend: redemptionTrendData,
-          liveCounters: liveCountersData,
-          qrStats: qrStatsData,
-          cityBreakdown: cityBreakdownData,
-        } = res as {
-          totals?: typeof totals;
-          revenueTrend?: TimelinePoint[];
-          partners?: PartnerSummary[];
-          latestSubmissions?: SubmissionSummary[];
-          points?: typeof points;
-          redemptions?: typeof redemptions;
-          pointsTrend?: TimelinePoint[];
-          redemptionUsedTrend?: TimelinePoint[];
-          liveCounters?: LiveCounters;
-          qrStats?: QrEventStats;
-          cityBreakdown?: CityBreakdownItem[];
-        };
-        setTotals(totalsData ?? null);
-        setRevenueTrend(revenueTrendData ?? []);
-        setPartners(partnerData ?? []);
-        setLatest(latestSubmissions ?? []);
-        setPoints(pointsData ?? null);
-        setRedemptions(redemptionsData ?? null);
-        setPointsTrend(pointsTrendData ?? []);
-        setRedemptionUsedTrend(redemptionTrendData ?? []);
-        setLiveCounters(liveCountersData ?? null);
-        setQrStats(qrStatsData ?? null);
-        setCityBreakdown(cityBreakdownData ?? []);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to load analytics";
-        setError(message);
-      } finally {
-        if (!silent) {
-          setLoading(false);
-        }
-      }
-    },
-    [],
-  );
+  const loadMetrics = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
+    if (!silent) {
+      setLoading(true);
+      setError("");
+    }
+    try {
+      const res = await adminApi.analyticsMetrics({});
+      const data = res as {
+        totals?: typeof totals;
+        revenueTrend?: TimelinePoint[];
+        partners?: PartnerSummary[];
+        latestSubmissions?: SubmissionSummary[];
+        points?: typeof points;
+        redemptions?: typeof redemptions;
+        pointsTrend?: TimelinePoint[];
+        redemptionUsedTrend?: TimelinePoint[];
+        liveCounters?: LiveCounters;
+        qrStats?: QrEventStats;
+        cityBreakdown?: CityBreakdownItem[];
+      };
+      setTotals(data.totals ?? null);
+      setRevenueTrend(data.revenueTrend ?? []);
+      setPartners(data.partners ?? []);
+      setLatest(data.latestSubmissions ?? []);
+      setPoints(data.points ?? null);
+      setRedemptions(data.redemptions ?? null);
+      setPointsTrend(data.pointsTrend ?? []);
+      setRedemptionUsedTrend(data.redemptionUsedTrend ?? []);
+      setLiveCounters(data.liveCounters ?? null);
+      setQrStats(data.qrStats ?? null);
+      setCityBreakdown(data.cityBreakdown ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load analytics");
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, []);
 
-  const loadSubmissions = useCallback(
-    async ({ silent = false }: { silent?: boolean } = {}) => {
-      if (!silent) {
-        setSubLoading(true);
-      }
-      try {
-        const res = await adminApi.analyticsSubmissions({ limit: 200, partnerId: partnerId || undefined, search: search || undefined }, {});
-        const { items } = res as { items?: SubmissionSummary[] };
-        setSubmissions(items ?? []);
-      } catch {
-        // non-fatal, keep going
-      } finally {
-        if (!silent) {
-          setSubLoading(false);
-        }
-      }
-    },
-    [partnerId, search],
-  );
+  const loadSubmissions = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
+    if (!silent) setSubLoading(true);
+    try {
+      const res = await adminApi.analyticsSubmissions({ limit: 200, partnerId: partnerId || undefined, search: search || undefined }, {});
+      setSubmissions((res as { items?: SubmissionSummary[] }).items ?? []);
+    } catch {
+      // non-fatal
+    } finally {
+      if (!silent) setSubLoading(false);
+    }
+  }, [partnerId, search]);
 
-  const loadQrEvents = useCallback(
-    async ({ silent = false }: { silent?: boolean } = {}) => {
-      if (!silent) {
-        setEventsLoading(true);
-        setEventsError("");
-      }
-      try {
-        const res = await adminApi.analyticsQrEvents(
-          {
-            limit: 100,
-            eventType: eventTypeFilter || undefined,
-            qrType: qrTypeFilter || undefined,
-          },
-          {},
-        );
-        const { items } = res as { items?: QrEventFeedItem[] };
-        setQrEvents(
-          (items ?? []).map((item) => ({
-            ...item,
-            metadata:
-              item && typeof item.metadata === "object" && item.metadata !== null
-                ? item.metadata
-                : {},
-          })),
-        );
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to load QR events";
-        setEventsError(message);
-        if (!silent) {
-          toast.error(message);
-        }
-      } finally {
-        if (!silent) {
-          setEventsLoading(false);
-        }
-      }
-    },
-    [eventTypeFilter, qrTypeFilter],
-  );
+  const loadQrEvents = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
+    if (!silent) {
+      setEventsLoading(true);
+      setEventsError("");
+    }
+    try {
+      const res = await adminApi.analyticsQrEvents({
+        limit: 100,
+        eventType: eventTypeFilter === "all" ? undefined : eventTypeFilter,
+        qrType: qrTypeFilter === "all" ? undefined : qrTypeFilter,
+      }, {});
+      setQrEvents((res as { items?: QrEventFeedItem[] }).items?.map((item) => ({
+        ...item,
+        metadata: item?.metadata && typeof item.metadata === "object" ? item.metadata : {},
+      })) ?? []);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to load QR events";
+      setEventsError(message);
+      if (!silent) toast.error(message);
+    } finally {
+      if (!silent) setEventsLoading(false);
+    }
+  }, [eventTypeFilter, qrTypeFilter]);
 
-  const loadReminders = useCallback(
-    async ({ silent = false }: { silent?: boolean } = {}) => {
-      if (!silent) {
-        setRemindersLoading(true);
-        setRemindersError(null);
-      }
-      try {
-        const res = await adminApi.dealRemindersList({});
-        const { reminders: raw } = res as { reminders?: DealReminderItem[] };
-        setReminders(
-          (raw ?? []).map((item) => ({
-            ...item,
-            metadata:
-              item && typeof item.metadata === "object" && item.metadata !== null
-                ? item.metadata
-                : {},
-          })),
-        );
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to load reminders";
-        setRemindersError(message);
-        if (!silent) toast.error(message);
-      } finally {
-        if (!silent) setRemindersLoading(false);
-      }
-    },
-    [],
-  );
+  const loadReminders = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
+    if (!silent) {
+      setRemindersLoading(true);
+      setRemindersError(null);
+    }
+    try {
+      const res = await adminApi.dealRemindersList({});
+      setReminders((res as { reminders?: DealReminderItem[] }).reminders?.map((item) => ({
+        ...item,
+        metadata: item?.metadata && typeof item.metadata === "object" ? item.metadata : {},
+      })) ?? []);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to load reminders";
+      setRemindersError(message);
+      if (!silent) toast.error(message);
+    } finally {
+      if (!silent) setRemindersLoading(false);
+    }
+  }, []);
 
-  useEffect(() => {
-    void loadMetrics();
-  }, [loadMetrics]);
+  useEffect(() => { void loadMetrics(); }, [loadMetrics]);
+  useEffect(() => { void loadSubmissions(); }, [loadSubmissions]);
+  useEffect(() => { void loadQrEvents(); }, [loadQrEvents]);
+  useEffect(() => { void loadReminders(); }, [loadReminders]);
 
-  useEffect(() => {
-    void loadSubmissions();
-  }, [loadSubmissions]);
-
-  useEffect(() => {
-    void loadQrEvents();
-  }, [loadQrEvents]);
-
-  useEffect(() => {
-    void loadReminders();
-  }, [loadReminders]);
-
-  const refreshAll = useCallback(
-    async ({ silent = false }: { silent?: boolean } = {}) => {
-      await Promise.all([
-        loadMetrics({ silent }),
-        loadSubmissions({ silent }),
-        loadQrEvents({ silent }),
-        loadReminders({ silent }),
-      ]);
-    },
-    [loadMetrics, loadSubmissions, loadQrEvents, loadReminders],
-  );
+  const refreshAll = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
+    await Promise.all([loadMetrics({ silent }), loadSubmissions({ silent }), loadQrEvents({ silent }), loadReminders({ silent })]);
+  }, [loadMetrics, loadSubmissions, loadQrEvents, loadReminders]);
 
   const { refreshing: autoRefreshing, trigger: triggerRefresh } = useAutoRefresh(
-    useCallback(async () => {
-      await refreshAll({ silent: true });
-    }, [refreshAll]),
-    { enabled: true, minInterval: 5_000 },
+    useCallback(async () => { await refreshAll({ silent: true }); }, [refreshAll]),
+    { enabled: true, minInterval: 5_000 }
   );
 
   useEffect(() => {
     const supabase = getSupabaseBrowser();
     if (!supabase) return;
-    const channel = supabase
-      .channel("admin-dashboard-visits")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "visit_registrations",
-        },
-        () => {
-          void triggerRefresh()
-            .then(() => {
-              toast.info("Analytics updated", {
-                description: "New visit data received.",
-              });
-            })
-            .catch((err) => {
-              console.error("[admin-analytics] realtime refresh failed", err);
-              toast.error("Failed to refresh analytics data.");
-            });
-        },
-      )
+    const channel = supabase.channel("admin-dashboard-visits")
+      .on("postgres_changes", { event: "*", schema: "public", table: "visit_registrations" }, () => {
+        void triggerRefresh().then(() => toast.info("Analytics updated")).catch(() => toast.error("Failed to refresh"));
+      })
       .subscribe();
-
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [refreshAll, triggerRefresh]);
+    return () => { void supabase.removeChannel(channel); };
+  }, [triggerRefresh]);
 
   const filteredPartners = useMemo(() => {
     if (!search) return partners;
@@ -338,678 +367,336 @@ export default function AdminAnalyticsPage() {
     return partners.filter((p) => `${p.id} ${p.label ?? ""}`.toLowerCase().includes(q));
   }, [partners, search]);
 
-  const metricFormatter = useMemo(
-    () => new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }),
-    [],
-  );
+  const fmt = useMemo(() => new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }), []);
+  const currency = useMemo(() => new Intl.NumberFormat(undefined, { style: "currency", currency: "CZK", maximumFractionDigits: 0 }), []);
 
-  const currencyFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat(undefined, {
-        style: "currency",
-        currency: "CZK",
-        maximumFractionDigits: 0,
-      }),
-    [],
-  );
+  if (loading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
-  const citySummary = useMemo(() => {
-    if (!cityBreakdown.length) {
-      return null;
-    }
-    const totalVisits = cityBreakdown.reduce((sum, entry) => sum + entry.visits, 0);
-    const totalRevenue = cityBreakdown.reduce((sum, entry) => sum + entry.revenue, 0);
-    return {
-      totalVisits,
-      totalRevenue,
-      topCity: cityBreakdown[0],
-    };
-  }, [cityBreakdown]);
-
-  const liveCounterCards = useMemo(
-    () =>
-      liveCounters
-        ? [
-            { label: "Visits today", value: liveCounters.visitsToday },
-            { label: "Pending visits", value: liveCounters.pendingVisits },
-            { label: "Unique visitors (24h)", value: liveCounters.uniqueVisitors24h },
-            { label: "Points earned (24h)", value: liveCounters.bonusEarned24h },
-            { label: "Points redeemed (24h)", value: liveCounters.bonusRedeemed24h },
-            { label: "Active flash deals", value: liveCounters.activeFlashDeals },
-            { label: "Scheduled flash deals", value: liveCounters.flashDealsScheduled },
-            { label: "Active transport services", value: liveCounters.activeTransportServices },
-            { label: "QR generated (24h)", value: liveCounters.qrGenerated24h },
-            { label: "QR scans (24h)", value: liveCounters.qrScans24h },
-            { label: "Pending redemptions", value: liveCounters.pendingRedemptions },
-          ]
-        : [],
-    [liveCounters],
-  );
-
-  const reminderSummary = useMemo(() => {
-    if (!reminders.length) {
-      return {
-        pending: 0,
-        dueSoon: 0,
-      };
-    }
-    const now = Date.now();
-    const oneDayMs = 24 * 60 * 60 * 1000;
-    let dueSoon = 0;
-    for (const item of reminders) {
-      const scheduled = Date.parse(item.scheduledAt);
-      if (!Number.isNaN(scheduled) && scheduled - now <= oneDayMs) {
-        dueSoon += 1;
-      }
-    }
-    return {
-      pending: reminders.length,
-      dueSoon,
-    };
-  }, [reminders]);
-
-  const flashRejectionSummary = useMemo(() => {
-    if (!qrEvents.length) {
-      return {
-        total: 0,
-        last24h: 0,
-      };
-    }
-    const now = Date.now();
-    const windowMs = 24 * 60 * 60 * 1000;
-    let total = 0;
-    let last24h = 0;
-    for (const event of qrEvents) {
-      if (event.eventType !== "rejected" || event.qrType !== "flash") continue;
-      total += 1;
-      const occurred = Date.parse(event.occurredAt);
-      if (!Number.isNaN(occurred) && now - occurred <= windowMs) {
-        last24h += 1;
-      }
-    }
-    return { total, last24h };
-  }, [qrEvents]);
-
-  const qrEventTypeCards = useMemo(
-    () =>
-      qrStats
-        ? [
-            { label: "Generated events", value: qrStats.byType.generated },
-            { label: "Scanned events", value: qrStats.byType.scanned },
-            { label: "Redeemed events", value: qrStats.byType.redeemed },
-            { label: "Expired events", value: qrStats.byType.expired },
-          ]
-        : [],
-    [qrStats],
-  );
-
-  const qrTypeCards = useMemo(
-    () =>
-      qrStats
-        ? [
-            { label: "Standard QR", value: qrStats.byQrType.standard },
-            { label: "Bonus QR", value: qrStats.byQrType.bonus },
-            { label: "Flash-deal QR", value: qrStats.byQrType.flash },
-            { label: "Transport QR", value: qrStats.byQrType.transport },
-          ]
-        : [],
-    [qrStats],
-  );
-
-  const eventTypeOptions = [
-    { label: "All events", value: "" },
-    { label: "Generated", value: "generated" },
-    { label: "Scanned", value: "scanned" },
-    { label: "Redeemed", value: "redeemed" },
-    { label: "Expired", value: "expired" },
-  ] as const;
-
-  const qrTypeOptions = [
-    { label: "All QR types", value: "" },
-    { label: "Standard", value: "standard" },
-    { label: "Bonus", value: "bonus" },
-    { label: "Flash deal", value: "flash" },
-    { label: "Transport", value: "transport" },
-  ] as const;
-
-  if (loading) return <div className="p-6">Loading...</div>;
-  if (error) return <div className="p-6 text-destructive">{error}</div>;
+  if (error) {
+    return (
+      <div className="flex h-96 flex-col items-center justify-center gap-4">
+        <p className="text-destructive">{error}</p>
+        <Button onClick={() => void loadMetrics()}>Retry</Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 space-y-8">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <h1 className="text-2xl font-semibold text-foreground">
-          Admin · Analytics
-        </h1>
-        <div className="flex gap-2">
-          <input
-            className="rounded border border-input px-3 py-2 bg-background text-foreground"
-            placeholder="Filter by partnerId"
-            value={partnerId}
-            onChange={(e) => setPartnerId(e.target.value)}
-          />
-          <input
-            className="rounded border border-input px-3 py-2 bg-background text-foreground"
-            placeholder="Search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <RefreshButton
-            onRefresh={async () => {
-              await triggerRefresh({ force: true });
-            }}
-            label="Refresh"
-            className="border-border"
-            disabled={autoRefreshing}
-          />
-          <a
-            className="rounded bg-primary text-primary-foreground px-3 py-2 text-sm hover:bg-primary/90"
-            href="/api/admin/analytics?mode=export"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Export CSV
-          </a>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-foreground/10">
+            <BarChart3 className="h-5 w-5 text-foreground" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Analytics</h1>
+            <p className="text-sm text-muted-foreground">Real-time platform metrics and insights</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Input placeholder="Filter by partner" value={partnerId} onChange={(e) => setPartnerId(e.target.value)} className="h-9 w-40" />
+          <Input placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-9 w-40" />
+          <Button variant="outline" size="sm" onClick={() => void triggerRefresh({ force: true })} disabled={autoRefreshing}>
+            <RefreshCw className={cn("mr-2 h-4 w-4", autoRefreshing && "animate-spin")} />
+            Refresh
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <a href="/api/admin/analytics?mode=export" target="_blank" rel="noreferrer">
+              <Download className="mr-2 h-4 w-4" />
+              Export
+            </a>
+          </Button>
         </div>
       </div>
 
-      {liveCounterCards.length ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-6">
-          {liveCounterCards.map((card) => (
-            <Card key={card.label} label={card.label} value={metricFormatter.format(card.value)} />
-          ))}
+      {/* Live Counters */}
+      {liveCounters && (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+          <MetricCard label="Visits today" value={fmt.format(liveCounters.visitsToday)} icon={Ticket} />
+          <MetricCard label="Pending visits" value={fmt.format(liveCounters.pendingVisits)} icon={Clock} />
+          <MetricCard label="Unique visitors (24h)" value={fmt.format(liveCounters.uniqueVisitors24h)} icon={Users} />
+          <MetricCard label="Points earned (24h)" value={fmt.format(liveCounters.bonusEarned24h)} icon={TrendingUp} />
+          <MetricCard label="Points redeemed (24h)" value={fmt.format(liveCounters.bonusRedeemed24h)} icon={Activity} />
+          <MetricCard label="Active flash deals" value={fmt.format(liveCounters.activeFlashDeals)} icon={Zap} />
+          <MetricCard label="Scheduled deals" value={fmt.format(liveCounters.flashDealsScheduled)} icon={Clock} />
+          <MetricCard label="QR generated (24h)" value={fmt.format(liveCounters.qrGenerated24h)} icon={QrCode} />
+          <MetricCard label="QR scans (24h)" value={fmt.format(liveCounters.qrScans24h)} icon={QrCode} />
+          <MetricCard label="Pending redemptions" value={fmt.format(liveCounters.pendingRedemptions)} icon={Bell} />
         </div>
-      ) : null}
+      )}
 
-      {(reminderSummary.pending > 0 || flashRejectionSummary.total > 0) ? (
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-6">
-          <Card
-            label="Pending reminders"
-            value={`${metricFormatter.format(reminderSummary.pending)}`}
-          />
-          <Card
-            label="Reminders due ≤24h"
-            value={`${metricFormatter.format(reminderSummary.dueSoon)}`}
-          />
-          <Card
-            label="Flash QR rejections (24h)"
-            value={`${metricFormatter.format(flashRejectionSummary.last24h)}`}
-          />
-          <Card
-            label="Flash QR rejections (all)"
-            value={`${metricFormatter.format(flashRejectionSummary.total)}`}
-          />
-        </section>
-      ) : null}
-
-      {qrStats ? (
-        <div className="grid gap-4 lg:grid-cols-[2fr,3fr]">
-          <section className="rounded-2xl border border-border bg-card/60 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h3 className="text-sm font-semibold text-foreground">QR events (last 24h)</h3>
-                <p className="text-xs text-muted-foreground">
-                  Counts of generated, scanned, redeemed, and expired QR codes across all programs.
-                </p>
-              </div>
-              <span className="text-2xl font-semibold text-foreground">{metricFormatter.format(qrStats.total)}</span>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              {qrEventTypeCards.map((card) => (
-                <div key={card.label} className="rounded-xl border border-border/50 bg-background px-4 py-3">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">{card.label}</p>
-                  <p className="mt-2 text-xl font-semibold text-foreground">{metricFormatter.format(card.value)}</p>
+      {/* QR Stats */}
+      {qrStats && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <SectionCard title="QR Events (24h)" description="Breakdown by event type">
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: "Generated", value: qrStats.byType.generated },
+                { label: "Scanned", value: qrStats.byType.scanned },
+                { label: "Redeemed", value: qrStats.byType.redeemed },
+                { label: "Expired", value: qrStats.byType.expired },
+              ].map((item) => (
+                <div key={item.label} className="rounded-lg border border-border bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground">{item.label}</p>
+                  <p className="mt-1 text-xl font-semibold text-foreground">{fmt.format(item.value)}</p>
                 </div>
               ))}
             </div>
-          </section>
-          <section className="rounded-2xl border border-border bg-card/60 p-4">
-            <h3 className="text-sm font-semibold text-foreground">QR usage by program</h3>
-            <p className="text-xs text-muted-foreground">
-              Breakdown of QR events by experience type within the last 24 hours.
-            </p>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              {qrTypeCards.map((card) => (
-                <div key={card.label} className="rounded-xl border border-border/50 bg-background px-4 py-3">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">{card.label}</p>
-                  <p className="mt-2 text-xl font-semibold text-foreground">{metricFormatter.format(card.value)}</p>
+          </SectionCard>
+          <SectionCard title="QR by Program" description="Distribution across programs">
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: "Standard", value: qrStats.byQrType.standard },
+                { label: "Bonus", value: qrStats.byQrType.bonus },
+                { label: "Flash Deal", value: qrStats.byQrType.flash },
+                { label: "Transport", value: qrStats.byQrType.transport },
+              ].map((item) => (
+                <div key={item.label} className="rounded-lg border border-border bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground">{item.label}</p>
+                  <p className="mt-1 text-xl font-semibold text-foreground">{fmt.format(item.value)}</p>
                 </div>
               ))}
             </div>
-          </section>
+          </SectionCard>
         </div>
-      ) : null}
+      )}
 
-      {cityBreakdown.length ? (
-        <section className="rounded-2xl border border-border bg-card/60 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">City segmentation</h3>
-              <p className="text-xs text-muted-foreground">
-                Top locales by visit volume and revenue drawn from recent submissions.
-              </p>
-            </div>
-            {citySummary?.topCity ? (
-              <Badge variant="outline" className="text-xs font-medium">
-                Top city: {citySummary.topCity.city} · {metricFormatter.format(citySummary.topCity.visits)} visits
-              </Badge>
-            ) : null}
-          </div>
-          <div className="mt-4 overflow-auto rounded-xl border border-border/60">
-            <table className="w-full min-w-[500px] text-sm">
-              <thead className="bg-black/5 text-xs uppercase tracking-wide text-muted-foreground">
-                <tr>
-                  <th className="p-2 text-left">City</th>
-                  <th className="p-2 text-right">Visits</th>
-                  <th className="p-2 text-right">Revenue</th>
-                  <th className="p-2 text-right">Avg spend</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cityBreakdown.map((entry) => (
-                  <tr key={entry.city.toLowerCase()} className="border-t border-border/40">
-                    <td className="p-2 text-foreground">{entry.city}</td>
-                    <td className="p-2 text-right">{metricFormatter.format(entry.visits)}</td>
-                    <td className="p-2 text-right">{currencyFormatter.format(entry.revenue)}</td>
-                    <td className="p-2 text-right">{currencyFormatter.format(entry.averageSpend)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      ) : null}
-
-      <section className="space-y-3 rounded-2xl border border-border bg-card/60 p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">QR event feed</h3>
-            <p className="text-xs text-muted-foreground">
-              Live log of QR lifecycle events across bonus, flash-deal, and transport programs.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <select
-              value={eventTypeFilter}
-              onChange={(event) => setEventTypeFilter(event.target.value)}
-              className="rounded border border-border bg-background px-3 py-2 text-sm text-foreground"
-            >
-              {eventTypeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <select
-              value={qrTypeFilter}
-              onChange={(event) => setQrTypeFilter(event.target.value)}
-              className="rounded border border-border bg-background px-3 py-2 text-sm text-foreground"
-            >
-              {qrTypeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <RefreshButton
-              onRefresh={async () => {
-                await loadQrEvents();
-              }}
-              label={eventsLoading ? "Refreshing…" : "Refresh feed"}
-              disabled={eventsLoading}
-            />
-          </div>
-        </div>
-        {eventsError ? <p className="text-sm text-destructive">{eventsError}</p> : null}
-        <div className="overflow-auto rounded-xl border border-border/80">
-          <table className="w-full min-w-[720px] text-sm">
-            <thead className="bg-black/5">
-              <tr>
-                <th className="p-2 text-left">Timestamp</th>
-                <th className="p-2 text-left">Event</th>
-                <th className="p-2 text-left">QR type</th>
-                <th className="p-2 text-left">Source</th>
-                <th className="p-2 text-left">Context</th>
-                <th className="p-2 text-left">Metadata</th>
+      {/* City Breakdown */}
+      {cityBreakdown.length > 0 && (
+        <SectionCard
+          title="City Segmentation"
+          description="Top locations by visit volume"
+          actions={
+            <Badge variant="secondary">
+              <MapPin className="mr-1 h-3 w-3" />
+              {cityBreakdown[0]?.city}: {fmt.format(cityBreakdown[0]?.visits ?? 0)} visits
+            </Badge>
+          }
+        >
+          <DataTable headers={["City", "Visits", "Revenue", "Avg Spend"]}>
+            {cityBreakdown.map((entry) => (
+              <tr key={entry.city}>
+                <td className="px-4 py-3 font-medium text-foreground">{entry.city}</td>
+                <td className="px-4 py-3 text-muted-foreground">{fmt.format(entry.visits)}</td>
+                <td className="px-4 py-3 text-muted-foreground">{currency.format(entry.revenue)}</td>
+                <td className="px-4 py-3 text-muted-foreground">{currency.format(entry.averageSpend)}</td>
               </tr>
-            </thead>
-            <tbody>
-              {qrEvents.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="p-6 text-center text-sm text-muted-foreground">
-                    {eventsLoading ? "Loading events…" : "No events found for the selected filters."}
-                  </td>
-                </tr>
-              ) : (
-                qrEvents.map((event) => (
-                  <tr key={event.id} className="border-t border-border/60">
-                    <td className="p-2 text-xs text-muted-foreground">
-                      {formatDateTime(event.occurredAt)}
-                    </td>
-                    <td className="p-2">
-                      <Badge variant="secondary" className="uppercase">
-                        {event.eventType}
-                      </Badge>
-                    </td>
-                    <td className="p-2">
-                      <Badge variant="outline" className="uppercase">
-                        {event.qrType}
-                      </Badge>
-                    </td>
-                    <td className="p-2 text-xs text-muted-foreground">{event.source || "system"}</td>
-                    <td className="p-2 text-xs text-muted-foreground">
-                      {summarizeContext(event)}
-                    </td>
-                    <td className="p-2 text-xs text-muted-foreground">
-                      {summarizeMetadata(event.metadata)}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+            ))}
+          </DataTable>
+        </SectionCard>
+      )}
 
-      <section className="space-y-3 rounded-2xl border border-border bg-card/60 p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">Reminder queue</h3>
-            <p className="text-xs text-muted-foreground">
-              Pending flash deal reminder emails awaiting dispatch.
-            </p>
+      {/* QR Event Feed */}
+      <SectionCard
+        title="QR Event Feed"
+        description="Live log of QR lifecycle events"
+        actions={
+          <div className="flex items-center gap-2">
+            <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
+              <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All events</SelectItem>
+                <SelectItem value="generated">Generated</SelectItem>
+                <SelectItem value="scanned">Scanned</SelectItem>
+                <SelectItem value="redeemed">Redeemed</SelectItem>
+                <SelectItem value="expired">Expired</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={qrTypeFilter} onValueChange={setQrTypeFilter}>
+              <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All types</SelectItem>
+                <SelectItem value="standard">Standard</SelectItem>
+                <SelectItem value="bonus">Bonus</SelectItem>
+                <SelectItem value="flash">Flash</SelectItem>
+                <SelectItem value="transport">Transport</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={() => void loadQrEvents()} disabled={eventsLoading}>
+              {eventsLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            </Button>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <RefreshButton
-              onRefresh={async () => {
-                await loadReminders();
-              }}
-              label={remindersLoading ? "Refreshing…" : "Refresh reminders"}
-              disabled={remindersLoading}
-            />
-            <button
-              type="button"
-              className="rounded-full border border-border px-4 py-2 text-xs font-semibold uppercase tracking-wide text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+        }
+      >
+        {eventsError && <p className="mb-3 text-sm text-destructive">{eventsError}</p>}
+        <DataTable headers={["Time", "Event", "Type", "Source", "Context"]}>
+          {qrEvents.length === 0 ? (
+            <tr><td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">No events found</td></tr>
+          ) : (
+            qrEvents.slice(0, 20).map((event) => (
+              <tr key={event.id}>
+                <td className="px-4 py-3 text-xs text-muted-foreground">{formatDateTime(event.occurredAt)}</td>
+                <td className="px-4 py-3"><Badge variant="secondary" className="uppercase text-[10px]">{event.eventType}</Badge></td>
+                <td className="px-4 py-3"><Badge variant="outline" className="uppercase text-[10px]">{event.qrType}</Badge></td>
+                <td className="px-4 py-3 text-xs text-muted-foreground">{event.source || "system"}</td>
+                <td className="px-4 py-3 text-xs text-muted-foreground">{summarizeContext(event)}</td>
+              </tr>
+            ))
+          )}
+        </DataTable>
+      </SectionCard>
+
+      {/* Reminder Queue */}
+      <SectionCard
+        title="Reminder Queue"
+        description={`${reminders.length} pending reminder${reminders.length === 1 ? "" : "s"}`}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => void loadReminders()} disabled={remindersLoading}>
+              <RefreshCw className={cn("mr-2 h-4 w-4", remindersLoading && "animate-spin")} />
+              Refresh
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               disabled={queueingReminders}
               onClick={async () => {
                 setQueueingReminders(true);
                 try {
                   const res = await adminApi.dealRemindersQueue({});
-                  const { processed, created } = res as { processed?: number; created?: number };
-                  toast.success(
-                    `Queued reminders (processed ${processed ?? 0}, new ${created ?? 0})`,
-                  );
+                  toast.success(`Queued ${(res as { created?: number }).created ?? 0} reminders`);
                   await loadReminders();
                 } catch (err) {
-                  toast.error(err instanceof Error ? err.message : "Failed to queue reminders");
+                  toast.error(err instanceof Error ? err.message : "Failed");
                 } finally {
                   setQueueingReminders(false);
                 }
               }}
             >
-              {queueingReminders ? "Queueing…" : "Queue reminders"}
-            </button>
-            <button
-              type="button"
-              className="rounded-full bg-primary px-4 py-2 text-xs font-semibold uppercase tracking-wide text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+              {queueingReminders ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Queue
+            </Button>
+            <Button
+              size="sm"
               disabled={dispatchingReminders || reminders.length === 0}
               onClick={async () => {
-                if (!reminders.length) return;
                 setDispatchingReminders(true);
                 try {
-                  const payload = {
-                    reminders: reminders.map((item) => ({
-                      id: item.id,
-                      status: "sent" as const,
-                      metadata: { dispatchedAt: new Date().toISOString() },
-                    })),
-                  };
-                  const res = await adminApi.dealRemindersDispatch(payload, {});
-                  const { updated } = res as { updated?: number };
-                  toast.success(`Marked ${updated ?? 0} reminder(s) as sent.`);
+                  const res = await adminApi.dealRemindersDispatch({
+                    reminders: reminders.map((i) => ({ id: i.id, status: "sent" as const, metadata: { dispatchedAt: new Date().toISOString() } })),
+                  }, {});
+                  toast.success(`Marked ${(res as { updated?: number }).updated ?? 0} as sent`);
                   await loadReminders();
                 } catch (err) {
-                  toast.error(err instanceof Error ? err.message : "Failed to update reminders");
+                  toast.error(err instanceof Error ? err.message : "Failed");
                 } finally {
                   setDispatchingReminders(false);
                 }
               }}
             >
-              {dispatchingReminders ? "Marking…" : "Mark all as sent"}
-            </button>
+              {dispatchingReminders ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Mark Sent
+            </Button>
           </div>
-        </div>
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Pending: {reminders.length}</span>
-          {remindersError ? <span className="text-destructive">{remindersError}</span> : null}
-        </div>
-        <div className="overflow-auto rounded-xl border border-border/80 bg-background">
-          <table className="w-full min-w-[680px] text-sm">
-            <thead className="bg-black/5">
-              <tr>
-                <th className="p-2 text-left">Deal</th>
-                <th className="p-2 text-left">Partner</th>
-                <th className="p-2 text-left">Reminder</th>
-                <th className="p-2 text-left">Email</th>
-                <th className="p-2 text-left">Scheduled</th>
-                <th className="p-2 text-left">Metadata</th>
+        }
+      >
+        {remindersError && <p className="mb-3 text-sm text-destructive">{remindersError}</p>}
+        <DataTable headers={["Deal", "Partner", "Type", "Email", "Scheduled"]}>
+          {reminders.length === 0 ? (
+            <tr><td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">No pending reminders</td></tr>
+          ) : (
+            reminders.map((item) => (
+              <tr key={item.id}>
+                <td className="px-4 py-3 font-medium text-foreground">{item.deal.title}</td>
+                <td className="px-4 py-3 text-muted-foreground">{item.deal.partnerName ?? item.deal.partnerId}</td>
+                <td className="px-4 py-3 text-xs text-muted-foreground capitalize">{item.reminderType.replace("_", " ")}</td>
+                <td className="px-4 py-3 text-xs text-muted-foreground">{item.userEmail ?? "—"}</td>
+                <td className="px-4 py-3 text-xs text-muted-foreground">{formatDateTime(item.scheduledAt)}</td>
               </tr>
-            </thead>
-            <tbody>
-              {reminders.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="p-6 text-center text-sm text-muted-foreground">
-                    {remindersLoading ? "Loading reminders…" : "No pending reminders."}
-                  </td>
-                </tr>
-              ) : (
-                reminders.map((item) => (
-                  <tr key={item.id} className="border-t border-border/60">
-                    <td className="p-2">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-foreground">{item.deal.title}</span>
-                        {item.deal.slug ? (
-                          <span className="text-xs text-muted-foreground">Slug: {item.deal.slug}</span>
-                        ) : null}
-                      </div>
-                    </td>
-                    <td className="p-2 text-xs text-muted-foreground">
-                      {item.deal.partnerName ?? item.deal.partnerId}
-                    </td>
-                    <td className="p-2 text-xs text-muted-foreground capitalize">
-                      {item.reminderType.replace("_", " ")}
-                    </td>
-                    <td className="p-2 text-xs text-muted-foreground">{item.userEmail ?? "—"}</td>
-                    <td className="p-2 text-xs text-muted-foreground">{formatDateTime(item.scheduledAt)}</td>
-                    <td className="p-2 text-xs text-muted-foreground">
-                      {Object.keys(item.metadata).length ? JSON.stringify(item.metadata) : "—"}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+            ))
+          )}
+        </DataTable>
+      </SectionCard>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card label="Total" value={totals?.count ?? 0} />
-        <Card label="Visited" value={totals?.visited ?? 0} />
-        <Card label="Revenue" value={totals?.revenue ?? 0} />
-        <Card label="Avg Rev" value={totals?.averageRevenue ?? 0} />
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <MetricCard label="Total Visits" value={fmt.format(totals?.count ?? 0)} />
+        <MetricCard label="Visited" value={fmt.format(totals?.visited ?? 0)} />
+        <MetricCard label="Revenue" value={currency.format(totals?.revenue ?? 0)} />
+        <MetricCard label="Avg Revenue" value={currency.format(totals?.averageRevenue ?? 0)} />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card label="Points earned" value={points?.earned ?? 0} />
-        <Card label="Points redeemed" value={points?.redeemed ?? 0} />
-        <Card label="Points net" value={points?.net ?? 0} />
-        <Card label="Redemptions used" value={redemptions?.used ?? 0} />
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <MetricCard label="Points Earned" value={fmt.format(points?.earned ?? 0)} />
+        <MetricCard label="Points Redeemed" value={fmt.format(points?.redeemed ?? 0)} />
+        <MetricCard label="Points Net" value={fmt.format(points?.net ?? 0)} />
+        <MetricCard label="Redemptions Used" value={fmt.format(redemptions?.used ?? 0)} />
       </div>
 
-      <div className="border rounded-xl p-3 bg-card">
-        <h3 className="text-sm font-medium mb-2">Revenue trend</h3>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={revenueTrend} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-              <YAxis allowDecimals={false} width={40} />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="value" stroke="#22c55e" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="border rounded-xl p-3">
-          <h3 className="text-sm font-medium mb-2">Points trend</h3>
+      {/* Charts */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <SectionCard title="Revenue Trend">
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={pointsTrend} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                <YAxis allowDecimals={false} width={40} />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} dot={false} />
+              <LineChart data={revenueTrend}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                <YAxis width={50} tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} />
+                <Line type="monotone" dataKey="value" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
-        </div>
-        <div className="border rounded-xl p-3">
-          <h3 className="text-sm font-medium mb-2">Redemptions used trend</h3>
+        </SectionCard>
+        <SectionCard title="Points Trend">
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={redemptionUsedTrend} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                <YAxis allowDecimals={false} width={40} />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="value" stroke="#ef4444" strokeWidth={2} dot={false} />
+              <LineChart data={pointsTrend}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                <YAxis width={50} tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} />
+                <Line type="monotone" dataKey="value" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </SectionCard>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-3">
-          <h3 className="text-sm font-medium">Partners</h3>
-          <div className="overflow-auto border rounded-xl">
-            <table className="w-full text-sm">
-              <thead className="bg-black/5">
-                <tr>
-                  <th className="text-left p-2">Partner</th>
-                  <th className="text-left p-2">Visits</th>
-                  <th className="text-left p-2">Revenue</th>
-                  <th className="text-left p-2">Last visit</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPartners.map((p, index) => (
-                  <tr key={index} className="border-t">
-                    <td className="p-2">{p.id}</td>
-                    <td className="p-2">{p.metrics?.count ?? 0}</td>
-                    <td className="p-2">{p.metrics?.revenue ?? 0}</td>
-                    <td className="p-2">{formatDateTime(p.lastSubmissionAt)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="text-sm font-medium">Latest visits</h3>
-          <div className="overflow-auto border rounded-xl">
-            <table className="w-full text-sm">
-              <thead className="bg-black/5">
-                <tr>
-                  <th className="text-left p-2">Email</th>
-                  <th className="text-left p-2">Partner</th>
-                  <th className="text-left p-2">Status</th>
-                  <th className="text-left p-2">Created</th>
-                  <th className="text-left p-2">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {latest.map((submission, index) => (
-                  <tr key={index} className="border-t">
-                    <td className="p-2">{submission.email || "—"}</td>
-                    <td className="p-2">{submission.partnerId || "—"}</td>
-                    <td className="p-2">{submission.status || "—"}</td>
-                    <td className="p-2">{formatDateTime(submission.createdAt)}</td>
-                    <td className="p-2">
-                      {typeof submission.totalPrice === "number" ? submission.totalPrice : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <h3 className="text-sm font-medium">Visits</h3>
-        {subLoading && <div className="text-sm">Loading visits…</div>}
-        <div className="overflow-auto border rounded-xl">
-          <table className="w-full text-sm">
-            <thead className="bg-black/5">
-              <tr>
-                <th className="text-left p-2">Email</th>
-                <th className="text-left p-2">Partner</th>
-                <th className="text-left p-2">Status</th>
-                <th className="text-left p-2">Created</th>
-                <th className="text-left p-2">Visited</th>
-                <th className="text-left p-2">Total</th>
+      {/* Partners & Latest Tables */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <SectionCard title="Partners" description={`${filteredPartners.length} partners`}>
+          <DataTable headers={["Partner", "Visits", "Revenue", "Last Visit"]}>
+            {filteredPartners.slice(0, 10).map((p) => (
+              <tr key={p.id}>
+                <td className="px-4 py-3 font-medium text-foreground">{p.label || p.id}</td>
+                <td className="px-4 py-3 text-muted-foreground">{p.metrics?.count ?? 0}</td>
+                <td className="px-4 py-3 text-muted-foreground">{currency.format(p.metrics?.revenue ?? 0)}</td>
+                <td className="px-4 py-3 text-xs text-muted-foreground">{formatDateTime(p.lastSubmissionAt)}</td>
               </tr>
-            </thead>
-            <tbody>
-              {submissions.map((submission, index) => (
-                <tr key={index} className="border-t">
-                  <td className="p-2">{submission.email || "—"}</td>
-                  <td className="p-2">{submission.partnerId || "—"}</td>
-                  <td className="p-2">{submission.visited ? "visited" : "pending"}</td>
-                  <td className="p-2">{formatDateTime(submission.createdAt)}</td>
-                  <td className="p-2">{formatDateTime(submission.visitedAt)}</td>
-                  <td className="p-2">
-                    {typeof submission.totalPrice === "number" ? submission.totalPrice : "—"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </DataTable>
+        </SectionCard>
+        <SectionCard title="Latest Visits" description="Recent submissions">
+          <DataTable headers={["Email", "Partner", "Status", "Total"]}>
+            {latest.slice(0, 10).map((s, i) => (
+              <tr key={i}>
+                <td className="px-4 py-3 text-foreground">{s.email || "—"}</td>
+                <td className="px-4 py-3 text-muted-foreground">{s.partnerId || "—"}</td>
+                <td className="px-4 py-3"><Badge variant={s.visited ? "default" : "secondary"}>{s.visited ? "visited" : "pending"}</Badge></td>
+                <td className="px-4 py-3 text-muted-foreground">{typeof s.totalPrice === "number" ? currency.format(s.totalPrice) : "—"}</td>
+              </tr>
+            ))}
+          </DataTable>
+        </SectionCard>
       </div>
-    </div>
-  );
-}
-
-function Card(props: { label: string; value: number | string }) {
-  return (
-    <div className="border rounded-xl p-4">
-      <div className="text-xs text-white/60">{props.label}</div>
-      <div className="text-2xl font-semibold">{props.value}</div>
     </div>
   );
 }
 
 function summarizeContext(event: QrEventFeedItem) {
-  const contextParts = [
+  const parts = [
     event.flashDealId ? `Flash ${event.flashDealId.slice(0, 8)}` : null,
     event.rewardId ? `Reward ${event.rewardId.slice(0, 8)}` : null,
     event.transportServiceId ? `Transport ${event.transportServiceId.slice(0, 8)}` : null,
     event.visitId ? `Visit ${event.visitId.slice(0, 8)}` : null,
   ].filter(Boolean);
-  return contextParts.length ? contextParts.join(" • ") : "—";
-}
-
-function summarizeMetadata(metadata: Record<string, unknown>) {
-  if (!metadata || Object.keys(metadata).length === 0) return "—";
-  const json = JSON.stringify(metadata);
-  return json.length > 120 ? `${json.slice(0, 117)}…` : json;
+  return parts.length ? parts.join(" • ") : "—";
 }

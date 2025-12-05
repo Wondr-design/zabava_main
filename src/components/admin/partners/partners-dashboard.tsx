@@ -588,7 +588,7 @@ export function PartnersDashboard({
         >
           ← Back to partners
         </Button>
-        <Card className="border-slate-200 bg-white shadow-sm">
+        <Card className="border-border bg-card shadow-sm">
           <CardHeader>
             <CardTitle>Create partner</CardTitle>
             <CardDescription>

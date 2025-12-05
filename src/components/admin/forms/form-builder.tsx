@@ -166,7 +166,7 @@ const STATUS_OPTIONS: Array<{
 const STATUS_BADGE_CLASS: Record<PartnerFormRecord["status"], string> = {
   draft: "border-sky-100 bg-sky-50 text-sky-700",
   published: "border-emerald-100 bg-emerald-50 text-emerald-700",
-  archived: "border-slate-200 bg-slate-100 text-slate-600",
+  archived: "border-border bg-muted text-muted-foreground",
 };
 
 function getStatusOption(value: PartnerFormRecord["status"]) {
@@ -1618,7 +1618,7 @@ export function AdminFormBuilder({
       <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold text-slate-800">
+            <p className="text-sm font-semibold text-foreground">
               {pricingLabel}
             </p>
             <p className="text-xs text-muted-foreground">
@@ -1674,7 +1674,7 @@ export function AdminFormBuilder({
             <Label className="text-xs uppercase text-muted-foreground">
               Manual overrides
             </Label>
-            <div className="flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-2">
+            <div className="flex items-center gap-3 rounded-lg border border-border px-4 py-2">
               <Checkbox
                 id={`pricing-override-${step.id}`}
                 checked={pricing.allowCustomTotals}
@@ -1686,7 +1686,7 @@ export function AdminFormBuilder({
               <div>
                 <Label
                   htmlFor={`pricing-override-${step.id}`}
-                  className="text-sm font-medium text-slate-700"
+                  className="text-sm font-medium text-foreground"
                 >
                   Allow totals override
                 </Label>
@@ -1701,7 +1701,7 @@ export function AdminFormBuilder({
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <p className="text-sm font-semibold text-slate-800">
+              <p className="text-sm font-semibold text-foreground">
                 Ticket bundles
               </p>
               <p className="text-xs text-muted-foreground">
@@ -1722,7 +1722,7 @@ export function AdminFormBuilder({
           </div>
 
           {pricing.bundles.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+            <p className="rounded-lg border border-dashed border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
               No bundles yet. Add at least one ticket bundle to continue.
             </p>
           ) : isReadOnly ? (
@@ -1737,12 +1737,12 @@ export function AdminFormBuilder({
                 return (
                   <div
                     key={bundle.id ?? bundleIndex}
-                    className="rounded-lg border border-slate-200 bg-slate-50 p-4"
+                    className="rounded-lg border border-border bg-muted/50 p-4"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-2">
-                          <p className="text-sm font-semibold text-slate-800">
+                          <p className="text-sm font-semibold text-foreground">
                             {bundle.label?.trim() || bundle.ticketType || `Bundle ${bundleIndex + 1}`}
                           </p>
                           {points !== null && (
@@ -1752,24 +1752,24 @@ export function AdminFormBuilder({
                           )}
                         </div>
                         {bundle.ticketType && (
-                          <p className="text-xs text-slate-600">
+                          <p className="text-xs text-muted-foreground">
                             Ticket type: {bundle.ticketType}
                           </p>
                         )}
                         {inclusions && (
                           <div className="flex flex-wrap gap-3 text-xs">
                             {inclusions.adults !== null && inclusions.adults !== undefined && (
-                              <span className="text-slate-600">
+                              <span className="text-muted-foreground">
                                 <span className="font-medium">Adults:</span> {inclusions.adults}
                               </span>
                             )}
                             {inclusions.children !== null && inclusions.children !== undefined && (
-                              <span className="text-slate-600">
+                              <span className="text-muted-foreground">
                                 <span className="font-medium">Children:</span> {inclusions.children}
                               </span>
                             )}
                             {inclusions.teens !== null && inclusions.teens !== undefined && (
-                              <span className="text-slate-600">
+                              <span className="text-muted-foreground">
                                 <span className="font-medium">Teens:</span> {inclusions.teens}
                               </span>
                             )}
@@ -1831,11 +1831,11 @@ export function AdminFormBuilder({
                 return (
                   <div
                     key={bundle.id ?? bundleIndex}
-                    className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                    className="rounded-xl border border-border bg-card p-4 shadow-sm"
                   >
                     <div className="mb-4 flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold text-slate-800">
+                        <p className="text-sm font-semibold text-foreground">
                           {bundle.label?.trim() || `Bundle ${bundleIndex + 1}`}
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -2104,7 +2104,7 @@ export function AdminFormBuilder({
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <p className="text-sm font-semibold text-slate-800">
+              <p className="text-sm font-semibold text-foreground">
                 Optional add-ons
               </p>
               <p className="text-xs text-muted-foreground">
@@ -2122,7 +2122,7 @@ export function AdminFormBuilder({
             </Button>
           </div>
           {pricing.addons.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+            <p className="rounded-lg border border-dashed border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
               No add-ons defined. Add optional extras if the partner supports
               them.
             </p>
@@ -2131,11 +2131,11 @@ export function AdminFormBuilder({
               {pricing.addons.map((addon, addonIndex) => (
                 <div
                   key={addon.id ?? addonIndex}
-                  className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                  className="rounded-xl border border-border bg-card p-4 shadow-sm"
                 >
                   <div className="mb-4 flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-slate-800">
+                      <p className="text-sm font-semibold text-foreground">
                         {addon.label?.trim() || `Add-on ${addonIndex + 1}`}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -2313,7 +2313,7 @@ export function AdminFormBuilder({
   function renderHiddenFields() {
     if (!draft) return null;
     return (
-      <Card className="border-slate-200 bg-white shadow-sm">
+      <Card className="border-border bg-card shadow-sm">
         <CardHeader>
           <CardTitle>Hidden fields</CardTitle>
           <CardDescription>
@@ -2380,7 +2380,7 @@ export function AdminFormBuilder({
   function renderTicketOptionsEditor() {
     if (!draft || !ticketField) return null;
     return (
-      <Card className="border-slate-200 bg-white shadow-sm">
+      <Card className="border-border bg-card shadow-sm">
         <CardHeader>
           <CardTitle>Ticket options</CardTitle>
           <CardDescription>
@@ -2473,24 +2473,24 @@ export function AdminFormBuilder({
         busFee: draft.config.pricing?.transportFee ?? 0,
       } as NonNullable<PartnerFormConfig["transport"]>);
     return (
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="rounded-xl border border-border bg-card shadow-sm">
         <details open className="group">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-t-xl bg-slate-100/80 px-4 py-3 text-sm font-medium">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-t-xl bg-muted/80 px-4 py-3 text-sm font-medium">
             <span>Transport settings</span>
-            <span className="text-xs uppercase tracking-wide text-slate-500">
+            <span className="text-xs uppercase tracking-wide text-muted-foreground">
               {transport.enabled ? "Enabled" : "Disabled"} · linked{" "}
               {linkedTransportCount} partners
             </span>
           </summary>
-          <div className="space-y-4 border-t border-slate-200 bg-white/90 p-4">
-            <p className="text-sm text-slate-500">
+          <div className="space-y-4 border-t border-border bg-card/90 p-4">
+            <p className="text-sm text-muted-foreground">
               Configure the optional transport step and manage related bus
               partners.
             </p>
-            <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50/70 px-4 py-3">
+            <div className="flex items-center justify-between rounded-lg border border-border bg-muted/50/70 px-4 py-3">
               <div>
-                <p className="font-medium text-slate-900">Enable transport</p>
-                <p className="text-sm text-slate-500">
+                <p className="font-medium text-foreground">Enable transport</p>
+                <p className="text-sm text-muted-foreground">
                   Toggle to offer transport selection to visitors.
                 </p>
               </div>
@@ -2659,11 +2659,11 @@ export function AdminFormBuilder({
               </div>
             </div>
 
-            <details className="rounded-lg border border-slate-200 bg-slate-50/60">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-4 py-2 text-sm font-medium text-slate-800">
+            <details className="rounded-lg border border-border bg-muted/50/60">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-4 py-2 text-sm font-medium text-foreground">
                 <span>
                   Bus partners{" "}
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-muted-foreground">
                     ({transport.partners.length})
                   </span>
                 </span>
@@ -2693,17 +2693,17 @@ export function AdminFormBuilder({
                   </Button>
                 </div>
               </summary>
-              <div className="space-y-4 border-t border-slate-200 bg-white/80 px-4 py-4">
+              <div className="space-y-4 border-t border-border bg-card/80 px-4 py-4">
                 <div>
-                  <p className="font-medium text-slate-900">Partner list</p>
-                  <p className="text-sm text-slate-500">
+                  <p className="font-medium text-foreground">Partner list</p>
+                  <p className="text-sm text-muted-foreground">
                     Displayed when transport is set to “Yes”. Sync pulls active
                     transport partners linked to this merchant.
                   </p>
                 </div>
 
                 {transport.partners.length === 0 ? (
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-muted-foreground">
                     No partners configured. Use “Sync linked partners” to pull
                     connected providers or add options manually.
                   </p>
@@ -2712,10 +2712,10 @@ export function AdminFormBuilder({
                 {transport.partners.map((partner, index) => (
                   <div
                     key={partner.id ?? index}
-                    className="space-y-3 rounded-md border border-slate-200 bg-white/90 p-4"
+                    className="space-y-3 rounded-md border border-border bg-card/90 p-4"
                   >
                     <div className="flex items-center justify-between">
-                      <p className="font-medium text-slate-900">
+                      <p className="font-medium text-foreground">
                         {partner.label || "Bus partner"}
                       </p>
                       <Button
@@ -3065,7 +3065,7 @@ export function AdminFormBuilder({
       ...(draft.config.styling?.theme ?? {}),
     };
     return (
-      <Card className="border-slate-200 bg-white shadow-sm">
+      <Card className="border-border bg-card shadow-sm">
         <CardHeader>
           <CardTitle>Styling</CardTitle>
           <CardDescription>
@@ -3213,7 +3213,7 @@ export function AdminFormBuilder({
     const requirementItemCount = dealRequirementRows.length;
     const hasDealRequirementStep = requirementItemCount > 0;
     return (
-      <Card className="border-slate-200 bg-white shadow-sm">
+      <Card className="border-border bg-card shadow-sm">
         <CardHeader>
           <CardTitle>Form steps</CardTitle>
           <CardDescription>
@@ -3223,16 +3223,16 @@ export function AdminFormBuilder({
         </CardHeader>
         <CardContent className="space-y-8">
           {hasDealRequirementStep ? (
-            <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/60">
+            <div className="space-y-3 rounded-xl border border-border bg-muted/50/60">
               <details open className="group">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-t-xl bg-slate-100/80 px-4 py-3 text-sm font-medium">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-t-xl bg-muted/80 px-4 py-3 text-sm font-medium">
                   <span>Step 1: Ticket requirements (read-only)</span>
                   <span className="text-xs text-muted-foreground">
                     {requirementItemCount} requirement
                     {requirementItemCount === 1 ? "" : "s"}
                   </span>
                 </summary>
-                <div className="space-y-4 border-t border-slate-200 bg-white/90 px-4 py-5 text-sm">
+                <div className="space-y-4 border-t border-border bg-card/90 px-4 py-5 text-sm">
                   <p className="text-muted-foreground">
                     Pulled from the linked flash deal. Users see these
                     requirements before completing the form.
@@ -3250,11 +3250,11 @@ export function AdminFormBuilder({
                       return (
                         <div
                           key={group.ticketType}
-                          className="space-y-2 rounded-lg border border-slate-100 bg-slate-50 p-3"
+                          className="space-y-2 rounded-lg border border-border bg-muted/50 p-3"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex flex-col">
-                              <span className="font-semibold text-slate-800">
+                              <span className="font-semibold text-foreground">
                                 {group.displayTicketType}
                               </span>
                               <span className="text-xs text-muted-foreground">
@@ -3262,7 +3262,7 @@ export function AdminFormBuilder({
                               </span>
                             </div>
                             {!hasSubOptions && baseItem ? (
-                              <span className="text-xs font-semibold text-slate-700">
+                              <span className="text-xs font-semibold text-foreground">
                                 Qty {baseItem.quantity}
                               </span>
                             ) : null}
@@ -3272,17 +3272,17 @@ export function AdminFormBuilder({
                               {subItems.map((item, idx) => (
                                 <div
                                   key={`${group.ticketType}-${item.subType ?? "base"}-${idx}`}
-                                  className="flex items-center justify-between rounded-md border border-slate-100 bg-white px-3 py-2"
+                                  className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2"
                                 >
                                   <div className="flex flex-col">
-                                    <span className="font-semibold text-slate-800">
+                                    <span className="font-semibold text-foreground">
                                       {`${group.displayTicketType} · ${item.displaySubType}`}
                                     </span>
                                     <span className="text-xs text-muted-foreground">
                                       {`Sub-option: ${item.displaySubType}`}
                                     </span>
                                   </div>
-                                  <span className="text-xs font-semibold text-slate-700">
+                                  <span className="text-xs font-semibold text-foreground">
                                     Qty {item.quantity}
                                   </span>
                                 </div>
@@ -3319,9 +3319,9 @@ export function AdminFormBuilder({
             const stepNumber = hasDealRequirementStep ? index + 2 : index + 1;
             return (
               <div key={step.id} className="space-y-3">
-                <div className="rounded-xl border border-slate-200 bg-slate-50/60">
+                <div className="rounded-xl border border-border bg-muted/50/60">
                   <details open className="group">
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-t-xl bg-slate-100/80 px-4 py-3 text-sm font-medium">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-t-xl bg-muted/80 px-4 py-3 text-sm font-medium">
                       <span>
                         Step {stepNumber}: {step.title}
                       </span>
@@ -3329,7 +3329,7 @@ export function AdminFormBuilder({
                         {summaryLabel}
                       </span>
                     </summary>
-                    <div className="space-y-5 border-t border-slate-200 bg-white/90 px-4 py-5">
+                    <div className="space-y-5 border-t border-border bg-card/90 px-4 py-5">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="text-sm font-medium text-muted-foreground">
                           Step settings
@@ -3433,10 +3433,10 @@ export function AdminFormBuilder({
                         </div>
                       </div>
 
-                      <div className="space-y-3 rounded-lg border border-dashed border-slate-200 bg-white/70 p-4">
+                      <div className="space-y-3 rounded-lg border border-dashed border-border bg-muted/50 p-4">
                         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                           <div>
-                            <p className="text-sm font-medium text-slate-700">
+                            <p className="text-sm font-medium text-foreground">
                               Conditional logic
                             </p>
                             <p className="text-xs text-muted-foreground">
@@ -3639,7 +3639,7 @@ export function AdminFormBuilder({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="border border-dashed border-slate-300 bg-white text-slate-600 hover:bg-slate-100"
+                    className="border border-dashed border-border bg-background text-muted-foreground hover:bg-muted"
                     onClick={() => handleAddStep(index)}
                   >
                     <Plus className="mr-2 h-4 w-4" />
@@ -3676,7 +3676,7 @@ export function AdminFormBuilder({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="rounded-2xl border border-border bg-card shadow-sm">
         <div className="flex flex-col gap-6 p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex flex-col gap-3">
@@ -3686,7 +3686,7 @@ export function AdminFormBuilder({
                   variant="outline"
                   size="sm"
                   asChild
-                  className="border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
+                  className="border-border bg-muted/50 text-muted-foreground hover:bg-muted"
                 >
                   <LocalizedLink href="/admin/forms">
                     <ArrowLeft className="mr-2 h-4 w-4" />
@@ -3696,21 +3696,21 @@ export function AdminFormBuilder({
                 {draft ? (
                   <Badge
                     variant="outline"
-                    className="border-slate-200 bg-slate-50 text-slate-700"
+                    className="border-border bg-muted/50 text-foreground"
                   >
                     {partnerShort}
                   </Badge>
                 ) : null}
               </div>
               <div>
-                <h1 className="text-2xl font-semibold text-slate-900">
+                <h1 className="text-2xl font-semibold text-foreground">
                   {draft ? draft.name : "Choose a partner form"}
                 </h1>
-                <p className="text-sm text-slate-500">{statusHelper}</p>
+                <p className="text-sm text-muted-foreground">{statusHelper}</p>
               </div>
             </div>
             <div className="min-w-[240px] space-y-2">
-              <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Switch form
               </Label>
               <Select
@@ -3723,7 +3723,7 @@ export function AdminFormBuilder({
                   setSelectedId(value);
                 }}
               >
-                <SelectTrigger className="w-full border-slate-200 bg-slate-50">
+                <SelectTrigger className="w-full border-border bg-muted/50">
                   <SelectValue placeholder="Select form" />
                 </SelectTrigger>
                 <SelectContent>
@@ -3742,7 +3742,7 @@ export function AdminFormBuilder({
             </div>
           </div>
 
-          <div className="flex flex-col gap-4 border-t border-slate-100 pt-4">
+          <div className="flex flex-col gap-4 border-t border-border pt-4">
             <div className="flex flex-wrap items-center gap-2">
               {STATUS_OPTIONS.map((option) => {
                 const isActive = draft?.status === option.value;
@@ -3756,8 +3756,8 @@ export function AdminFormBuilder({
                     className={cn(
                       "rounded-full px-4 py-2 text-sm font-medium",
                       isActive
-                        ? "bg-slate-900 text-white hover:bg-slate-800"
-                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
+                        ? "bg-foreground text-background hover:bg-foreground/90"
+                        : "border-border bg-background text-muted-foreground hover:bg-muted"
                     )}
                     onClick={() => {
                       if (!draft) return;
@@ -3855,10 +3855,10 @@ export function AdminFormBuilder({
                   </p>
                 </div>
               )}
-              <div className="grid gap-6 border-t border-slate-100 pt-4 md:grid-cols-[1.8fr_1fr]">
+              <div className="grid gap-6 border-t border-border pt-4 md:grid-cols-[1.8fr_1fr]">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       Form name
                     </Label>
                     <Input
@@ -3871,7 +3871,7 @@ export function AdminFormBuilder({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       Slug
                     </Label>
                     <Input
@@ -3885,7 +3885,7 @@ export function AdminFormBuilder({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       Partner <span className="text-red-500">*</span>
                     </Label>
                     <Input value={partnerShort ?? "—"} disabled />
@@ -3895,7 +3895,7 @@ export function AdminFormBuilder({
                     </p>
                   </div>
                   <div className="md:col-span-2 space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       Description
                     </Label>
                     <Textarea
@@ -3911,20 +3911,20 @@ export function AdminFormBuilder({
                   </div>
                 </div>
                 <div className="grid gap-4">
-                  <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-sm shadow-sm dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200">
+                  <div className="space-y-3 rounded-xl border border-border bg-muted/50/70 p-4 text-sm shadow-sm dark:border-border dark:bg-card dark:text-foreground">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <p className="font-semibold text-slate-700 dark:text-slate-100">
+                        <p className="font-semibold text-foreground dark:text-foreground">
                           Usage type
                         </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                           Control whether this form books visits or redeems
                           rewards.
                         </p>
                       </div>
                       <Badge
                         variant="outline"
-                        className="border-slate-200 bg-white dark:border-slate-600 dark:bg-slate-900/80"
+                        className="border-border bg-card"
                       >
                         {draft.usageType === "reward"
                           ? "Reward"
@@ -3961,7 +3961,7 @@ export function AdminFormBuilder({
                         });
                       }}
                     >
-                      <SelectTrigger className="w-full border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+                      <SelectTrigger className="w-full border-border bg-background">
                         <SelectValue placeholder="Select usage" />
                       </SelectTrigger>
                       <SelectContent>
@@ -3977,7 +3977,7 @@ export function AdminFormBuilder({
 
                     {draft.usageType === "reward" ? (
                       <div className="space-y-2">
-                        <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
+                        <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground dark:text-muted-foreground">
                           Linked reward
                         </Label>
                         {rewardSelectOptions.length > 0 ? (
@@ -3990,7 +3990,7 @@ export function AdminFormBuilder({
                               })
                             }
                           >
-                            <SelectTrigger className="w-full border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+                            <SelectTrigger className="w-full border-border bg-background">
                               <SelectValue placeholder="Select reward" />
                             </SelectTrigger>
                             <SelectContent>
@@ -4011,7 +4011,7 @@ export function AdminFormBuilder({
                             </SelectContent>
                           </Select>
                         ) : (
-                          <div className="rounded-lg border border-dashed border-slate-200 bg-white/70 p-3 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
+                          <div className="rounded-lg border border-dashed border-border bg-muted/50 p-3 text-xs text-muted-foreground dark:border-border dark:bg-muted/40 dark:text-muted-foreground">
                             No rewards found. Manage rewards in the{" "}
                             <LocalizedLink
                               href="/admin/rewards"
@@ -4022,7 +4022,7 @@ export function AdminFormBuilder({
                             .
                           </div>
                         )}
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                           Customers will complete this form when redeeming the
                           selected reward.
                         </p>
@@ -4031,7 +4031,7 @@ export function AdminFormBuilder({
                     {draft.usageType === "deal" ? (
                       <div className="space-y-3">
                         <div className="space-y-2">
-                          <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
+                          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground dark:text-muted-foreground">
                             Linked deal
                           </Label>
                           {dealSelectOptions.length > 0 ? (
@@ -4044,7 +4044,7 @@ export function AdminFormBuilder({
                                 })
                               }
                             >
-                              <SelectTrigger className="w-full border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+                              <SelectTrigger className="w-full border-border bg-background">
                                 <SelectValue placeholder="Select deal" />
                               </SelectTrigger>
                               <SelectContent>
@@ -4065,14 +4065,14 @@ export function AdminFormBuilder({
                               </SelectContent>
                             </Select>
                           ) : (
-                            <div className="rounded-lg border border-dashed border-slate-200 bg-white/70 p-3 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
+                            <div className="rounded-lg border border-dashed border-border bg-muted/50 p-3 text-xs text-muted-foreground dark:border-border dark:bg-muted/40 dark:text-muted-foreground">
                               No eligible deals found. Publish a flash deal
                               first.
                             </div>
                           )}
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
+                          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground dark:text-muted-foreground">
                             Visitors field
                           </Label>
                           {counterFieldOptions.length > 0 ? (
@@ -4088,7 +4088,7 @@ export function AdminFormBuilder({
                                 })
                               }
                             >
-                              <SelectTrigger className="w-full border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+                              <SelectTrigger className="w-full border-border bg-background">
                                 <SelectValue placeholder="Select field" />
                               </SelectTrigger>
                               <SelectContent>
@@ -4106,14 +4106,14 @@ export function AdminFormBuilder({
                               </SelectContent>
                             </Select>
                           ) : (
-                            <div className="rounded-lg border border-dashed border-slate-200 bg-white/70 p-3 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
+                            <div className="rounded-lg border border-dashed border-border bg-muted/50 p-3 text-xs text-muted-foreground dark:border-border dark:bg-muted/40 dark:text-muted-foreground">
                               Add a counter or numeric input to capture visitor
                               count.
                             </div>
                           )}
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
+                          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground dark:text-muted-foreground">
                             Marketing consent checkbox (optional)
                           </Label>
                           <Select
@@ -4128,7 +4128,7 @@ export function AdminFormBuilder({
                               })
                             }
                           >
-                            <SelectTrigger className="w-full border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+                            <SelectTrigger className="w-full border-border bg-background">
                               <SelectValue placeholder="Select consent field" />
                             </SelectTrigger>
                             <SelectContent>
@@ -4146,7 +4146,7 @@ export function AdminFormBuilder({
                             </SelectContent>
                           </Select>
                         </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                           Visitors will generate a flash deal QR tied to the
                           selected offer.
                         </p>
@@ -4154,7 +4154,7 @@ export function AdminFormBuilder({
                     ) : null}
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       Form title
                     </Label>
                     <Input
@@ -4168,7 +4168,7 @@ export function AdminFormBuilder({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       Subtitle
                     </Label>
                     <Input
@@ -4183,7 +4183,7 @@ export function AdminFormBuilder({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       QR expiry (days)
                     </Label>
                     <Input
@@ -4216,7 +4216,7 @@ export function AdminFormBuilder({
               </div>
             </>
           ) : (
-            <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/60 p-6 text-sm text-slate-500">
+            <div className="rounded-lg border border-dashed border-border bg-muted/50/60 p-6 text-sm text-muted-foreground">
               Select an existing form from the list to begin editing.
             </div>
           )}
@@ -4234,7 +4234,7 @@ export function AdminFormBuilder({
               {renderStyling()}
             </>
           ) : (
-            <Card className="border-slate-200 bg-white shadow-sm">
+            <Card className="border-border bg-card shadow-sm">
               <CardContent className="py-10 text-center text-sm text-muted-foreground">
                 No form selected yet. Choose a form from the list above to
                 unlock the builder. New forms can be created from the overview.
@@ -4244,7 +4244,7 @@ export function AdminFormBuilder({
         </div>
 
         <div className="space-y-4">
-          <Card className="border-slate-200 bg-white shadow-sm">
+          <Card className="border-border bg-card shadow-sm">
             <CardHeader>
               <CardTitle>Summary</CardTitle>
               <CardDescription>
@@ -4401,7 +4401,7 @@ function FieldEditor({
   };
 
   return (
-    <div className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="space-y-4 rounded-lg border border-border bg-card p-4 shadow-sm">
       <div className="flex items-center justify-between gap-4">
         <div className="space-y-1">
           <p className="font-medium">{field.label}</p>
@@ -4425,7 +4425,7 @@ function FieldEditor({
                 }
               }}
             >
-              <SelectTrigger className="w-[140px] border-slate-200 bg-slate-50">
+              <SelectTrigger className="w-[140px] border-border bg-muted/50">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -4567,10 +4567,10 @@ function FieldEditor({
         </div>
       ) : null}
 
-      <div className="space-y-3 rounded-lg border border-dashed border-slate-200 bg-white/70 p-4">
+      <div className="space-y-3 rounded-lg border border-dashed border-border bg-muted/50 p-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm font-medium text-slate-700">
+            <p className="text-sm font-medium text-foreground">
               Conditional display
             </p>
             <p className="text-xs text-muted-foreground">

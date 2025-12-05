@@ -2,13 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useLocalizedRouter } from "@/i18n/use-localized-router";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ResetPasswordPanel } from "@/components/auth/reset-password-panel";
 import { useEmailVerification } from "@/hooks/use-email-verification";
+import { AuthLayout } from "@/components/auth/auth-layout";
+import {
+  AuthAlert,
+  AuthInput,
+  AuthSubmitButton,
+  EmailVerificationSection,
+} from "@/components/auth/auth-form";
+import { ResetPasswordPanel } from "@/components/auth/reset-password-panel";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 export default function StaffLoginPage() {
   const router = useLocalizedRouter();
@@ -19,6 +23,7 @@ export default function StaffLoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [showReset, setShowReset] = useState(false);
+
   const {
     email: verifiedEmail,
     requestCode,
@@ -31,26 +36,21 @@ export default function StaffLoginPage() {
     reset: resetVerification,
   } = useEmailVerification({ type: "staff_login" });
 
-  const normalizedEmail = useMemo(
-    () => email.trim().toLowerCase(),
-    [email],
-  );
+  const normalizedEmail = useMemo(() => email.trim().toLowerCase(), [email]);
+
   const isEmailVerified =
     Boolean(verifiedAt) &&
     verifiedEmail?.toLowerCase() === normalizedEmail &&
     normalizedEmail.length > 0;
 
   useEffect(() => {
-    if (
-      verifiedEmail &&
-      verifiedEmail.toLowerCase() !== normalizedEmail
-    ) {
+    if (verifiedEmail && verifiedEmail.toLowerCase() !== normalizedEmail) {
       resetVerification();
       setCodeInput("");
     }
   }, [normalizedEmail, verifiedEmail, resetVerification]);
 
-  async function handleRequestCode() {
+  const handleRequestCode = async () => {
     if (!normalizedEmail) {
       setError("Enter your email before requesting a code.");
       return;
@@ -58,9 +58,9 @@ export default function StaffLoginPage() {
     setError("");
     await requestCode(normalizedEmail);
     setNotice("Verification code sent. Check your inbox.");
-  }
+  };
 
-  async function handleVerifyCode() {
+  const handleVerifyCode = async () => {
     if (!codeInput.trim()) {
       setError("Enter the verification code we emailed you.");
       return;
@@ -70,11 +70,12 @@ export default function StaffLoginPage() {
     if (ok) {
       setNotice("Email verified. Continue signing in.");
     }
-  }
+  };
 
-  async function onSubmit(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (submitting) return;
+
     if (!email || !password) {
       setError("Enter both email and password");
       return;
@@ -83,9 +84,11 @@ export default function StaffLoginPage() {
       setError("Verify the code we emailed you before signing in.");
       return;
     }
+
     setSubmitting(true);
     setError("");
     setNotice(null);
+
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -105,145 +108,98 @@ export default function StaffLoginPage() {
     } finally {
       setSubmitting(false);
     }
-  }
+  };
 
-  function handleResetSuccess(resetEmail: string) {
+  const handleResetSuccess = (resetEmail: string) => {
     setShowReset(false);
     setNotice("Password updated. Sign in with your new password.");
     setEmail(resetEmail);
     setPassword("");
     setError("");
-  }
+  };
 
   return (
-    <Card className="w-full max-w-2xl">
-      <CardContent className="p-6">
-        <form onSubmit={onSubmit} className="space-y-5">
-          <header className="space-y-2">
-            <h1 className="text-xl font-semibold text-foreground">
-              Staff login
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Use the email and password created during your invite onboarding.
-            </p>
-          </header>
-          {error ? (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          ) : null}
-          {notice ? (
-            <Alert className="border-green-500/40 bg-green-500/10 text-green-600">
-              <AlertDescription>{notice}</AlertDescription>
-            </Alert>
-          ) : null}
-          <div className="space-y-2">
-            <Label htmlFor="email">
-              Email <span className="text-destructive">*</span>
-            </Label>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                placeholder="name@example.com"
-                disabled={codeRequesting}
-              />
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={handleRequestCode}
-                disabled={codeRequesting || !normalizedEmail.length}
-              >
-                {codeRequesting ? "Sending…" : "Send code"}
-              </Button>
-            </div>
-            {verificationError ? (
-              <p className="text-xs text-destructive mt-2">
-                {verificationError}
-              </p>
-            ) : null}
-            {expiresAt && !isEmailVerified ? (
-              <p className="text-xs text-muted-foreground mt-1">
-                Code expires at {new Date(expiresAt).toLocaleTimeString()}
-              </p>
-            ) : null}
-            {isEmailVerified ? (
-              <p className="text-xs text-green-600 mt-1">
-                Email verified.
-              </p>
-            ) : null}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="code">
-              Verification code <span className="text-destructive">*</span>
-            </Label>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Input
-                id="code"
-                type="text"
-                inputMode="numeric"
-                value={codeInput}
-                onChange={(e) => setCodeInput(e.target.value)}
-                placeholder="Enter the code"
-                maxLength={8}
-                disabled={isEmailVerified}
-              />
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={handleVerifyCode}
-                disabled={
-                  isEmailVerified ||
-                  codeVerifying ||
-                  !codeInput.trim() ||
-                  !normalizedEmail.length
-                }
-              >
-                {codeVerifying ? "Verifying…" : isEmailVerified ? "Verified" : "Verify"}
-              </Button>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">
-              Password <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              placeholder="••••••••"
-            />
-          </div>
-          <Button type="submit" className="w-full" disabled={submitting}>
-            {submitting ? "Signing in…" : "Sign in"}
-          </Button>
-          <p className="text-xs text-muted-foreground">
-            Need access? Ask your partner admin for a new staff invite link.
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              setShowReset((prev) => !prev);
-              setError("");
-            }}
-            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-          >
-            {showReset ? "Hide password reset" : "Forgot password?"}
-          </button>
+    <AuthLayout
+      variant="staff"
+      title="Staff Sign In"
+      description="Use the credentials from your invite onboarding."
+      brandTitle="Staff Console"
+      brandDescription="Check in customers, process redemptions, and manage visits efficiently from your mobile device."
+    >
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {error && <AuthAlert type="error" message={error} />}
+        {notice && <AuthAlert type="success" message={notice} />}
+
+        <EmailVerificationSection
+          email={email}
+          onEmailChange={setEmail}
+          codeInput={codeInput}
+          onCodeChange={setCodeInput}
+          isVerified={isEmailVerified}
+          verifiedEmail={verifiedEmail}
+          expiresAt={expiresAt}
+          verificationError={verificationError}
+          onRequestCode={handleRequestCode}
+          onVerifyCode={handleVerifyCode}
+          onReset={() => {
+            resetVerification();
+            setCodeInput("");
+          }}
+          codeRequesting={codeRequesting}
+          codeVerifying={codeVerifying}
+        />
+
+        <AuthInput
+          id="password"
+          label="Password"
+          type="password"
+          value={password}
+          onChange={setPassword}
+          placeholder="Enter your password"
+          required
+          autoComplete="current-password"
+          icon="password"
+        />
+
+        <AuthSubmitButton loading={submitting} loadingText="Signing in...">
+          Sign in
+        </AuthSubmitButton>
+      </form>
+
+      {/* Password reset toggle */}
+      <div className="mt-6">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setShowReset((prev) => !prev);
+            setError("");
+          }}
+          className="h-auto p-0 text-sm font-normal text-muted-foreground hover:text-foreground"
+        >
           {showReset ? (
-            <ResetPasswordPanel
-              role="staff"
-              onSuccess={handleResetSuccess}
-              className="mt-2"
-            />
-          ) : null}
-        </form>
-      </CardContent>
-    </Card>
+            <>
+              Hide password reset <ChevronUp className="ml-1 h-3 w-3" />
+            </>
+          ) : (
+            <>
+              Forgot password? <ChevronDown className="ml-1 h-3 w-3" />
+            </>
+          )}
+        </Button>
+
+        {showReset && (
+          <div className="mt-4">
+            <ResetPasswordPanel role="staff" onSuccess={handleResetSuccess} />
+          </div>
+        )}
+      </div>
+
+      {/* Info text */}
+      <p className="mt-8 text-center text-sm text-muted-foreground">
+        Need access? Ask your partner admin for a new staff invite link.
+      </p>
+    </AuthLayout>
   );
 }

@@ -3,12 +3,15 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocalizedRouter } from "@/i18n/use-localized-router";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AuthLayout } from "@/components/auth/auth-layout";
+import {
+  AuthAlert,
+  AuthInput,
+  AuthSubmitButton,
+  AuthVerificationStatus,
+} from "@/components/auth/auth-form";
 import { EmailVerification } from "@/site/components/email-verification";
+import { AlertTriangle } from "lucide-react";
 
 function StaffSignupInner() {
   const router = useLocalizedRouter();
@@ -27,36 +30,38 @@ function StaffSignupInner() {
   const [verificationKey, setVerificationKey] = useState(0);
 
   const emailVerified = Boolean(verifiedEmail);
+  const hasInviteToken = presetToken.trim().length > 0;
 
   useEffect(() => {
     setEmail(presetEmail);
-    // token is sourced from search params; no user editing required
     setName(presetName);
     setVerifiedEmail(null);
     setVerificationKey((key) => key + 1);
   }, [presetEmail, presetToken, presetName]);
 
-  function handleEmailVerified(value: string) {
+  const handleEmailVerified = (value: string) => {
     const normalized = value.trim().toLowerCase();
     setEmail(normalized);
     setVerifiedEmail(normalized);
     setError("");
-  }
+  };
 
-  function handleResetVerification() {
+  const handleResetVerification = () => {
     setVerifiedEmail(null);
     setEmail("");
     setError("");
     setVerificationKey((key) => key + 1);
-  }
+  };
 
-  async function onSubmit(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (submitting) return;
+
     const normalizedEmail = email.trim().toLowerCase();
     const pw = password.trim();
     const confirm = confirmPassword.trim();
     const inviteToken = presetToken.trim();
+
     if (!emailVerified || !verifiedEmail || normalizedEmail !== verifiedEmail) {
       setError("Verify your email before creating an account.");
       return;
@@ -80,6 +85,7 @@ function StaffSignupInner() {
 
     setSubmitting(true);
     setError("");
+
     try {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
@@ -100,133 +106,135 @@ function StaffSignupInner() {
     } finally {
       setSubmitting(false);
     }
-  }
+  };
 
   return (
-    <Card className="space-y-6 rounded-lg p-6">
-      <EmailVerification
-        key={verificationKey}
-        type="staff_signup"
-        onVerified={handleEmailVerified}
-        className="border border-white/10 bg-slate-950/40 text-white"
-      />
+    <AuthLayout
+      variant="staff"
+      title="Create your account"
+      description="Complete your invite to access the staff console."
+      brandTitle="Welcome to the Team"
+      brandDescription="Create your staff account to start checking in customers and processing redemptions at your venue."
+    >
+      <div className="space-y-6">
+        {error && <AuthAlert type="error" message={error} />}
 
-      {presetToken ? (
-        <div className="rounded-lg border border-border bg-muted px-4 py-3 text-sm text-muted-foreground">
-          Invite detected. Complete the steps below to activate your staff access.
-        </div>
-      ) : (
-        <Alert variant="destructive">
-          <AlertDescription>
-            We couldn&apos;t find an invite token. Open the signup link directly from your invite email.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {emailVerified ? (
-        <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted px-4 py-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <span>
-            Verified email:{" "}
-            <span className="font-semibold text-foreground">
-              {verifiedEmail}
+        {/* Invite token status */}
+        {hasInviteToken ? (
+          <div className="flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-600">
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+              />
+            </svg>
+            Invite detected. Complete the steps below to activate your access.
+          </div>
+        ) : (
+          <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+            <span>
+              No invite token found. Open the signup link directly from your
+              invite email.
             </span>
-          </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={handleResetVerification}
-            className="self-start sm:self-auto"
-          >
-            Use a different email
-          </Button>
-        </div>
-      ) : (
-        <p className="rounded-lg border border-dashed border-border bg-muted/60 px-4 py-3 text-sm text-muted-foreground">
-          Verify your email with a one-time code to continue.
-        </p>
-      )}
+          </div>
+        )}
 
-      <form onSubmit={onSubmit} className="space-y-5">
-        <header className="space-y-2">
-          <h1 className="text-xl font-semibold text-foreground">
-            Create your staff account
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Complete your invite by confirming the email and choosing a secure password.
-          </p>
-        </header>
-        {error ? (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : null}
-        <div className="space-y-2">
-          <Label htmlFor="name">Full name</Label>
-          <Input
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Jane Doe"
+        {/* Email Verification */}
+        <div className="space-y-4">
+          <EmailVerification
+            key={verificationKey}
+            type="staff_signup"
+            onVerified={handleEmailVerified}
+            className="rounded-lg border border-border bg-muted/50 p-4"
           />
+
+          {emailVerified ? (
+            <AuthVerificationStatus
+              verified={true}
+              email={verifiedEmail}
+              onReset={handleResetVerification}
+            />
+          ) : (
+            <div className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+              Verify your email with a one-time code to continue.
+            </div>
+          )}
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="email">
-            Email <span className="text-destructive">*</span>
-          </Label>
-          <Input
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <AuthInput
+            id="name"
+            label="Full name"
+            value={name}
+            onChange={setName}
+            placeholder="Jane Doe"
+            autoComplete="name"
+            icon="user"
+          />
+
+          <AuthInput
             id="email"
+            label="Email"
             type="email"
             value={email}
+            onChange={() => {}}
+            placeholder="Verify your email above"
+            required
             readOnly
             disabled={!emailVerified}
             autoComplete="email"
-            placeholder="Verify your email above to continue"
+            icon="email"
+            hint={
+              emailVerified
+                ? "Verified via the emailed code."
+                : "Complete verification above."
+            }
           />
-          <p className="text-xs text-muted-foreground">
-            {emailVerified
-              ? "Verified via the emailed code."
-              : "Complete the verification step above to populate this field."}
-          </p>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="password">
-              Password <span className="text-destructive">*</span>
-            </Label>
-            <Input
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <AuthInput
               id="password"
+              label="Password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              minLength={8}
-              autoComplete="new-password"
+              onChange={setPassword}
               placeholder="At least 8 characters"
+              required
+              autoComplete="new-password"
+              icon="password"
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirm-password">
-              Confirm password <span className="text-destructive">*</span>
-            </Label>
-            <Input
+
+            <AuthInput
               id="confirm-password"
+              label="Confirm password"
               type="password"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              autoComplete="new-password"
+              onChange={setConfirmPassword}
               placeholder="Re-enter password"
+              required
+              autoComplete="new-password"
+              icon="password"
             />
           </div>
-        </div>
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={submitting || !emailVerified}
-        >
-          {submitting ? "Creating account…" : "Create account"}
-        </Button>
-      </form>
-    </Card>
+
+          <AuthSubmitButton
+            loading={submitting}
+            loadingText="Creating account..."
+            disabled={!emailVerified || !hasInviteToken}
+          >
+            Create account
+          </AuthSubmitButton>
+        </form>
+      </div>
+    </AuthLayout>
   );
 }
 
@@ -234,9 +242,9 @@ export default function StaffSignupPage() {
   return (
     <Suspense
       fallback={
-        <Card className="rounded-lg p-6 text-muted-foreground">
-          Loading…
-        </Card>
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-muted-foreground">Loading...</div>
+        </div>
       }
     >
       <StaffSignupInner />

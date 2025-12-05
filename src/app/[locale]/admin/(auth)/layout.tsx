@@ -6,10 +6,9 @@ export default function AdminAuthLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <BodyThemeClass className="theme-vercel" />
-      <div className="theme-vercel flex min-h-screen items-center justify-center bg-background text-foreground">
-        <div className="w-full max-w-md px-4">{children}</div>
+      <div className="theme-vercel min-h-screen bg-background text-foreground">
+        {children}
       </div>
     </>
   );
 }
-

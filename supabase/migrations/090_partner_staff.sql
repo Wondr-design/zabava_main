@@ -6,6 +6,7 @@ create table if not exists public.partner_staff (
   password_hash text not null,
   name text,
   status text not null default 'active' check (status in ('active','inactive','revoked')),
+  auth_user_id uuid,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   last_login_at timestamptz
@@ -13,6 +14,7 @@ create table if not exists public.partner_staff (
 
 create index if not exists partner_staff_partner_idx on public.partner_staff (partner_id);
 create index if not exists partner_staff_status_idx on public.partner_staff (status);
+create index if not exists partner_staff_auth_user_id_idx on public.partner_staff (auth_user_id);
 
 -- Invitations that partners send to staff members
 create table if not exists public.partner_staff_invites (

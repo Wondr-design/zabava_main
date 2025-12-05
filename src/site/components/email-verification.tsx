@@ -1,7 +1,10 @@
 "use client";
-import { useState } from "react";
-import { Loader2, ShieldCheck } from "lucide-react";
 
+import { useState } from "react";
+import { Loader2, ShieldCheck, Mail } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   DesignButton,
   DesignFormField,
@@ -27,6 +30,8 @@ interface EmailVerificationProps {
   className?: string;
   requestEndpoint?: string;
   verifyEndpoint?: string;
+  /** Use "auth" variant for dashboard auth pages, "public" for public-facing pages */
+  variant?: "public" | "auth";
 }
 
 export function EmailVerification(props: EmailVerificationProps) {
@@ -37,6 +42,7 @@ export function EmailVerification(props: EmailVerificationProps) {
     className,
     requestEndpoint,
     verifyEndpoint,
+    variant = "public",
   } = props;
 
   const verification = useEmailVerification({
@@ -66,8 +72,154 @@ export function EmailVerification(props: EmailVerificationProps) {
     }
   }
 
+  // Determine if we should use the bonus page or auth variant styling
   const isBonusPage = type === "bonus";
+  const isAuthVariant = variant === "auth" || 
+    type.includes("signup") || 
+    type.includes("password_reset") ||
+    type === "admin_signup" ||
+    type === "partner_signup" ||
+    type === "staff_signup";
 
+  // Auth variant - clean, minimal design for dashboard auth pages
+  if (isAuthVariant && !isBonusPage) {
+    return (
+      <div className={cn("w-full space-y-4", className)}>
+        {/* Email field */}
+        <div className="space-y-2">
+          <Label htmlFor="verify-email" className="text-sm font-medium text-foreground">
+            Email <span className="text-destructive">*</span>
+          </Label>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                <Mail className="h-4 w-4" />
+              </div>
+              <Input
+                id="verify-email"
+                type="email"
+                value={inputEmail}
+                onChange={(e) => setInputEmail(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !verification.requesting && !emailVerified && inputEmail.trim().length > 0) {
+                    e.preventDefault();
+                    handleRequestCode();
+                  }
+                }}
+                disabled={verification.requesting || emailVerified}
+                placeholder={t("emailPlaceholder")}
+                autoComplete="email"
+                className="h-11 pl-10 border-border bg-background focus:border-foreground focus:ring-1 focus:ring-foreground/20"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleRequestCode}
+              disabled={
+                verification.requesting ||
+                emailVerified ||
+                inputEmail.trim().length === 0
+              }
+              className="h-11 px-4 font-medium"
+            >
+              {verification.requesting ? (
+                <>
+                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                "Send code"
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Verification code field */}
+        <div className="space-y-2">
+          <Label htmlFor="verify-code" className="text-sm font-medium text-foreground">
+            Verification code <span className="text-destructive">*</span>
+          </Label>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </div>
+              <Input
+                id="verify-code"
+                type="text"
+                inputMode="numeric"
+                value={inputCode}
+                onChange={(e) => setInputCode(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !verification.verifying && !emailVerified && verification.email.length > 0 && inputCode.trim().length > 0) {
+                    e.preventDefault();
+                    handleVerify();
+                  }
+                }}
+                disabled={verification.verifying || emailVerified}
+                placeholder={t("codePlaceholder")}
+                maxLength={8}
+                className="h-11 pl-10 border-border bg-background focus:border-foreground focus:ring-1 focus:ring-foreground/20"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleVerify}
+              disabled={
+                verification.verifying ||
+                emailVerified ||
+                verification.email.length === 0 ||
+                inputCode.trim().length === 0
+              }
+              className="h-11 px-4 font-medium"
+            >
+              {verification.verifying ? (
+                <>
+                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                  Verifying...
+                </>
+              ) : emailVerified ? (
+                "Verified"
+              ) : (
+                "Verify"
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Expiry notice */}
+        {verification.expiresAt && !emailVerified && (
+          <p className="text-xs text-muted-foreground">
+            Code expires at {new Date(verification.expiresAt).toLocaleTimeString()}
+          </p>
+        )}
+
+        {/* Error message */}
+        {verification.error && (
+          <div className="flex items-start gap-2 rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2.5">
+            <p className="text-sm text-destructive">{verification.error}</p>
+          </div>
+        )}
+
+        {/* Success message */}
+        {emailVerified && (
+          <div className="flex items-center gap-2 rounded-lg border border-green-500/50 bg-green-500/10 px-3 py-2.5">
+            <ShieldCheck className="h-4 w-4 shrink-0 text-green-600" />
+            <p className="text-sm text-green-600">
+              Email verified at {new Date(verification.verifiedAt ?? Date.now()).toLocaleTimeString()}
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Original public variant - for bonus page and other public-facing pages
   return (
     <div className={cn("w-full space-y-6", className)}>
       <div className="space-y-6">

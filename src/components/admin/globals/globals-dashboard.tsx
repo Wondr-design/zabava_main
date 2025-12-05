@@ -11,6 +11,14 @@ import {
   RefreshCw,
   X,
   Check,
+  Globe2,
+  Ticket,
+  Tag,
+  Layers,
+  Coins,
+  CreditCard,
+  Building,
+  ChevronRight,
 } from "lucide-react";
 
 import { adminApi } from "@/lib/web/api-client";
@@ -18,47 +26,57 @@ import type {
   GlobalValueRecord,
   GlobalValueType,
 } from "@/lib/data/global-values";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import {
-  PageHeader,
-  SectionCard,
-  DesignButton,
-  DesignFormField,
-  DesignInput,
-  DesignTextarea,
-  DesignSwitch,
-  DesignSelect,
-  DesignSelectContent,
-  DesignSelectItem,
-  DesignSelectTrigger,
-  DesignSelectValue,
-  StatusPill,
-  FilterChip,
-} from "@/components/design-system";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
-const TYPE_LABELS: Record<GlobalValueType, string> = {
-  ticket_type: "Ticket types",
-  category: "Categories",
-  tag: "Tags",
-  listing_tier: "Listing tiers",
-  cash_currency: "Cash currencies",
-  accepted_payment: "Accepted payments",
-  facility: "Facilities",
-};
-
-const TYPE_DESCRIPTIONS: Record<GlobalValueType, string> = {
-  ticket_type:
-    "Configure the standard ticket types that deals, partners, and forms can reference.",
-  category:
-    "Define reusable categories for partners, deals, or rewards across the platform.",
-  tag: "Manage the tag vocabulary used for rewards, deals, and analytics filters.",
-  listing_tier:
-    "Control the Silver/Gold/Platinum tiers that determine partner spotlight placement.",
-  cash_currency:
-    "Maintain the list of currencies partners can accept for cash payments.",
-  accepted_payment:
-    "Define reusable payment method labels (cash, cards, Apple Pay, etc.) that partner profiles can reference.",
-  facility:
-    "Manage the amenities/facilities icons that appear on partner detail cards.",
+const TYPE_CONFIG: Record<GlobalValueType, { label: string; icon: React.ComponentType<{ className?: string }>; description: string }> = {
+  ticket_type: {
+    label: "Ticket types",
+    icon: Ticket,
+    description: "Configure the standard ticket types that deals, partners, and forms can reference.",
+  },
+  category: {
+    label: "Categories",
+    icon: Layers,
+    description: "Define reusable categories for partners, deals, or rewards across the platform.",
+  },
+  tag: {
+    label: "Tags",
+    icon: Tag,
+    description: "Manage the tag vocabulary used for rewards, deals, and analytics filters.",
+  },
+  listing_tier: {
+    label: "Listing tiers",
+    icon: Layers,
+    description: "Control the Silver/Gold/Platinum tiers that determine partner spotlight placement.",
+  },
+  cash_currency: {
+    label: "Cash currencies",
+    icon: Coins,
+    description: "Maintain the list of currencies partners can accept for cash payments.",
+  },
+  accepted_payment: {
+    label: "Accepted payments",
+    icon: CreditCard,
+    description: "Define reusable payment method labels (cash, cards, Apple Pay, etc.).",
+  },
+  facility: {
+    label: "Facilities",
+    icon: Building,
+    description: "Manage the amenities/facilities icons that appear on partner detail cards.",
+  },
 };
 
 function slugifyValue(value: string) {
@@ -102,7 +120,7 @@ interface FormState {
   description: string;
   sortOrder: string;
   isActive: boolean;
-  subOptions: string[]; // Array of ticket type keys for sub-options
+  subOptions: string[];
   heroMediaUrl: string;
   heroMediaAlt: string;
   accentColor: string;
@@ -135,7 +153,6 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
     [values, activeType]
   );
 
-  // Available ticket types for sub-options (exclude the current one being edited)
   const availableTicketTypesForSubOptions = useMemo(() => {
     if (activeType !== "ticket_type") return [];
     return values.ticket_type
@@ -186,7 +203,6 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
     try {
       const metadata: Record<string, unknown> = {};
       let includeMetadata = false;
-      // Store sub-options in metadata for ticket types (always set to ensure clearing works)
       if (activeType === "ticket_type") {
         includeMetadata = true;
         if (form.subOptions.length > 0) {
@@ -200,15 +216,9 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
         const mediaUrl = form.heroMediaUrl.trim();
         const mediaAlt = form.heroMediaAlt.trim();
         const accentColor = form.accentColor.trim();
-        if (mediaUrl) {
-          metadata.heroMediaUrl = mediaUrl;
-        }
-        if (mediaAlt) {
-          metadata.heroMediaAlt = mediaAlt;
-        }
-        if (accentColor) {
-          metadata.accentColor = accentColor;
-        }
+        if (mediaUrl) metadata.heroMediaUrl = mediaUrl;
+        if (mediaAlt) metadata.heroMediaAlt = mediaAlt;
+        if (accentColor) metadata.accentColor = accentColor;
       }
 
       const payload = {
@@ -267,23 +277,15 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
     try {
       const result = await adminApi.uploadFile(
         file,
-        {
-          folder: getCategoryAssetFolder(),
-          contentType: file.type,
-        },
+        { folder: getCategoryAssetFolder(), contentType: file.type },
         {}
       );
       if (!result?.url) {
-        toast.warning(
-          "Media uploaded but no URL returned. Check storage permissions."
-        );
+        toast.warning("Media uploaded but no URL returned.");
       } else {
         toast.success("Category media uploaded.");
       }
-      setForm((prev) => ({
-        ...prev,
-        heroMediaUrl: result?.url ?? "",
-      }));
+      setForm((prev) => ({ ...prev, heroMediaUrl: result?.url ?? "" }));
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to upload media."
@@ -331,7 +333,7 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
     const item = currentValues.find((value) => value.id === id);
     if (!item) return;
     const confirmDelete = window.confirm(
-      `Delete “${item.label}”? This cannot be undone.`
+      `Delete "${item.label}"? This cannot be undone.`
     );
     if (!confirmDelete) return;
     try {
@@ -340,9 +342,7 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
         ...prev,
         [activeType]: prev[activeType].filter((value) => value.id !== id),
       }));
-      if (editingId === id) {
-        resetForm();
-      }
+      if (editingId === id) resetForm();
       toast.success("Value deleted.");
     } catch (error) {
       toast.error(
@@ -371,347 +371,329 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
     }
   }
 
-  return (
-    <div className="space-y-6 px-6 py-8">
-      <PageHeader
-        title="Global references"
-        description="Manage reusable ticket types, categories, tags, and listing tiers for the entire platform."
-        actions={
-          <DesignButton
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => void refreshType()}
-            disabled={refreshing}
-          >
-            {refreshing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Refreshing…
-              </>
-            ) : (
-              <>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Refresh
-              </>
-            )}
-          </DesignButton>
-        }
-      />
+  const activeConfig = TYPE_CONFIG[activeType];
+  const ActiveIcon = activeConfig.icon;
 
-      <div className="flex flex-wrap gap-2">
-        {(Object.keys(TYPE_LABELS) as GlobalValueType[]).map((type) => (
-          <FilterChip
-            key={type}
-            selected={activeType === type}
-            onClick={() => {
-              setActiveType(type);
-              resetForm(type);
-            }}
-          >
-            {TYPE_LABELS[type]}
-          </FilterChip>
-        ))}
+  return (
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-foreground/10">
+            <Globe2 className="h-5 w-5 text-foreground" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              Global References
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Manage reusable values that power the entire platform.
+            </p>
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => void refreshType()}
+          disabled={refreshing}
+        >
+          {refreshing ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="mr-2 h-4 w-4" />
+          )}
+          Refresh
+        </Button>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,2fr)]">
-        <SectionCard
-          title={editingId ? "Edit value" : "Create value"}
-          description={TYPE_DESCRIPTIONS[activeType]}
-        >
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <DesignFormField label="Label" required>
-              <DesignInput
+      {/* Type Tabs */}
+      <div className="flex flex-wrap gap-1 rounded-lg border border-border bg-muted/40 p-1">
+        {(Object.keys(TYPE_CONFIG) as GlobalValueType[]).map((type) => {
+          const config = TYPE_CONFIG[type];
+          const Icon = config.icon;
+          const isActive = activeType === type;
+          const count = values[type]?.length ?? 0;
+          return (
+            <button
+              key={type}
+              type="button"
+              onClick={() => {
+                setActiveType(type);
+                resetForm(type);
+              }}
+              className={cn(
+                "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-all",
+                isActive
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-background/50 hover:text-foreground"
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              <span className="hidden sm:inline">{config.label}</span>
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                {count}
+              </Badge>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Main Content */}
+      <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
+        {/* Form Panel */}
+        <div className="rounded-lg border border-border bg-card">
+          <div className="border-b border-border px-5 py-4">
+            <div className="flex items-center gap-2">
+              <ActiveIcon className="h-4 w-4 text-muted-foreground" />
+              <h2 className="font-semibold text-foreground">
+                {editingId ? "Edit value" : "Create value"}
+              </h2>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {activeConfig.description}
+            </p>
+          </div>
+
+          <form className="space-y-4 p-5" onSubmit={handleSubmit}>
+            <div className="space-y-2">
+              <Label htmlFor="label" className="text-sm font-medium">
+                Label <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="label"
                 value={form.label}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, label: event.target.value }))
-                }
+                onChange={(e) => setForm((prev) => ({ ...prev, label: e.target.value }))}
                 placeholder="e.g. Adult"
                 required
+                className="h-10"
               />
-            </DesignFormField>
+            </div>
 
-            <DesignFormField
-              label="Key"
-              helper="Optional. Derived from the label if left blank."
-            >
-              <DesignInput
+            <div className="space-y-2">
+              <Label htmlFor="key" className="text-sm font-medium">
+                Key
+              </Label>
+              <Input
+                id="key"
                 value={form.key}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, key: event.target.value }))
-                }
-                placeholder="Derived from the label if left blank"
+                onChange={(e) => setForm((prev) => ({ ...prev, key: e.target.value }))}
+                placeholder="Derived from label if blank"
+                className="h-10"
               />
-            </DesignFormField>
+              <p className="text-xs text-muted-foreground">
+                Optional. Auto-generated from label if empty.
+              </p>
+            </div>
 
-            <DesignFormField
-              label="Description"
-              helper="Optional context for teammates"
-            >
-              <DesignTextarea
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-sm font-medium">
+                Description
+              </Label>
+              <Textarea
+                id="description"
                 value={form.description}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    description: event.target.value,
-                  }))
-                }
-                rows={3}
+                onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+                rows={2}
                 placeholder="Optional context for teammates"
+                className="resize-none"
               />
-            </DesignFormField>
+            </div>
 
             {activeType === "category" && (
               <>
-                <DesignFormField
-                  label="Hero media"
-                  helper="Upload an image/video or paste an existing URL. Videos should be .mp4, .webm, or .mov."
-                >
-                  <div className="space-y-3">
-                    {form.heroMediaUrl ? (
-                      <div className="relative h-48 overflow-hidden rounded-lg border border-border bg-muted">
-                        {inferMediaKind(form.heroMediaUrl) === "video" ? (
-                          <video
-                            className="h-full w-full object-cover"
-                            controls
-                            playsInline
-                            muted
-                            loop
-                            src={form.heroMediaUrl}
-                          />
-                        ) : (
-                          <Image
-                            src={form.heroMediaUrl}
-                            alt={form.heroMediaAlt || form.label || "Category media"}
-                            fill
-                            className="object-cover"
-                            sizes="(min-width: 1024px) 420px, 100vw"
-                            unoptimized
-                          />
-                        )}
-                      </div>
-                    ) : null}
-                    <input
-                      ref={categoryMediaInputRef}
-                      type="file"
-                      className="hidden"
-                      accept="image/*,video/mp4,video/webm,video/quicktime"
-                      onChange={handleCategoryMediaUpload}
-                    />
-                    <div className="flex flex-wrap items-center gap-2">
-                      <DesignButton
-                        type="button"
-                        variant="outline"
-                        onClick={() => categoryMediaInputRef.current?.click()}
-                        disabled={mediaUploading}
-                      >
-                        {mediaUploading ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Uploading…
-                          </>
-                        ) : (
-                          "Upload media"
-                        )}
-                      </DesignButton>
-                      {form.heroMediaUrl ? (
-                        <DesignButton
-                          type="button"
-                          variant="ghost"
-                          onClick={() =>
-                            setForm((prev) => ({
-                              ...prev,
-                              heroMediaUrl: "",
-                            }))
-                          }
-                        >
-                          Clear media
-                        </DesignButton>
-                      ) : null}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Hero media</Label>
+                  {form.heroMediaUrl && (
+                    <div className="relative h-32 overflow-hidden rounded-lg border border-border bg-muted">
+                      {inferMediaKind(form.heroMediaUrl) === "video" ? (
+                        <video
+                          className="h-full w-full object-cover"
+                          controls
+                          playsInline
+                          muted
+                          loop
+                          src={form.heroMediaUrl}
+                        />
+                      ) : (
+                        <Image
+                          src={form.heroMediaUrl}
+                          alt={form.heroMediaAlt || form.label || "Category media"}
+                          fill
+                          className="object-cover"
+                          sizes="380px"
+                          unoptimized
+                        />
+                      )}
                     </div>
-                    <DesignInput
-                      value={form.heroMediaUrl}
-                      onChange={(event) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          heroMediaUrl: event.target.value,
-                        }))
-                      }
-                      placeholder="https://cdn.zabava/media/home-category.mp4"
-                    />
+                  )}
+                  <input
+                    ref={categoryMediaInputRef}
+                    type="file"
+                    className="hidden"
+                    accept="image/*,video/mp4,video/webm,video/quicktime"
+                    onChange={handleCategoryMediaUpload}
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => categoryMediaInputRef.current?.click()}
+                      disabled={mediaUploading}
+                    >
+                      {mediaUploading ? (
+                        <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                      ) : null}
+                      Upload
+                    </Button>
+                    {form.heroMediaUrl && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setForm((prev) => ({ ...prev, heroMediaUrl: "" }))}
+                      >
+                        Clear
+                      </Button>
+                    )}
                   </div>
-                </DesignFormField>
+                  <Input
+                    value={form.heroMediaUrl}
+                    onChange={(e) => setForm((prev) => ({ ...prev, heroMediaUrl: e.target.value }))}
+                    placeholder="Or paste URL"
+                    className="h-9 text-xs"
+                  />
+                </div>
 
-                <DesignFormField
-                  label="Media alt text"
-                  helper="Used for accessibility when media is an image."
-                >
-                  <DesignInput
+                <div className="space-y-2">
+                  <Label htmlFor="heroMediaAlt" className="text-sm font-medium">
+                    Alt text
+                  </Label>
+                  <Input
+                    id="heroMediaAlt"
                     value={form.heroMediaAlt}
-                    onChange={(event) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        heroMediaAlt: event.target.value,
-                      }))
-                    }
-                    placeholder="Energetic group enjoying an escape room"
+                    onChange={(e) => setForm((prev) => ({ ...prev, heroMediaAlt: e.target.value }))}
+                    placeholder="Describe the media"
+                    className="h-10"
                   />
-                </DesignFormField>
+                </div>
 
-                <DesignFormField
-                  label="Fallback background color"
-                  helper="Applied when no media is configured. Accepts any CSS color value (e.g., #0f172a)."
-                >
-                  <DesignInput
-                    value={form.accentColor}
-                    onChange={(event) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        accentColor: event.target.value,
-                      }))
-                    }
-                    placeholder="#a3e635"
-                  />
-                </DesignFormField>
+                <div className="space-y-2">
+                  <Label htmlFor="accentColor" className="text-sm font-medium">
+                    Accent color
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="accentColor"
+                      value={form.accentColor}
+                      onChange={(e) => setForm((prev) => ({ ...prev, accentColor: e.target.value }))}
+                      placeholder="#a3e635"
+                      className="h-10 flex-1"
+                    />
+                    {form.accentColor && (
+                      <div
+                        className="h-10 w-10 rounded-md border border-border"
+                        style={{ backgroundColor: form.accentColor }}
+                      />
+                    )}
+                  </div>
+                </div>
               </>
             )}
 
-            {activeType === "ticket_type" && (
-              <DesignFormField
-                label="Sub-options"
-                helper="Select other ticket types that are available as sub-options for this ticket type (e.g., Family can include Child and Adult)"
-              >
+            {activeType === "ticket_type" && availableTicketTypesForSubOptions.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Sub-options</Label>
                 <div className="space-y-2">
-                  {availableTicketTypesForSubOptions.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">
-                      No other active ticket types available. Create other
-                      ticket types first.
-                    </p>
-                  ) : (
-                    <>
-                      {form.subOptions.map((subOptionKey, index) => {
-                        const availableOptions =
-                          availableTicketTypesForSubOptions.filter(
-                            (opt) =>
-                              !form.subOptions.includes(opt.key) ||
-                              opt.key === subOptionKey
-                          );
-                        return (
-                          <div
-                            key={`${subOptionKey}-${index}`}
-                            className="flex items-center gap-2"
-                          >
-                            <DesignSelect
-                              value={subOptionKey}
-                              onValueChange={(value) => {
-                                const updated = [...form.subOptions];
-                                updated[index] = value;
-                                setForm((prev) => ({
-                                  ...prev,
-                                  subOptions: updated,
-                                }));
-                              }}
-                            >
-                              <DesignSelectTrigger className="flex-1">
-                                <DesignSelectValue placeholder="Select ticket type" />
-                              </DesignSelectTrigger>
-                              <DesignSelectContent>
-                                {availableOptions.map((opt) => (
-                                  <DesignSelectItem
-                                    key={opt.key}
-                                    value={opt.key}
-                                  >
-                                    {opt.label}
-                                  </DesignSelectItem>
-                                ))}
-                              </DesignSelectContent>
-                            </DesignSelect>
-                            <DesignButton
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setForm((prev) => ({
-                                  ...prev,
-                                  subOptions: prev.subOptions.filter(
-                                    (_, i) => i !== index
-                                  ),
-                                }));
-                              }}
-                            >
-                              <X className="h-4 w-4" />
-                              <span className="sr-only">Remove</span>
-                            </DesignButton>
-                          </div>
-                        );
-                      })}
-                      {form.subOptions.length <
-                        availableTicketTypesForSubOptions.length && (
-                        <DesignButton
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const nextAvailable =
-                              availableTicketTypesForSubOptions.find(
-                                (opt) => !form.subOptions.includes(opt.key)
-                              );
-                            if (nextAvailable) {
-                              setForm((prev) => ({
-                                ...prev,
-                                subOptions: [
-                                  ...prev.subOptions,
-                                  nextAvailable.key,
-                                ],
-                              }));
-                            }
+                  {form.subOptions.map((subOptionKey, index) => {
+                    const availableOptions = availableTicketTypesForSubOptions.filter(
+                      (opt) => !form.subOptions.includes(opt.key) || opt.key === subOptionKey
+                    );
+                    return (
+                      <div key={`${subOptionKey}-${index}`} className="flex items-center gap-2">
+                        <Select
+                          value={subOptionKey}
+                          onValueChange={(value) => {
+                            const updated = [...form.subOptions];
+                            updated[index] = value;
+                            setForm((prev) => ({ ...prev, subOptions: updated }));
                           }}
-                          className="w-full"
                         >
-                          <Plus className="mr-2 h-4 w-4" />
-                          Add sub-option
-                        </DesignButton>
-                      )}
-                    </>
+                          <SelectTrigger className="h-9 flex-1">
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableOptions.map((opt) => (
+                              <SelectItem key={opt.key} value={opt.key}>
+                                {opt.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 shrink-0"
+                          onClick={() => {
+                            setForm((prev) => ({
+                              ...prev,
+                              subOptions: prev.subOptions.filter((_, i) => i !== index),
+                            }));
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                  {form.subOptions.length < availableTicketTypesForSubOptions.length && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        const nextAvailable = availableTicketTypesForSubOptions.find(
+                          (opt) => !form.subOptions.includes(opt.key)
+                        );
+                        if (nextAvailable) {
+                          setForm((prev) => ({
+                            ...prev,
+                            subOptions: [...prev.subOptions, nextAvailable.key],
+                          }));
+                        }
+                      }}
+                    >
+                      <Plus className="mr-2 h-3 w-3" />
+                      Add sub-option
+                    </Button>
                   )}
                 </div>
-              </DesignFormField>
+              </div>
             )}
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <DesignFormField label="Sort order">
-                <DesignInput
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="sortOrder" className="text-sm font-medium">
+                  Sort order
+                </Label>
+                <Input
+                  id="sortOrder"
                   type="number"
                   min={0}
                   value={form.sortOrder}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      sortOrder: event.target.value,
-                    }))
-                  }
+                  onChange={(e) => setForm((prev) => ({ ...prev, sortOrder: e.target.value }))}
+                  className="h-10"
                 />
-              </DesignFormField>
-              <div className="flex flex-col justify-between rounded-lg border border-border bg-muted p-3">
-                <div className="space-y-1">
-                  <label
-                    htmlFor="global-active"
-                    className="text-sm font-medium text-foreground"
-                  >
-                    Active status
-                  </label>
-                  <p className="text-xs text-muted-foreground">
-                    Inactive values stay available historically but cannot be
-                    selected in new records.
-                  </p>
-                </div>
-                <div className="mt-3 flex items-center gap-2">
-                  <DesignSwitch
-                    id="global-active"
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Status</Label>
+                <div className="flex h-10 items-center gap-2 rounded-md border border-border bg-muted/40 px-3">
+                  <Switch
+                    id="isActive"
                     checked={form.isActive}
-                    onCheckedChange={(checked) =>
-                      setForm((prev) => ({ ...prev, isActive: checked }))
-                    }
+                    onCheckedChange={(checked) => setForm((prev) => ({ ...prev, isActive: checked }))}
                   />
                   <span className="text-sm text-muted-foreground">
                     {form.isActive ? "Active" : "Inactive"}
@@ -720,150 +702,138 @@ export function GlobalsDashboard({ initialValues }: GlobalsDashboardProps) {
               </div>
             </div>
 
-            <div className="flex items-center justify-between gap-3 pt-2">
-              <DesignButton type="submit" variant="primary" disabled={loading}>
+            <div className="flex gap-2 pt-2">
+              <Button type="submit" disabled={loading} className="flex-1">
                 {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {editingId ? "Saving…" : "Creating…"}
-                  </>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : editingId ? (
-                  <>
-                    <Check className="mr-2 h-4 w-4" />
-                    Save changes
-                  </>
+                  <Check className="mr-2 h-4 w-4" />
                 ) : (
-                  <>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create value
-                  </>
+                  <Plus className="mr-2 h-4 w-4" />
                 )}
-              </DesignButton>
+                {editingId ? "Save changes" : "Create value"}
+              </Button>
               {editingId && (
-                <DesignButton
-                  type="button"
-                  variant="outline"
-                  onClick={() => resetForm()}
-                  disabled={loading}
-                >
-                  <X className="mr-2 h-4 w-4" />
+                <Button type="button" variant="outline" onClick={() => resetForm()} disabled={loading}>
                   Cancel
-                </DesignButton>
+                </Button>
               )}
             </div>
           </form>
-        </SectionCard>
+        </div>
 
-        <SectionCard
-          title={TYPE_LABELS[activeType]}
-          description={
-            <>
-              {currentValues.length} value
-              {currentValues.length === 1 ? "" : "s"} configured
-            </>
-          }
-        >
-          {currentValues.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border bg-muted p-8 text-center">
-              <p className="text-sm text-muted-foreground">
-                No values yet. Add your first entry to make it available
-                throughout the admin experience.
+        {/* List Panel */}
+        <div className="rounded-lg border border-border bg-card">
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <div>
+              <h2 className="font-semibold text-foreground">{activeConfig.label}</h2>
+              <p className="text-xs text-muted-foreground">
+                {currentValues.length} value{currentValues.length === 1 ? "" : "s"} configured
               </p>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {currentValues.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex flex-col gap-4 rounded-lg border border-border bg-muted p-4 transition hover:border-foreground/30 sm:flex-row sm:items-start sm:justify-between"
-                >
-                  <div className="flex-1 space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold text-foreground">
-                        {item.label}
-                      </span>
-                      {item.key && (
-                        <StatusPill tone="neutral" size="sm">
-                          {item.key}
-                        </StatusPill>
-                      )}
-                      {item.isActive ? (
-                        <StatusPill tone="success" size="sm">
-                          Active
-                        </StatusPill>
-                      ) : (
-                        <StatusPill tone="warning" size="sm">
-                          Inactive
-                        </StatusPill>
-                      )}
-                    </div>
-                    {item.description && (
-                      <p className="text-sm text-muted-foreground">
-                        {item.description}
-                      </p>
+          </div>
+
+          <div className="p-3">
+            {currentValues.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/30 px-6 py-12 text-center">
+                <ActiveIcon className="h-10 w-10 text-muted-foreground/50" />
+                <p className="mt-3 text-sm font-medium text-muted-foreground">
+                  No {activeConfig.label.toLowerCase()} yet
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground/70">
+                  Create your first entry using the form.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {currentValues.map((item) => (
+                  <div
+                    key={item.id}
+                    className={cn(
+                      "group flex items-center justify-between gap-3 rounded-lg border border-border p-3 transition-all",
+                      editingId === item.id
+                        ? "border-foreground/30 bg-foreground/5"
+                        : "bg-background hover:border-foreground/20"
                     )}
-                    {activeType === "ticket_type" &&
-                      Array.isArray(item.metadata?.subOptions) &&
-                      (item.metadata.subOptions as unknown[]).length > 0 && (
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-xs font-medium text-muted-foreground">
-                            Sub-options:
-                          </span>
-                          {(item.metadata.subOptions as string[]).map(
-                            (subKey) => {
-                              const subOption = values.ticket_type.find(
-                                (t) => t.key === subKey
-                              );
-                              return (
-                                <StatusPill
-                                  key={subKey}
-                                  tone="neutral"
-                                  size="sm"
-                                >
-                                  {subOption?.label ?? subKey}
-                                </StatusPill>
-                              );
-                            }
-                          )}
-                        </div>
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-foreground truncate">
+                          {item.label}
+                        </span>
+                        <Badge variant="outline" className="shrink-0 text-[10px]">
+                          {item.key}
+                        </Badge>
+                        {item.isActive ? (
+                          <Badge className="shrink-0 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10">
+                            Active
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="shrink-0">
+                            Inactive
+                          </Badge>
+                        )}
+                      </div>
+                      {item.description && (
+                        <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                          {item.description}
+                        </p>
                       )}
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span>Sort order: {item.sortOrder}</span>
+                      {activeType === "ticket_type" &&
+                        Array.isArray(item.metadata?.subOptions) &&
+                        (item.metadata.subOptions as unknown[]).length > 0 && (
+                          <div className="mt-1 flex items-center gap-1">
+                            <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                            {(item.metadata.subOptions as string[]).map((subKey) => {
+                              const subOption = values.ticket_type.find((t) => t.key === subKey);
+                              return (
+                                <Badge key={subKey} variant="outline" className="text-[10px]">
+                                  {subOption?.label ?? subKey}
+                                </Badge>
+                              );
+                            })}
+                          </div>
+                        )}
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleEdit(item)}
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleToggleActive(item)}
+                      >
+                        {item.isActive ? (
+                          <X className="h-3.5 w-3.5" />
+                        ) : (
+                          <Check className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => void handleDelete(item.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <DesignButton
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(item)}
-                    >
-                      <Edit2 className="mr-2 h-3.5 w-3.5" />
-                      Edit
-                    </DesignButton>
-                    <DesignButton
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleToggleActive(item)}
-                    >
-                      {item.isActive ? "Disable" : "Activate"}
-                    </DesignButton>
-                    <DesignButton
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => void handleDelete(item.id)}
-                    >
-                      <Trash2 className="mr-2 h-3.5 w-3.5" />
-                      Delete
-                    </DesignButton>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </SectionCard>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

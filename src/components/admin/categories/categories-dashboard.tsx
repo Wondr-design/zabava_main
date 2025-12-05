@@ -272,7 +272,7 @@ export function CategoriesDashboard({ directory }: CategoriesDashboardProps) {
           </div>
         </div>
 
-        <Card className="border-slate-200 bg-white shadow-sm">
+        <Card className="border-border bg-card shadow-sm">
           <CardHeader>
             <CardTitle>{isEditing ? "Edit category" : "Create category"}</CardTitle>
             <CardDescription>
@@ -598,7 +598,7 @@ export function CategoriesDashboard({ directory }: CategoriesDashboardProps) {
 
   return (
     <div className="space-y-6">
-      <Card className="border-slate-200 bg-white shadow-sm">
+      <Card className="border-border bg-card shadow-sm">
         <CardHeader className="flex items-center justify-between gap-4">
           <div>
             <CardTitle>Categories</CardTitle>
@@ -668,7 +668,7 @@ export function CategoriesDashboard({ directory }: CategoriesDashboardProps) {
         </CardContent>
       </Card>
 
-      <Card className="border-slate-200 bg-white shadow-sm">
+      <Card className="border-border bg-card shadow-sm">
         <CardHeader>
           <CardTitle>Categories embed</CardTitle>
           <CardDescription>
@@ -723,7 +723,7 @@ function EmbedCard({
   onCopy: () => void;
 }) {
   return (
-    <Card className="border-slate-200 bg-white shadow-sm">
+    <Card className="border-border bg-card shadow-sm">
       <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
           <CardTitle>{title}</CardTitle>

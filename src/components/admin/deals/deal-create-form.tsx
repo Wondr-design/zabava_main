@@ -1275,7 +1275,7 @@ const [linkedFormId, setLinkedFormId] = useState<string | null>(
 
         {validityMode === "always_on" ? (
           <>
-            <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-muted-foreground">
+            <p className="rounded-2xl border border-dashed border-border bg-slate-50 px-4 py-3 text-sm text-muted-foreground">
               This deal will remain live until you pause or expire it manually.
             </p>
             <UsageLimitFields
@@ -1309,12 +1309,12 @@ const [linkedFormId, setLinkedFormId] = useState<string | null>(
             </p>
           </div>
           {!form.partnerId ? (
-            <p className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-3 text-sm text-muted-foreground">
+            <p className="rounded-2xl border border-dashed border-border bg-card px-4 py-3 text-sm text-muted-foreground">
               Select a partner to load ticket types.
             </p>
           ) : ticketDetailsLoading &&
             currentPartnerTicketDetails === undefined ? (
-            <p className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-3 text-sm text-muted-foreground">
+            <p className="rounded-2xl border border-dashed border-border bg-card px-4 py-3 text-sm text-muted-foreground">
               Loading ticket types&hellip;
             </p>
           ) : ticketDetailsError ? (
@@ -1322,7 +1322,7 @@ const [linkedFormId, setLinkedFormId] = useState<string | null>(
               {ticketDetailsError}
             </p>
           ) : ticketRequirements.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-3 text-sm text-muted-foreground">
+            <p className="rounded-2xl border border-dashed border-border bg-card px-4 py-3 text-sm text-muted-foreground">
               No ticket types configured for this partner. Add ticket types in
               the partner profile first.
             </p>
@@ -1331,7 +1331,7 @@ const [linkedFormId, setLinkedFormId] = useState<string | null>(
               {groupedTicketRequirements.map((group) => (
                 <div
                   key={group.ticketType}
-                  className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                  className="space-y-3 rounded-2xl border border-border bg-card p-4 shadow-sm"
                 >
                   <div className="flex flex-col gap-1">
                     <p className="text-sm font-semibold text-foreground">
@@ -1427,7 +1427,7 @@ function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-none">
+    <section className="space-y-4 rounded-3xl border border-border bg-card p-6 shadow-none">
       <div className="space-y-1">
         <h2 className="text-lg font-semibold text-foreground">{title}</h2>
         {description ? (

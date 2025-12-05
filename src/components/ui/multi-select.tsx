@@ -56,7 +56,7 @@ export function MultiSelect({
   return (
     <div
       className={cn(
-        "grid gap-3 rounded-2xl border border-slate-200 bg-white/90 p-4 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200 sm:grid-cols-2",
+        "grid gap-3 rounded-lg border border-border bg-card p-4 text-sm text-foreground shadow-sm sm:grid-cols-2",
         className
       )}
     >
@@ -72,7 +72,7 @@ export function MultiSelect({
               "group relative flex w-full flex-col gap-2 rounded-2xl border px-4 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed",
               active
                 ? "border-emerald-300/80 bg-emerald-50/70 text-emerald-900 shadow-[0_12px_40px_-24px_rgba(16,185,129,0.7)] dark:border-emerald-400/60 dark:bg-emerald-500/10 dark:text-emerald-100"
-                : "border-slate-200 bg-slate-50/60 text-slate-700 hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-900/70",
+                : "border-border bg-muted/50 text-foreground hover:border-border hover:bg-muted",
               disabled ? "opacity-60" : ""
             )}
           >
@@ -85,7 +85,7 @@ export function MultiSelect({
                   "flex h-6 w-6 items-center justify-center rounded-full border text-xs transition",
                   active
                     ? "border-emerald-400 bg-emerald-500/15 text-emerald-500 dark:border-emerald-300 dark:text-emerald-200"
-                    : "border-slate-200 bg-white text-transparent group-hover:text-slate-400 dark:border-slate-600 dark:bg-slate-900"
+                    : "border-border bg-background text-transparent group-hover:text-muted-foreground"
                 )}
               >
                 <Check className="h-3.5 w-3.5" />

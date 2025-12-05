@@ -58,9 +58,9 @@ const STATUS_LABELS: Record<PartnerFormRecord["status"], string> = {
 };
 
 const STATUS_BADGE_CLASS: Record<PartnerFormRecord["status"], string> = {
-  draft: "border-sky-100 bg-sky-50 text-sky-700",
-  published: "border-emerald-100 bg-emerald-50 text-emerald-700",
-  archived: "border-slate-200 bg-slate-100 text-slate-600",
+  draft: "border-sky-500/30 bg-sky-500/10 text-sky-600 dark:text-sky-400",
+  published: "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  archived: "border-border bg-muted text-muted-foreground",
 };
 
 const USAGE_LABELS: Record<PartnerFormRecord["usageType"], string> = {
@@ -70,9 +70,9 @@ const USAGE_LABELS: Record<PartnerFormRecord["usageType"], string> = {
 };
 
 const USAGE_BADGE_CLASS: Record<PartnerFormRecord["usageType"], string> = {
-  visit: "border-blue-100 bg-blue-50 text-blue-700",
-  reward: "border-violet-100 bg-violet-50 text-violet-700",
-  deal: "border-amber-100 bg-amber-50 text-amber-700",
+  visit: "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400",
+  reward: "border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400",
+  deal: "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
 };
 
 type DealOption = {
@@ -239,7 +239,7 @@ export function AdminFormsOverview({
 
   return (
     <div className="space-y-6">
-      <Card className="border-slate-200 bg-white shadow-sm">
+      <Card className="border-border bg-card shadow-sm">
         <CardHeader>
           <CardTitle>Create new form</CardTitle>
           <CardDescription>
@@ -257,7 +257,7 @@ export function AdminFormsOverview({
                 value={newPartnerId}
                 onValueChange={(value) => setNewPartnerId(value)}
               >
-                <SelectTrigger className="w-full border-slate-200 bg-slate-50">
+                <SelectTrigger className="w-full border-border bg-muted/50">
                   <SelectValue placeholder="Select partner" />
                 </SelectTrigger>
                 <SelectContent>
@@ -281,7 +281,7 @@ export function AdminFormsOverview({
                   setNewDealId("");
                 }}
               >
-                <SelectTrigger className="w-full border-slate-200 bg-slate-50">
+                <SelectTrigger className="w-full border-border bg-muted/50">
                   <SelectValue placeholder="Select form type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -312,7 +312,7 @@ export function AdminFormsOverview({
                   value={newRewardId}
                   onValueChange={(value) => setNewRewardId(value)}
                 >
-                  <SelectTrigger className="w-full border-slate-200 bg-slate-50">
+                  <SelectTrigger className="w-full border-border bg-muted/50">
                     <SelectValue placeholder="Select reward" />
                   </SelectTrigger>
                   <SelectContent>
@@ -325,7 +325,7 @@ export function AdminFormsOverview({
                   </SelectContent>
                 </Select>
               ) : (
-                <div className="rounded-lg border border-dashed border-slate-200 bg-white/70 p-3 text-xs text-slate-500">
+                <div className="rounded-lg border border-dashed border-border bg-muted/50 p-3 text-xs text-muted-foreground">
                   No rewards found. Create a reward first.
                 </div>
               )}
@@ -341,7 +341,7 @@ export function AdminFormsOverview({
                   value={newDealId}
                   onValueChange={(value) => setNewDealId(value)}
                 >
-                  <SelectTrigger className="w-full border-slate-200 bg-slate-50">
+                  <SelectTrigger className="w-full border-border bg-muted/50">
                     <SelectValue placeholder="Select deal" />
                   </SelectTrigger>
                   <SelectContent>
@@ -354,7 +354,7 @@ export function AdminFormsOverview({
                   </SelectContent>
                 </Select>
               ) : (
-                <div className="rounded-lg border border-dashed border-slate-200 bg-white/70 p-3 text-xs text-slate-500">
+                <div className="rounded-lg border border-dashed border-border bg-muted/50 p-3 text-xs text-muted-foreground">
                   No eligible deals found. Publish a flash deal first.
                 </div>
               )}
@@ -389,7 +389,7 @@ export function AdminFormsOverview({
         </CardContent>
       </Card>
 
-      <Card className="border-slate-200 bg-white shadow-sm">
+      <Card className="border-border bg-card shadow-sm">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -407,7 +407,7 @@ export function AdminFormsOverview({
               <TabsTrigger value="all" className="relative">
                 All
                 {formCounts.all > 0 && (
-                  <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                  <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                     {formCounts.all}
                   </span>
                 )}
@@ -415,10 +415,7 @@ export function AdminFormsOverview({
               <TabsTrigger value="visit" className="relative">
                 Visit
                 {formCounts.visit > 0 && (
-                  <span className={cn(
-                    "ml-2 rounded-full px-2 py-0.5 text-xs font-medium",
-                    "bg-blue-50 text-blue-700"
-                  )}>
+                  <span className="ml-2 rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-600 dark:text-blue-400">
                     {formCounts.visit}
                   </span>
                 )}
@@ -426,10 +423,7 @@ export function AdminFormsOverview({
               <TabsTrigger value="reward" className="relative">
                 Reward
                 {formCounts.reward > 0 && (
-                  <span className={cn(
-                    "ml-2 rounded-full px-2 py-0.5 text-xs font-medium",
-                    "bg-violet-50 text-violet-700"
-                  )}>
+                  <span className="ml-2 rounded-full bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-600 dark:text-violet-400">
                     {formCounts.reward}
                   </span>
                 )}
@@ -437,10 +431,7 @@ export function AdminFormsOverview({
               <TabsTrigger value="deal" className="relative">
                 Flash Deal
                 {formCounts.deal > 0 && (
-                  <span className={cn(
-                    "ml-2 rounded-full px-2 py-0.5 text-xs font-medium",
-                    "bg-amber-50 text-amber-700"
-                  )}>
+                  <span className="ml-2 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
                     {formCounts.deal}
                   </span>
                 )}
@@ -449,11 +440,11 @@ export function AdminFormsOverview({
 
             <TabsContent value="all" className="mt-6 space-y-4">
               {sortedForms.length === 0 ? (
-                <div className="rounded-md border border-dashed border-slate-200 bg-slate-50/60 p-6 text-center text-sm text-muted-foreground">
+                <div className="rounded-md border border-dashed border-border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
                   No forms yet. Create one above to get started.
                 </div>
               ) : (
-                <div className="rounded-lg border border-slate-200 overflow-hidden">
+                <div className="rounded-lg border border-border overflow-hidden">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -480,7 +471,7 @@ export function AdminFormsOverview({
                               className={cn(
                                 "border px-2.5 py-1 text-xs font-medium",
                                 USAGE_BADGE_CLASS[form.usageType] ??
-                                  "border-slate-200 bg-slate-100 text-slate-600"
+                                  "border-border bg-muted text-muted-foreground"
                               )}
                             >
                               {USAGE_LABELS[form.usageType] ?? form.usageType}
@@ -517,11 +508,11 @@ export function AdminFormsOverview({
             </TabsContent>
             <TabsContent value="visit" className="mt-6 space-y-4">
               {sortedForms.length === 0 ? (
-                <div className="rounded-md border border-dashed border-slate-200 bg-slate-50/60 p-6 text-center text-sm text-muted-foreground">
+                <div className="rounded-md border border-dashed border-border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
                   No visit forms found.
                 </div>
               ) : (
-                <div className="rounded-lg border border-slate-200 overflow-hidden">
+                <div className="rounded-lg border border-border overflow-hidden">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -572,11 +563,11 @@ export function AdminFormsOverview({
             </TabsContent>
             <TabsContent value="reward" className="mt-6 space-y-4">
               {sortedForms.length === 0 ? (
-                <div className="rounded-md border border-dashed border-slate-200 bg-slate-50/60 p-6 text-center text-sm text-muted-foreground">
+                <div className="rounded-md border border-dashed border-border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
                   No reward forms found.
                 </div>
               ) : (
-                <div className="rounded-lg border border-slate-200 overflow-hidden">
+                <div className="rounded-lg border border-border overflow-hidden">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -627,11 +618,11 @@ export function AdminFormsOverview({
             </TabsContent>
             <TabsContent value="deal" className="mt-6 space-y-4">
               {sortedForms.length === 0 ? (
-                <div className="rounded-md border border-dashed border-slate-200 bg-slate-50/60 p-6 text-center text-sm text-muted-foreground">
+                <div className="rounded-md border border-dashed border-border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
                   No flash deal forms found.
                 </div>
               ) : (
-                <div className="rounded-lg border border-slate-200 overflow-hidden">
+                <div className="rounded-lg border border-border overflow-hidden">
                   <Table>
                     <TableHeader>
                       <TableRow>

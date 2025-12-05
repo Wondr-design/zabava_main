@@ -1,6 +1,6 @@
 ---
-# Note: UI/UX guidelines are covered in ux.mdc
-# This file is kept for reference but does not apply rules to avoid duplication.
+description: UI/UX design principles (duplicate of ux.mdc - kept for reference only)
+alwaysApply: false
 ---
 
     You are an expert in UI and UX design principles for software development.

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
+import { Settings, Clock, History, Coins } from "lucide-react";
 
 import { adminApi } from "@/lib/web/api-client";
 import { getCsrfToken } from "@/lib/web/csrf";
@@ -189,90 +190,118 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="space-y-6 px-4 pb-10 pt-6 sm:px-6 lg:px-8">
+    <div className="space-y-8">
+      {/* Page Header */}
       <div className="space-y-1">
-        <h1 className="text-3xl font-semibold text-foreground">Platform settings</h1>
-        <p className="text-sm text-muted-foreground">
-          Tune how Zabava awards points and keep track of recent configuration changes.
-        </p>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-foreground/10">
+            <Settings className="h-5 w-5 text-foreground" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              Platform Settings
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Configure how Zabava awards points and manages timezones.
+            </p>
+          </div>
+        </div>
       </div>
 
-      <Card className="border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
-        <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <CardTitle>Point ratio</CardTitle>
-            <CardDescription>
-              Define how many Czech Crowns customer spending translates into one reward point.
-            </CardDescription>
+      {/* Point Ratio Card */}
+      <Card className="overflow-hidden border-border bg-card">
+        <CardHeader className="border-b border-border bg-muted/30 px-6 py-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-foreground/10">
+                <Coins className="h-4 w-4 text-foreground" />
+              </div>
+              <div>
+                <CardTitle className="text-base font-semibold text-foreground">
+                  Point Ratio
+                </CardTitle>
+                <CardDescription className="text-sm text-muted-foreground">
+                  Define how many Czech Crowns translate into one reward point.
+                </CardDescription>
+              </div>
+            </div>
+            <Badge
+              variant="secondary"
+              className="shrink-0 font-medium"
+            >
+              {source === "database" ? "Custom" : "Default"}
+            </Badge>
           </div>
-          <Badge
-            variant="outline"
-            className="border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
-          >
-            {source === "database" ? "Custom" : "Default"}
-          </Badge>
         </CardHeader>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-6">
-            <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
-              <div className="space-y-3">
-                <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
-                  CZK per point
-                </Label>
-                <Input
-                  type="number"
-                  min={1}
-                  step={1}
-                  value={ratioInput}
-                  onChange={(event) => setRatioInput(event.target.value)}
-                  disabled={loading || saving}
-                  className="max-w-xs"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Visitors earn one point for every <strong>{ratioInput || "?"}</strong> CZK confirmed at check-in.
-                  Adjust this to speed up or slow down how quickly customers reach rewards.
+          <CardContent className="p-6">
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* Input Section */}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    CZK per point
+                  </Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={ratioInput}
+                    onChange={(event) => setRatioInput(event.target.value)}
+                    disabled={loading || saving}
+                    className="h-11 max-w-[200px] border-border bg-background"
+                  />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Visitors earn one point for every <strong className="text-foreground">{ratioInput || "?"} CZK</strong> confirmed at check-in.
                 </p>
               </div>
-              <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-sm shadow-inner dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-200">
+
+              {/* Info Panel */}
+              <div className="rounded-lg border border-border bg-muted/40 p-4">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-700 dark:text-slate-100">
+                  <span className="text-sm font-medium text-muted-foreground">
                     Current ratio
                   </span>
-                  <span className="text-lg font-semibold">
+                  <span className="text-xl font-semibold text-foreground">
                     {activeRatio ? `${activeRatio.toLocaleString()} Kč` : "—"}
                   </span>
                 </div>
-                <Separator className="my-2 bg-slate-200 dark:bg-slate-700" />
-                <div className="space-y-1 text-xs text-slate-500 dark:text-slate-400">
-                  <p>
-                    Updated {lastUpdated ?? "never"}. The latest change is tracked with author and timestamp for auditing.
+                <Separator className="my-3 bg-border" />
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    Updated {lastUpdated ?? "never"}
                   </p>
-                  {history.length > 0 ? (
-                    <ul className="space-y-1 pt-2">
-                      {history.map((item) => (
-                        <li key={item.id} className="flex items-center justify-between gap-3">
-                          <span>
-                            {item.ratioCzk.toLocaleString()} Kč
-                            <span className="ml-2 text-slate-400">
-                              by {item.createdBy ?? "system"}
+                  {history.length > 0 && (
+                    <div className="space-y-1.5 pt-2">
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                        <History className="h-3 w-3" />
+                        Recent changes
+                      </div>
+                      <ul className="space-y-1">
+                        {history.slice(0, 3).map((item) => (
+                          <li key={item.id} className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>
+                              {item.ratioCzk.toLocaleString()} Kč
+                              <span className="ml-1.5 opacity-60">
+                                by {item.createdBy ?? "system"}
+                              </span>
                             </span>
-                          </span>
-                          <span className="text-slate-400">
-                            {formatDistanceToNow(new Date(item.createdAt), {
-                              addSuffix: true,
-                            })}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
+                            <span className="opacity-60">
+                              {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex items-center justify-between border-t border-slate-100 bg-slate-50/60 px-6 py-4 dark:border-slate-800 dark:bg-slate-900/40">
+          <CardFooter className="flex items-center justify-between border-t border-border bg-muted/20 px-6 py-4">
             <p className="text-xs text-muted-foreground">
-              Updates apply instantly for new QR confirmations. Existing point balances remain unchanged.
+              Updates apply instantly for new QR confirmations.
             </p>
             <Button type="submit" disabled={saving || loading}>
               {saving ? "Saving…" : "Save ratio"}
@@ -280,42 +309,56 @@ export default function AdminSettingsPage() {
           </CardFooter>
         </form>
       </Card>
-      <Card className="border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
-        <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <CardTitle>Default timezone</CardTitle>
-            <CardDescription>
-              Choose which timezone drives deal validation and what to fall back to when partner data is absent.
-            </CardDescription>
+
+      {/* Timezone Card */}
+      <Card className="overflow-hidden border-border bg-card">
+        <CardHeader className="border-b border-border bg-muted/30 px-6 py-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-foreground/10">
+                <Clock className="h-4 w-4 text-foreground" />
+              </div>
+              <div>
+                <CardTitle className="text-base font-semibold text-foreground">
+                  Default Timezone
+                </CardTitle>
+                <CardDescription className="text-sm text-muted-foreground">
+                  Choose which timezone drives deal validation and fallback behavior.
+                </CardDescription>
+              </div>
+            </div>
+            <Badge
+              variant="secondary"
+              className="shrink-0 font-medium"
+            >
+              {timezoneLoading
+                ? "Loading…"
+                : timeZoneSource === "partner"
+                ? "Partner fallback"
+                : "Admin timezone"}
+            </Badge>
           </div>
-          <Badge
-            variant="outline"
-            className="border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
-          >
-            {timezoneLoading
-              ? "Loading…"
-              : timeZoneSource === "partner"
-              ? "Partner fallback"
-              : "Admin timezone"}
-          </Badge>
         </CardHeader>
         <form onSubmit={handleTimezoneSave}>
-          <CardContent className="space-y-6">
-            <div className="space-y-3">
-              <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
+          <CardContent className="space-y-6 p-6">
+            {/* Timezone Input */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Admin timezone
               </Label>
               <Input
                 value={timeZoneInput}
                 onChange={(event) => setTimeZoneInput(event.target.value)}
                 disabled={timezoneLoading || timezoneSaving}
-                className="max-w-xs"
+                className="h-11 max-w-xs border-border bg-background"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 {formatTimezoneLabel(timeZoneInput)}
               </p>
             </div>
-            <div className="flex items-center gap-3">
+
+            {/* Partner Fallback Switch */}
+            <div className="flex items-start gap-4 rounded-lg border border-border bg-muted/30 p-4">
               <Switch
                 checked={timeZoneSource === "partner"}
                 onCheckedChange={(checked) =>
@@ -323,8 +366,8 @@ export default function AdminSettingsPage() {
                 }
                 disabled={timezoneLoading || timezoneSaving}
               />
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-foreground">
                   Derive from partner address
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -332,34 +375,35 @@ export default function AdminSettingsPage() {
                 </p>
               </div>
             </div>
-            {timezoneHistory.length ? (
-              <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50/40 p-4 text-xs text-slate-500">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-slate-400">
+
+            {/* History */}
+            {timezoneHistory.length > 0 && (
+              <div className="rounded-lg border border-border bg-muted/40 p-4">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <History className="h-3 w-3" />
                   Recent timezone history
-                </p>
-                <ul className="space-y-1">
-                  {timezoneHistory.map((item) => (
-                    <li key={item.id} className="flex items-center justify-between text-[11px]">
+                </div>
+                <ul className="mt-2 space-y-1">
+                  {timezoneHistory.slice(0, 3).map((item) => (
+                    <li key={item.id} className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>
                         {item.adminTimeZone} · {item.source === "partner" ? "partner" : "admin"}
-                        <span className="ml-2 text-slate-400">
+                        <span className="ml-1.5 opacity-60">
                           by {item.createdBy ?? "system"}
                         </span>
                       </span>
-                      <span className="text-slate-400">
-                        {formatDistanceToNow(new Date(item.createdAt), {
-                          addSuffix: true,
-                        })}
+                      <span className="opacity-60">
+                        {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
                       </span>
                     </li>
                   ))}
                 </ul>
               </div>
-            ) : null}
+            )}
           </CardContent>
-          <CardFooter className="flex items-center justify-between border-t border-slate-100 bg-slate-50/60 px-6 py-4 dark:border-slate-800 dark:bg-slate-900/40">
+          <CardFooter className="flex items-center justify-between border-t border-border bg-muted/20 px-6 py-4">
             <p className="text-xs text-muted-foreground">
-              Updates apply instantly and show up on the public deal cards and QR flow.
+              Updates apply instantly to deal cards and QR flows.
             </p>
             <Button type="submit" disabled={timezoneSaving || timezoneLoading}>
               {timezoneSaving ? "Saving…" : "Save timezone"}

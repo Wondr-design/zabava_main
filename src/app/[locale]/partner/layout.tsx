@@ -17,12 +17,15 @@ export default function PartnerLayout({ children }: { children: ReactNode }) {
   const loginPath = useMemo(() => buildLocalizedPath("/partner/login", locale), [locale]);
   const isAuthRoute = pathname === loginPath;
 
-  if (isAuthRoute) {
+  const signupPath = useMemo(() => buildLocalizedPath("/partner/signup", locale), [locale]);
+  const isSignupRoute = pathname.startsWith(signupPath);
+  
+  if (isAuthRoute || isSignupRoute) {
     return (
       <>
         <BodyThemeClass className="theme-vercel" />
-        <div className="theme-vercel flex min-h-screen items-center justify-center bg-background text-foreground">
-          <div className="w-full max-w-md px-4">{children}</div>
+        <div className="theme-vercel min-h-screen bg-background text-foreground">
+          {children}
         </div>
       </>
     );
@@ -54,7 +57,7 @@ export default function PartnerLayout({ children }: { children: ReactNode }) {
             </LocalizedLink>
           </div>
           <div className="flex items-center gap-3">
-            <DesignButton asChild variant="tonal" size="sm" className="gap-2">
+            <DesignButton asChild variant="secondary" size="sm" className="gap-2">
               <LocalizedLink href="/partner/settings">
                 <Settings className="h-4 w-4" aria-hidden />
                 <span className="hidden sm:inline">Settings</span>

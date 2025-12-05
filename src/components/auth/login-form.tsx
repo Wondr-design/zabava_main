@@ -30,7 +30,7 @@ export function LoginForm({ action }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <Card className="border border-slate-200 bg-white shadow-lg">
+    <Card className="border border-border bg-card shadow-lg">
       <CardHeader>
         <CardTitle className="text-xl text-slate-900">Admin login</CardTitle>
         <CardDescription className="text-slate-500">

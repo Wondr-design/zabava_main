@@ -194,12 +194,12 @@ function SubmitInviteButton() {
   }
 
   return (
-    <Card className="border border-slate-200 bg-white shadow-sm">
+    <Card className="border border-border bg-card shadow-sm">
       <CardHeader>
-        <CardTitle className="text-base text-slate-900">
+        <CardTitle className="text-base text-foreground">
           Create invite
         </CardTitle>
-        <CardDescription className="text-xs text-slate-500">
+        <CardDescription className="text-xs text-muted-foreground">
           Generate a new partner or admin invite.
         </CardDescription>
       </CardHeader>
@@ -230,24 +230,24 @@ function SubmitInviteButton() {
               </SelectContent>
             </Select>
             {loadingPartner ? (
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 Loading partner contact…
               </p>
             ) : null}
             {partnerSnapshot ? (
-              <div className="rounded-2xl border border-slate-200/80 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-500">
+              <div className="rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm text-foreground">
+                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
                   Summary
                 </p>
                 <div className="mt-2 grid gap-3 sm:grid-cols-2">
                   <div>
-                    <p className="text-xs text-slate-500">Listing tier</p>
+                    <p className="text-xs text-muted-foreground">Listing tier</p>
                     <p className="font-semibold">
                       {partnerSnapshot.listingTierLabel ?? "Not set"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500">Monthly fee</p>
+                    <p className="text-xs text-muted-foreground">Monthly fee</p>
                     <p className="font-semibold">
                       {partnerSnapshot.monthlyFee !== null
                         ? formatCurrencyCZK(partnerSnapshot.monthlyFee)
@@ -255,19 +255,19 @@ function SubmitInviteButton() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500">Contact name</p>
+                    <p className="text-xs text-muted-foreground">Contact name</p>
                     <p className="font-semibold">
                       {partnerSnapshot.contactName || "Not set"}
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       {partnerSnapshot.contactEmail || "No email"}
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       {partnerSnapshot.contactPhone || "No phone"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500">Commission</p>
+                    <p className="text-xs text-muted-foreground">Commission</p>
                     <p className="font-semibold">
                       {partnerSnapshot.commissionRate ?? "—"}% ·{
                         " "

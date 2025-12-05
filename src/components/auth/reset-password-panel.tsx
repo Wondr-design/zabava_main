@@ -1,12 +1,16 @@
-import { useEffect, useState } from "react";
+"use client";
 
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { KeyRound, RotateCcw, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { EmailVerification } from "@/site/components/email-verification";
 import { cn } from "@/lib/utils";
+import {
+  AuthInput,
+  AuthAlert,
+  AuthVerificationStatus,
+} from "@/components/auth/auth-form";
 
 type ResetRole = "admin" | "partner" | "staff";
 
@@ -42,14 +46,14 @@ export function ResetPasswordPanel(props: ResetPasswordPanelProps) {
     setSuccess(null);
   }, [role]);
 
-  function handleVerified(email: string, code: string) {
+  const handleVerified = (email: string, code: string) => {
     setVerifiedEmail(email);
     setVerifiedCode(code);
     setError(null);
     setSuccess("Email verified. Choose a new password below.");
-  }
+  };
 
-  function resetFlow() {
+  const resetFlow = () => {
     setVerifiedEmail(null);
     setVerifiedCode(null);
     setPassword("");
@@ -58,9 +62,9 @@ export function ResetPasswordPanel(props: ResetPasswordPanelProps) {
     setSuccess(null);
     setSubmitting(false);
     setVerificationKey((key) => key + 1);
-  }
+  };
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!verifiedEmail || !verifiedCode) {
       setError("Verify your email before resetting the password.");
@@ -98,11 +102,13 @@ export function ResetPasswordPanel(props: ResetPasswordPanelProps) {
         throw new Error(
           typeof data?.error === "string"
             ? data.error
-            : "Unable to reset password.",
+            : "Unable to reset password."
         );
       }
 
-      setSuccess("Password updated. You can now sign in with your new password.");
+      setSuccess(
+        "Password updated. You can now sign in with your new password."
+      );
       setPassword("");
       setConfirmPassword("");
       if (onSuccess) {
@@ -115,84 +121,146 @@ export function ResetPasswordPanel(props: ResetPasswordPanelProps) {
     } finally {
       setSubmitting(false);
     }
-  }
+  };
 
   return (
-    <Card className={cn("", className)}>
-      <CardContent className="space-y-4 p-4">
-        <div className="space-y-1">
-          <h3 className="text-base font-semibold text-foreground">
-            Forgot your password?
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Verify your email to receive a reset code. Once verified, you can set a new password.
-          </p>
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={{ duration: 0.3 }}
+      className={cn(
+        "overflow-hidden rounded-lg border border-border bg-muted/30",
+        className
+      )}
+    >
+      <div className="p-5 space-y-5">
+        {/* Header */}
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-foreground/10">
+            <KeyRound className="h-5 w-5 text-foreground" />
+          </div>
+          <div>
+            <h3 className="text-base font-semibold text-foreground">
+              Reset your password
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Verify your email to receive a reset code, then set a new password.
+            </p>
+          </div>
         </div>
 
-        {error ? (
-          <Badge variant="destructive" className="w-full justify-start py-2 px-3">{error}</Badge>
-        ) : null}
-        {success ? (
-          <Badge variant="outline" className="w-full justify-start py-2 px-3 border-green-500 text-green-600 bg-green-500/10">{success}</Badge>
-        ) : null}
+        {/* Alerts */}
+        <AnimatePresence mode="wait">
+          {error && <AuthAlert type="error" message={error} />}
+          {success && <AuthAlert type="success" message={success} />}
+        </AnimatePresence>
 
-        <EmailVerification
-          key={verificationKey}
-          type={RESET_VERIFICATION_TYPE[role]}
-          onVerified={handleVerified}
-        />
+        {/* Email Verification */}
+        <div className="space-y-4">
+          <EmailVerification
+            key={verificationKey}
+            type={RESET_VERIFICATION_TYPE[role]}
+            onVerified={handleVerified}
+            className="rounded-lg border border-border bg-background p-4"
+          />
 
-        {verifiedEmail ? (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="new-password">
-                New password <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="new-password"
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="Minimum 8 characters"
-                autoComplete="new-password"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">
-                Confirm password <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-                placeholder="Re-enter new password"
-                autoComplete="new-password"
-              />
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <Button
-                type="submit"
-                disabled={submitting}
-              >
-                {submitting ? "Updating…" : "Update password"}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={resetFlow}
-              >
-                Start over
-              </Button>
-            </div>
-          </form>
-        ) : (
-          <p className="rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted-foreground">
-            After verifying your email, you will be prompted to choose a new password.
-          </p>
-        )}
-      </CardContent>
-    </Card>
+          {verifiedEmail && (
+            <AuthVerificationStatus
+              verified={true}
+              email={verifiedEmail}
+              onReset={resetFlow}
+            />
+          )}
+        </div>
+
+        {/* Password Form */}
+        <AnimatePresence mode="wait">
+          {verifiedEmail ? (
+            <motion.form
+              key="password-form"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              onSubmit={handleSubmit}
+              className="space-y-4"
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                <AuthInput
+                  id="new-password"
+                  label="New password"
+                  type="password"
+                  value={password}
+                  onChange={setPassword}
+                  placeholder="Minimum 8 characters"
+                  required
+                  autoComplete="new-password"
+                  icon="password"
+                />
+
+                <AuthInput
+                  id="confirm-new-password"
+                  label="Confirm password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={setConfirmPassword}
+                  placeholder="Re-enter password"
+                  required
+                  autoComplete="new-password"
+                  icon="password"
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button
+                  type="submit"
+                  disabled={submitting}
+                  className="h-10 px-5 font-medium bg-foreground text-background hover:bg-foreground/90"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      Update password
+                    </>
+                  )}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={resetFlow}
+                  className="h-10 text-muted-foreground hover:text-foreground"
+                >
+                  <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                  Start over
+                </Button>
+              </div>
+            </motion.form>
+          ) : (
+            <motion.div
+              key="prompt"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex items-center gap-3 rounded-lg border border-dashed border-border bg-muted/50 px-4 py-3"
+            >
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
+                <span className="text-sm font-medium text-muted-foreground">1</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Verify your email address to unlock the password reset form.
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
   );
 }

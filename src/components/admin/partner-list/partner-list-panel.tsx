@@ -78,7 +78,7 @@ export function PartnerListPanel() {
   }
 
   return (
-    <Card className="border-slate-200 bg-white shadow-sm">
+    <Card className="border-border bg-card shadow-sm">
       <CardHeader>
         <CardTitle>Partner list embed</CardTitle>
         <CardDescription>

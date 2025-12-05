@@ -1,3 +1,25 @@
+-- Create flash_deals table if it doesn't exist
+CREATE TABLE IF NOT EXISTS public.flash_deals (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  partner_id text REFERENCES public.partners(id) ON DELETE CASCADE,
+  title text NOT NULL,
+  name text, -- legacy, use title instead
+  description text,
+  status text NOT NULL DEFAULT 'draft',
+  discount_percent integer,
+  discount_amount numeric,
+  valid_from timestamptz,
+  valid_until timestamptz,
+  valid_days text[],
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS flash_deals_partner_id_idx ON public.flash_deals (partner_id);
+CREATE INDEX IF NOT EXISTS flash_deals_is_active_idx ON public.flash_deals (is_active);
+CREATE INDEX IF NOT EXISTS flash_deals_status_idx ON public.flash_deals (status);
+
 -- Add columns to existing flash_deals table to support unified deal model
 ALTER TABLE public.flash_deals
   ADD COLUMN IF NOT EXISTS deal_type text NOT NULL DEFAULT 'flash',

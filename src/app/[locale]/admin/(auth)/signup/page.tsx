@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { EmailVerification } from "@/site/components/email-verification";
-import { LocalizedLink } from "@/components/ui/localized-link";
 import { useLocalizedRouter } from "@/i18n/use-localized-router";
+import { LocalizedLink } from "@/components/ui/localized-link";
+import { AuthLayout } from "@/components/auth/auth-layout";
+import {
+  AuthAlert,
+  AuthInput,
+  AuthSubmitButton,
+  AuthVerificationStatus,
+} from "@/components/auth/auth-form";
+import { EmailVerification } from "@/site/components/email-verification";
 
 export default function AdminSignupPage() {
   const router = useLocalizedRouter();
@@ -36,22 +37,22 @@ export default function AdminSignupPage() {
     }
   }, [router]);
 
-  function handleEmailVerified(value: string) {
+  const handleEmailVerified = (value: string) => {
     const normalized = value.trim().toLowerCase();
     setEmail(normalized);
     setVerifiedEmail(normalized);
     setError(null);
-  }
+  };
 
-  function handleResetVerification() {
+  const handleResetVerification = () => {
     setVerifiedEmail(null);
     setEmail("");
     setSuccess(null);
     setError(null);
     setVerificationKey((key) => key + 1);
-  }
+  };
 
-  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (submitting) return;
     setError(null);
@@ -93,158 +94,133 @@ export default function AdminSignupPage() {
         throw new Error(
           typeof data?.error === "string"
             ? data.error
-            : "Unable to create account. Please try again.",
+            : "Unable to create account. Please try again."
         );
       }
-      setSuccess("Account created. Redirecting…");
+      setSuccess("Account created. Redirecting...");
       setTimeout(() => {
         router.replace("/admin/dashboard");
       }, 500);
     } catch (err: unknown) {
       const message =
-        err instanceof Error
-          ? err.message
-          : "Failed to create account.";
+        err instanceof Error ? err.message : "Failed to create account.";
       setError(message);
     } finally {
       setSubmitting(false);
     }
-  }
+  };
 
   return (
-    <div className="flex min-h-[60vh] items-center justify-center bg-background px-6 py-12">
-      <Card className="w-full max-w-xl space-y-6 rounded-lg p-8">
-        <header className="space-y-1">
-          <h1 className="text-2xl font-semibold text-foreground">
-            Create admin account
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Use this form to provision a new administrator for the control centre.
-          </p>
-        </header>
+    <AuthLayout
+      variant="admin"
+      title="Create admin account"
+      description="Provision a new administrator for the control centre."
+      brandTitle="Join the Team"
+      brandDescription="Create your administrator account to help manage the Zabava platform and support our partner network."
+    >
+      <div className="space-y-6">
+        {error && <AuthAlert type="error" message={error} />}
+        {success && <AuthAlert type="success" message={success} />}
 
-        {error ? (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : null}
+        {/* Email Verification */}
+        <div className="space-y-4">
+          <EmailVerification
+            key={verificationKey}
+            type="admin_signup"
+            onVerified={handleEmailVerified}
+            className="rounded-lg border border-border bg-muted/50 p-4"
+          />
 
-        {success ? (
-          <div className="rounded-lg border border-green-500/40 bg-green-500/10 px-4 py-3 text-sm text-green-600">
-            {success}
-          </div>
-        ) : null}
-
-        <EmailVerification
-          key={verificationKey}
-          type="admin_signup"
-          onVerified={handleEmailVerified}
-          className="border border-white/10 bg-slate-950/40 text-white"
-        />
-
-        {emailVerified ? (
-          <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted px-4 py-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-            <span>
-              Verified email:{" "}
-              <span className="font-semibold text-foreground">
-                {verifiedEmail}
-              </span>
-            </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleResetVerification}
-              className="self-start sm:self-auto"
-            >
-              Use a different email
-            </Button>
-          </div>
-        ) : (
-          <p className="rounded-lg border border-dashed border-border bg-muted/60 px-4 py-3 text-sm text-muted-foreground">
-            Verify your email with a one-time code to unlock the rest of the form.
-          </p>
-        )}
-
-        <form onSubmit={onSubmit} className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Ada Lovelace"
-              autoComplete="name"
+          {emailVerified ? (
+            <AuthVerificationStatus
+              verified={true}
+              email={verifiedEmail}
+              onReset={handleResetVerification}
             />
-            <p className="text-xs text-muted-foreground">Optional</p>
-          </div>
+          ) : (
+            <div className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+              Verify your email with a one-time code to unlock the form.
+            </div>
+          )}
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">
-              Email <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              readOnly
-              disabled={!emailVerified}
-              placeholder="Verify your email above to continue"
-              autoComplete="email"
-            />
-            <p className="text-xs text-muted-foreground">
-              {emailVerified
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <AuthInput
+            id="name"
+            label="Full name"
+            value={name}
+            onChange={setName}
+            placeholder="Ada Lovelace"
+            autoComplete="name"
+            icon="user"
+            hint="Optional"
+          />
+
+          <AuthInput
+            id="email"
+            label="Email"
+            type="email"
+            value={email}
+            onChange={() => {}}
+            placeholder="Verify your email above"
+            required
+            readOnly
+            disabled={!emailVerified}
+            autoComplete="email"
+            icon="email"
+            hint={
+              emailVerified
                 ? "Verified via the code sent to your inbox."
-                : "Complete the verification step above to populate this field."}
-            </p>
-          </div>
+                : "Complete verification above to populate this field."
+            }
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="password">
-              Password <span className="text-destructive">*</span>
-            </Label>
-            <Input
+          <div className="grid gap-4 sm:grid-cols-2">
+            <AuthInput
               id="password"
+              label="Password"
               type="password"
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={setPassword}
+              placeholder="Create a password"
+              required
               autoComplete="new-password"
+              icon="password"
+              hint="Minimum 8 characters"
             />
-            <p className="text-xs text-muted-foreground">Minimum 8 characters.</p>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="confirm-password">
-              Confirm password <span className="text-destructive">*</span>
-            </Label>
-            <Input
+            <AuthInput
               id="confirm-password"
+              label="Confirm password"
               type="password"
               value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
+              onChange={setConfirmPassword}
+              placeholder="Re-enter password"
+              required
               autoComplete="new-password"
+              icon="password"
             />
           </div>
 
-          <Button
-            type="submit"
-            disabled={submitting || !emailVerified}
-            className="w-full"
+          <AuthSubmitButton
+            loading={submitting}
+            loadingText="Creating account..."
+            disabled={!emailVerified}
           >
-            {submitting ? "Creating account…" : "Create account"}
-          </Button>
+            Create account
+          </AuthSubmitButton>
         </form>
 
-        <p className="text-sm text-muted-foreground">
+        <p className="text-center text-sm text-muted-foreground">
           Already have access?{" "}
           <LocalizedLink
             href="/admin/login"
-            className="font-medium text-primary underline-offset-4 hover:underline"
+            className="font-medium text-foreground underline-offset-4 hover:underline"
           >
             Sign in instead
           </LocalizedLink>
         </p>
-      </Card>
-    </div>
+      </div>
+    </AuthLayout>
   );
 }
